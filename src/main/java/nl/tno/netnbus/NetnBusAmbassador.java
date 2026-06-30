@@ -1,8 +1,5 @@
 package nl.tno.netnbus;
 
-import java.net.URL;
-import java.util.Set;
-
 import hla.rti1516e.AttributeHandle;
 import hla.rti1516e.AttributeHandleFactory;
 import hla.rti1516e.AttributeHandleSet;
@@ -144,19 +141,21 @@ import hla.rti1516e.exceptions.TimeConstrainedIsNotEnabled;
 import hla.rti1516e.exceptions.TimeRegulationAlreadyEnabled;
 import hla.rti1516e.exceptions.TimeRegulationIsNotEnabled;
 import hla.rti1516e.exceptions.UnsupportedCallbackModel;
+import java.net.URL;
+import java.util.Set;
 import nl.tno.netnbus.socket.NetnBusSocketClient;
 import nl.tno.oorti.OOFederateAmbassador;
 import nl.tno.oorti.OORTIambassador;
 import nl.tno.oorti.OOattribute;
 import nl.tno.oorti.OOparameter;
 
-public class NetnBusOORTIambassador implements OORTIambassador {
+public class NetnBusAmbassador implements OORTIambassador {
 
   protected final NetnBusContext context;
   private final NetnBusSocketClient socketClient;
 
-  public NetnBusOORTIambassador(NetnBusContext context) {
-    this.context = context;
+  public NetnBusAmbassador() {
+    this.context = new NetnBusContext();
     this.socketClient = new NetnBusSocketClient();
   }
 
@@ -174,9 +173,8 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           AlreadyConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-            System.out.println("Should not be used");
-          }
-
+    System.out.println("Should not be used");
+  }
 
   @Override
   public void connect(FederateAmbassador federateReference, CallbackModel callbackModel)
@@ -186,10 +184,10 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           AlreadyConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-            System.out.println("Should not be used");
-          }
+    System.out.println("Should not be used");
+  }
 
-@Override
+  @Override
   public void connect(
       OOFederateAmbassador federateReference,
       CallbackModel callbackModel,
@@ -199,9 +197,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           UnsupportedCallbackModel,
           AlreadyConnected,
           CallNotAllowedFromWithinCallback,
-          RTIinternalError{
-            connect(federateReference, callbackModel);
-          }
+          RTIinternalError {
+    connect(federateReference, callbackModel);
+  }
 
   @Override
   public void connect(OOFederateAmbassador federateReference, CallbackModel callbackModel)
@@ -211,24 +209,23 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           AlreadyConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-            // Store federate locally for callbacks
-            this.context.addFederate(federateReference);
-            
-            // Connect to the NetnBus server via socket
-            String federateName = federateReference.getClass().getName() + "@" + System.identityHashCode(federateReference);
-            boolean connected = socketClient.connect(federateName);
-            if (!connected) {
-              System.err.println("Warning: Could not connect to NetnBus server. Running in local mode.");
-            }
-          }
+    // Store federate locally for callbacks
+    this.context.addFederate(federateReference);
 
+    // Connect to the NetnBus server via socket
+    String federateName =
+        federateReference.getClass().getName() + "@" + System.identityHashCode(federateReference);
+    boolean connected = socketClient.connect(federateName);
+    if (!connected) {
+      System.err.println("Warning: Could not connect to NetnBus server. Running in local mode.");
+    }
+  }
 
   @Override
   public void disconnect()
       throws FederateIsExecutionMember, CallNotAllowedFromWithinCallback, RTIinternalError {
-            socketClient.disconnect();
-          }
-
+    socketClient.disconnect();
+  }
 
   @Override
   public void createFederationExecution(
@@ -247,7 +244,6 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           NotConnected,
           RTIinternalError {}
 
-
   @Override
   public void createFederationExecution(
       String federationExecutionName, URL[] fomModules, String logicalTimeImplementationName)
@@ -258,7 +254,6 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           FederationExecutionAlreadyExists,
           NotConnected,
           RTIinternalError {}
-
 
   @Override
   public void createFederationExecution(
@@ -319,8 +314,8 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           NotConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-            return null;
-          }
+    return null;
+  }
 
   @Override
   public FederateHandle joinFederationExecution(
@@ -335,7 +330,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           FederateAlreadyExecutionMember,
           NotConnected,
           CallNotAllowedFromWithinCallback,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public FederateHandle joinFederationExecution(
@@ -348,7 +345,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           FederateAlreadyExecutionMember,
           NotConnected,
           CallNotAllowedFromWithinCallback,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public FederateHandle joinFederationExecution(String federateType, String federationExecutionName)
@@ -359,7 +358,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           FederateAlreadyExecutionMember,
           NotConnected,
           CallNotAllowedFromWithinCallback,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public void resignFederationExecution(ResignAction resignAction)
@@ -691,7 +692,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public ObjectInstanceHandle registerObjectInstance(
@@ -704,7 +707,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public void updateAttributeValues(
@@ -732,7 +737,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public void sendInteraction(
@@ -762,7 +769,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public void deleteObjectInstance(ObjectInstanceHandle objectHandle, byte[] userSuppliedTag)
@@ -784,7 +793,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public void localDeleteObjectInstance(ObjectInstanceHandle objectHandle)
@@ -962,7 +973,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public void cancelNegotiatedAttributeOwnershipDivestiture(
@@ -1009,7 +1022,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return false; }
+          RTIinternalError {
+    return false;
+  }
 
   //////////////////////////////
   // Time Management Services //
@@ -1144,7 +1159,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public LogicalTime queryLogicalTime()
@@ -1152,7 +1169,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public TimeQueryReturn queryLITS()
@@ -1160,7 +1179,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public void modifyLookahead(LogicalTimeInterval theLookahead)
@@ -1180,7 +1201,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public void retract(MessageRetractionHandle theHandle)
@@ -1225,7 +1248,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public void commitRegionModifications(RegionHandleSet regions)
@@ -1262,7 +1287,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public ObjectInstanceHandle registerObjectInstanceWithRegions(
@@ -1282,7 +1309,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public void associateRegionsForUpdates(
@@ -1462,7 +1491,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public void requestAttributeValueUpdateWithRegions(
@@ -1485,7 +1516,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
   //////////////////////////
   @Override
   public ResignAction getAutomaticResignDirective()
-      throws FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public void setAutomaticResignDirective(ResignAction resignAction)
@@ -1493,7 +1526,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
 
   @Override
   public FederateHandle getFederateHandle(String theName)
-      throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public String getFederateName(FederateHandle theHandle)
@@ -1501,27 +1536,39 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           FederateHandleNotKnown,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public ObjectClassHandle getObjectClassHandle(String theName)
-      throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public String getObjectClassName(ObjectClassHandle theHandle)
-      throws InvalidObjectClassHandle, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws InvalidObjectClassHandle, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public ObjectClassHandle getKnownObjectClassHandle(ObjectInstanceHandle theObject)
-      throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public ObjectInstanceHandle getObjectInstanceHandle(String theName)
-      throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public String getObjectInstanceName(ObjectInstanceHandle theHandle)
-      throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public AttributeHandle getAttributeHandle(ObjectClassHandle whichClass, String theName)
@@ -1529,7 +1576,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           InvalidObjectClassHandle,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public String getAttributeName(ObjectClassHandle whichClass, AttributeHandle theHandle)
@@ -1538,14 +1587,18 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           InvalidObjectClassHandle,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public double getUpdateRateValue(String updateRateDesignator)
       throws InvalidUpdateRateDesignator,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return 0.0; }
+          RTIinternalError {
+    return 0.0;
+  }
 
   @Override
   public double getUpdateRateValueForAttribute(
@@ -1554,18 +1607,24 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           AttributeNotDefined,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return 0.0; }
+          RTIinternalError {
+    return 0.0;
+  }
 
   @Override
   public InteractionClassHandle getInteractionClassHandle(String theName)
-      throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public String getInteractionClassName(InteractionClassHandle theHandle)
       throws InvalidInteractionClassHandle,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public ParameterHandle getParameterHandle(InteractionClassHandle whichClass, String theName)
@@ -1573,7 +1632,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           InvalidInteractionClassHandle,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public String getParameterName(InteractionClassHandle whichClass, ParameterHandle theHandle)
@@ -1582,23 +1643,33 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           InvalidInteractionClassHandle,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public OrderType getOrderType(String theName)
-      throws InvalidOrderName, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws InvalidOrderName, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public String getOrderName(OrderType theType)
-      throws InvalidOrderType, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws InvalidOrderType, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public TransportationTypeHandle getTransportationTypeHandle(String theName)
-      throws InvalidTransportationName, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws InvalidTransportationName, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public String getTransportationTypeName(TransportationTypeHandle theHandle)
-      throws InvalidTransportationType, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws InvalidTransportationType, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public DimensionHandleSet getAvailableDimensionsForClassAttribute(
@@ -1608,7 +1679,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           InvalidObjectClassHandle,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public DimensionHandleSet getAvailableDimensionsForInteractionClass(
@@ -1616,19 +1689,27 @@ public class NetnBusOORTIambassador implements OORTIambassador {
       throws InvalidInteractionClassHandle,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public DimensionHandle getDimensionHandle(String theName)
-      throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public String getDimensionName(DimensionHandle theHandle)
-      throws InvalidDimensionHandle, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws InvalidDimensionHandle, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public long getDimensionUpperBound(DimensionHandle theHandle)
-      throws InvalidDimensionHandle, FederateNotExecutionMember, NotConnected, RTIinternalError { return 0; }
+      throws InvalidDimensionHandle, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return 0;
+  }
 
   @Override
   public DimensionHandleSet getDimensionHandleSet(RegionHandle region)
@@ -1637,7 +1718,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public RangeBounds getRangeBounds(RegionHandle region, DimensionHandle dimension)
@@ -1647,7 +1730,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public void setRangeBounds(RegionHandle region, DimensionHandle dimension, RangeBounds bounds)
@@ -1663,11 +1748,15 @@ public class NetnBusOORTIambassador implements OORTIambassador {
 
   @Override
   public long normalizeFederateHandle(FederateHandle federateHandle)
-      throws InvalidFederateHandle, FederateNotExecutionMember, NotConnected, RTIinternalError { return 0; }
+      throws InvalidFederateHandle, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return 0;
+  }
 
   @Override
   public long normalizeServiceGroup(ServiceGroup group)
-      throws InvalidServiceGroup, FederateNotExecutionMember, NotConnected, RTIinternalError { return 0; }
+      throws InvalidServiceGroup, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return 0;
+  }
 
   @Override
   public void enableObjectClassRelevanceAdvisorySwitch()
@@ -1743,12 +1832,16 @@ public class NetnBusOORTIambassador implements OORTIambassador {
 
   @Override
   public boolean evokeCallback(double approximateMinimumTimeInSeconds)
-      throws CallNotAllowedFromWithinCallback, RTIinternalError { return false; }
+      throws CallNotAllowedFromWithinCallback, RTIinternalError {
+    return false;
+  }
 
   @Override
   public boolean evokeMultipleCallbacks(
       double approximateMinimumTimeInSeconds, double approximateMaximumTimeInSeconds)
-      throws CallNotAllowedFromWithinCallback, RTIinternalError { return false; }
+      throws CallNotAllowedFromWithinCallback, RTIinternalError {
+    return false;
+  }
 
   @Override
   public void enableCallbacks() throws SaveInProgress, RestoreInProgress, RTIinternalError {}
@@ -1758,77 +1851,110 @@ public class NetnBusOORTIambassador implements OORTIambassador {
 
   @Override
   public AttributeHandleFactory getAttributeHandleFactory()
-      throws FederateNotExecutionMember, NotConnected { return null; }
+      throws FederateNotExecutionMember, NotConnected {
+    return null;
+  }
 
   @Override
   public AttributeHandleSetFactory getAttributeHandleSetFactory()
-      throws FederateNotExecutionMember, NotConnected { return null; }
+      throws FederateNotExecutionMember, NotConnected {
+    return null;
+  }
 
   @Override
   public AttributeHandleValueMapFactory getAttributeHandleValueMapFactory()
-      throws FederateNotExecutionMember, NotConnected { return null; }
+      throws FederateNotExecutionMember, NotConnected {
+    return null;
+  }
 
   @Override
   public AttributeSetRegionSetPairListFactory getAttributeSetRegionSetPairListFactory()
-      throws FederateNotExecutionMember, NotConnected { return null; }
+      throws FederateNotExecutionMember, NotConnected {
+    return null;
+  }
 
   @Override
   public DimensionHandleFactory getDimensionHandleFactory()
-      throws FederateNotExecutionMember, NotConnected { return null; }
+      throws FederateNotExecutionMember, NotConnected {
+    return null;
+  }
 
   @Override
   public DimensionHandleSetFactory getDimensionHandleSetFactory()
-      throws FederateNotExecutionMember, NotConnected { return null; }
+      throws FederateNotExecutionMember, NotConnected {
+    return null;
+  }
 
   @Override
   public FederateHandleFactory getFederateHandleFactory()
-      throws FederateNotExecutionMember, NotConnected { return null; }
+      throws FederateNotExecutionMember, NotConnected {
+    return null;
+  }
 
   @Override
   public FederateHandleSetFactory getFederateHandleSetFactory()
-      throws FederateNotExecutionMember, NotConnected { return null; }
+      throws FederateNotExecutionMember, NotConnected {
+    return null;
+  }
 
   @Override
   public InteractionClassHandleFactory getInteractionClassHandleFactory()
-      throws FederateNotExecutionMember, NotConnected { return null; }
+      throws FederateNotExecutionMember, NotConnected {
+    return null;
+  }
 
   @Override
   public ObjectClassHandleFactory getObjectClassHandleFactory()
-      throws FederateNotExecutionMember, NotConnected { return null; }
+      throws FederateNotExecutionMember, NotConnected {
+    return null;
+  }
 
   @Override
   public ObjectInstanceHandleFactory getObjectInstanceHandleFactory()
-      throws FederateNotExecutionMember, NotConnected { return null; }
+      throws FederateNotExecutionMember, NotConnected {
+    return null;
+  }
 
   @Override
   public ParameterHandleFactory getParameterHandleFactory()
-      throws FederateNotExecutionMember, NotConnected { return null; }
+      throws FederateNotExecutionMember, NotConnected {
+    return null;
+  }
 
   @Override
   public ParameterHandleValueMapFactory getParameterHandleValueMapFactory()
-      throws FederateNotExecutionMember, NotConnected { return null; }
+      throws FederateNotExecutionMember, NotConnected {
+    return null;
+  }
 
   @Override
   public RegionHandleSetFactory getRegionHandleSetFactory()
-      throws FederateNotExecutionMember, NotConnected { return null; }
+      throws FederateNotExecutionMember, NotConnected {
+    return null;
+  }
 
   @Override
   public TransportationTypeHandleFactory getTransportationTypeHandleFactory()
-      throws FederateNotExecutionMember, NotConnected { return null; }
+      throws FederateNotExecutionMember, NotConnected {
+    return null;
+  }
 
   @Override
-  public String getHLAversion() { return null; }
+  public String getHLAversion() {
+    return null;
+  }
 
   @Override
-  public LogicalTimeFactory getTimeFactory() throws FederateNotExecutionMember, NotConnected { return null; }
-  
+  public LogicalTimeFactory getTimeFactory() throws FederateNotExecutionMember, NotConnected {
+    return null;
+  }
+
   ////////////////////////////////////
   // Federation Management Services //
   ////////////////////////////////////
-  /// 
+  ///
   /// OORTI STUFF
 
-
   @Override
   public FederateHandle joinFederationExecutionWithCurrentFDD(
       String federateName,
@@ -1847,7 +1973,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           NotConnected,
           CallNotAllowedFromWithinCallback,
           FederateNameAlreadyInUse,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public FederateHandle joinFederationExecutionWithCurrentFDD(
@@ -1866,7 +1994,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           NotConnected,
           CallNotAllowedFromWithinCallback,
           FederateNameAlreadyInUse,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public FederateHandle joinFederationExecutionWithCurrentFDD(
@@ -1885,7 +2015,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           NotConnected,
           CallNotAllowedFromWithinCallback,
           FederateNameAlreadyInUse,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public FederateHandle joinFederationExecutionWithCurrentFDD(
@@ -1901,7 +2033,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           NotConnected,
           CallNotAllowedFromWithinCallback,
           FederateNameAlreadyInUse,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   /////////////////////////////////////
   // Declaration Management Services //
@@ -2088,7 +2222,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public MessageRetractionReturn updateAttributeValues(
@@ -2101,7 +2237,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public MessageRetractionReturn updateAttributeValues(
@@ -2114,7 +2252,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public void deleteObjectInstance(Object theObject, byte[] userSuppliedTag)
@@ -2146,7 +2286,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public MessageRetractionReturn deleteObjectInstance(
@@ -2158,7 +2300,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public void requestAttributeValueUpdate(Class clazz, byte[] userSuppliedTag)
@@ -2236,7 +2380,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public MessageRetractionReturn sendInteraction(
@@ -2252,14 +2398,17 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   ///////////////////////////////////
   // Ownership Management Services //
   ///////////////////////////////////
 
   @Override
-  public void unconditionalAttributeOwnershipDivestiture(Object theObject, Set<OOattribute> theAttributes)
+  public void unconditionalAttributeOwnershipDivestiture(
+      Object theObject, Set<OOattribute> theAttributes)
       throws AttributeNotOwned,
           AttributeNotDefined,
           ObjectInstanceNotKnown,
@@ -2283,7 +2432,8 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RTIinternalError {}
 
   @Override
-  public void confirmDivestiture(Object theObject, Set<OOattribute> theAttributes, byte[] userSuppliedTag)
+  public void confirmDivestiture(
+      Object theObject, Set<OOattribute> theAttributes, byte[] userSuppliedTag)
       throws NoAcquisitionPending,
           AttributeDivestitureWasNotRequested,
           AttributeNotOwned,
@@ -2345,7 +2495,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public void cancelNegotiatedAttributeOwnershipDivestiture(
@@ -2390,7 +2542,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return false; }
+          RTIinternalError {
+    return false;
+  }
 
   //////////////////////////
   // RTI Support Services //
@@ -2398,27 +2552,45 @@ public class NetnBusOORTIambassador implements OORTIambassador {
 
   @Override
   public String getObjectClassName(Class theClass)
-      throws ObjectClassNotDefined, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws ObjectClassNotDefined, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public Class getObjectClass(String theClassName)
-      throws ObjectClassNotDefined, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws ObjectClassNotDefined, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public String getInteractionClassName(Class theClass)
-      throws InteractionClassNotDefined, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws InteractionClassNotDefined,
+          FederateNotExecutionMember,
+          NotConnected,
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public Class getInteractionClass(String theClassName)
-      throws InteractionClassNotDefined, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws InteractionClassNotDefined,
+          FederateNotExecutionMember,
+          NotConnected,
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public String getObjectName(Object theObject)
-      throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public Object getObject(String theObjectName)
-      throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError { return null; }
+      throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    return null;
+  }
 
   @Override
   public OOattribute getAttribute(Class clazz, String attributeName)
@@ -2426,7 +2598,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           AttributeNotDefined,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public Set<OOattribute> getAttributes(Class clazz, String... attributeName)
@@ -2434,7 +2608,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           AttributeNotDefined,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public Set<OOattribute> getAttributes(Class clazz)
@@ -2442,7 +2618,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           AttributeNotDefined,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public OOparameter getParameter(Class clazz, String parameterName)
@@ -2450,7 +2628,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           InteractionParameterNotDefined,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public Set<OOparameter> getParameters(Class clazz, String... parameterName)
@@ -2458,7 +2638,9 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           InteractionParameterNotDefined,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 
   @Override
   public Set<OOparameter> getParameters(Class clazz)
@@ -2466,5 +2648,7 @@ public class NetnBusOORTIambassador implements OORTIambassador {
           InteractionParameterNotDefined,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError { return null; }
+          RTIinternalError {
+    return null;
+  }
 }

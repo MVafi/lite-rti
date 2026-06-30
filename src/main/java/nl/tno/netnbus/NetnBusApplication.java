@@ -12,8 +12,8 @@ public class NetnBusApplication {
     this.context = new NetnBusContext();
   }
 
-  public NetnBusOORTIambassador createRTIambassador() {
-    return new NetnBusOORTIambassador(context);
+  public NetnBusAmbassador createRTIambassador() {
+    return new NetnBusAmbassador();
   }
 
   public void run() throws Exception {

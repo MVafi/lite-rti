@@ -1,11 +1,10 @@
 package nl.tno.netnbus;
 
+import hla.rti1516e.FederateAmbassador;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
-import hla.rti1516e.FederateAmbassador;
 
 public class NetnBusContext {
 
@@ -24,17 +23,13 @@ public class NetnBusContext {
   }
 
   /**
-   * Queue an event to be processed in the main loop.
-   * Thread-safe - can be called from any thread.
+   * Queue an event to be processed in the main loop. Thread-safe - can be called from any thread.
    */
   public void queueEvent(Runnable event) {
     eventQueue.offer(event);
   }
 
-  /**
-   * Process all pending events in the queue.
-   * Called from the main event loop.
-   */
+  /** Process all pending events in the queue. Called from the main event loop. */
   public void processEvents() {
     Runnable event;
     while ((event = eventQueue.poll()) != null) {
@@ -47,25 +42,22 @@ public class NetnBusContext {
     }
   }
 
-  /**
-   * Get all connected federates for broadcasting callbacks.
-   */
+  /** Get all connected federates for broadcasting callbacks. */
   public Map<String, FederateAmbassador> getConnectedFederates() {
     return connectedFederates;
   }
 
-  /**
-   * Broadcast a callback to all connected federates.
-   */
+  /** Broadcast a callback to all connected federates. */
   public void broadcastToFederates(FederateCallback callback) {
     for (FederateAmbassador federate : connectedFederates.values()) {
-      queueEvent(() -> {
-        try {
-          callback.invoke(federate);
-        } catch (Exception e) {
-          System.err.println("Error invoking callback on federate: " + e.getMessage());
-        }
-      });
+      queueEvent(
+          () -> {
+            try {
+              callback.invoke(federate);
+            } catch (Exception e) {
+              System.err.println("Error invoking callback on federate: " + e.getMessage());
+            }
+          });
     }
   }
 

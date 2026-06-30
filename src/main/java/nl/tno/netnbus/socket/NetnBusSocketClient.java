@@ -7,8 +7,8 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 /**
- * Socket client for connecting to the NETN Bus server.
- * Used by federates to connect to a running NetnBusApplication.
+ * Socket client for connecting to the NETN Bus server. Used by federates to connect to a running
+ * NetnBusApplication.
  */
 public class NetnBusSocketClient {
 
@@ -30,6 +30,7 @@ public class NetnBusSocketClient {
 
   /**
    * Connect to the NETN Bus server.
+   *
    * @param federateName Unique name for this federate
    * @return true if connection successful
    */
@@ -55,9 +56,7 @@ public class NetnBusSocketClient {
     return false;
   }
 
-  /**
-   * Disconnect from the NETN Bus server.
-   */
+  /** Disconnect from the NETN Bus server. */
   public void disconnect() {
     if (connected) {
       try {
@@ -70,16 +69,12 @@ public class NetnBusSocketClient {
     }
   }
 
-  /**
-   * Check if connected to the bus.
-   */
+  /** Check if connected to the bus. */
   public boolean isConnected() {
     return connected;
   }
 
-  /**
-   * Get federate count from server.
-   */
+  /** Get federate count from server. */
   public int getFederateCount() {
     if (!connected) return 0;
     try {

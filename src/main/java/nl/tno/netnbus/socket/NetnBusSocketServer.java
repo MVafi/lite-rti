@@ -11,10 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
- * Socket server for the NETN Bus.
- * Listens for federate connections and manages them.
- */
+/** Socket server for the NETN Bus. Listens for federate connections and manages them. */
 public class NetnBusSocketServer {
 
   public static final int DEFAULT_PORT = 4567;
@@ -34,9 +31,7 @@ public class NetnBusSocketServer {
     this(DEFAULT_PORT);
   }
 
-  /**
-   * Start the socket server in a background thread.
-   */
+  /** Start the socket server in a background thread. */
   public void start() throws IOException {
     serverSocket = new ServerSocket(port);
     running = true;
@@ -45,24 +40,23 @@ public class NetnBusSocketServer {
     System.out.println("[NetnBus] Ready to accept federate connections");
 
     // Accept connections in a separate thread
-    executor.submit(() -> {
-      while (running) {
-        try {
-          Socket clientSocket = serverSocket.accept();
-          ClientHandler handler = new ClientHandler(clientSocket, this);
-          executor.submit(handler);
-        } catch (IOException e) {
-          if (running) {
-            System.err.println("[NetnBus] Error accepting connection: " + e.getMessage());
+    executor.submit(
+        () -> {
+          while (running) {
+            try {
+              Socket clientSocket = serverSocket.accept();
+              ClientHandler handler = new ClientHandler(clientSocket, this);
+              executor.submit(handler);
+            } catch (IOException e) {
+              if (running) {
+                System.err.println("[NetnBus] Error accepting connection: " + e.getMessage());
+              }
+            }
           }
-        }
-      }
-    });
+        });
   }
 
-  /**
-   * Stop the socket server.
-   */
+  /** Stop the socket server. */
   public void stop() {
     running = false;
     try {
@@ -75,41 +69,31 @@ public class NetnBusSocketServer {
     executor.shutdownNow();
   }
 
-  /**
-   * Register a connected federate.
-   */
+  /** Register a connected federate. */
   void registerFederate(String name, ClientHandler handler) {
     connectedFederates.put(name, handler);
     System.out.println("[NetnBus] Federate connected: " + name);
     System.out.println("[NetnBus] Total federates: " + connectedFederates.size());
   }
 
-  /**
-   * Unregister a disconnected federate.
-   */
+  /** Unregister a disconnected federate. */
   void unregisterFederate(String name) {
     connectedFederates.remove(name);
     System.out.println("[NetnBus] Federate disconnected: " + name);
     System.out.println("[NetnBus] Remaining federates: " + connectedFederates.size());
   }
 
-  /**
-   * Get count of connected federates.
-   */
+  /** Get count of connected federates. */
   public int getFederateCount() {
     return connectedFederates.size();
   }
 
-  /**
-   * Check if server is running.
-   */
+  /** Check if server is running. */
   public boolean isRunning() {
     return running;
   }
 
-  /**
-   * Handles communication with a single federate client.
-   */
+  /** Handles communication with a single federate client. */
   static class ClientHandler implements Runnable {
     private final Socket socket;
     private final NetnBusSocketServer server;
