@@ -1,0 +1,11 @@
+/target/
+.classpath
+.project
+.settings/
+/bin/
+launch.json
+.devcontainer
+.vscode
+nbactions.xml
+nb-configuration.xml
+%LOCALAPPDATA%
