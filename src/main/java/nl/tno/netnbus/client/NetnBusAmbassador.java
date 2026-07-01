@@ -1,4 +1,7 @@
-package nl.tno.netnbus;
+package nl.tno.netnbus.client;
+
+import java.net.URL;
+import java.util.Set;
 
 import hla.rti1516e.AttributeHandle;
 import hla.rti1516e.AttributeHandleFactory;
@@ -141,21 +144,18 @@ import hla.rti1516e.exceptions.TimeConstrainedIsNotEnabled;
 import hla.rti1516e.exceptions.TimeRegulationAlreadyEnabled;
 import hla.rti1516e.exceptions.TimeRegulationIsNotEnabled;
 import hla.rti1516e.exceptions.UnsupportedCallbackModel;
-import java.net.URL;
-import java.util.Set;
-import nl.tno.netnbus.socket.NetnBusSocketClient;
 import nl.tno.oorti.OOFederateAmbassador;
 import nl.tno.oorti.OORTIambassador;
 import nl.tno.oorti.OOattribute;
 import nl.tno.oorti.OOparameter;
 
 public class NetnBusAmbassador implements OORTIambassador {
+  // Todo: remove non oorti logic
 
-  protected final NetnBusContext context;
+  //   protected final NetnBusContext context;
   private final NetnBusSocketClient socketClient;
 
   public NetnBusAmbassador() {
-    this.context = new NetnBusContext();
     this.socketClient = new NetnBusSocketClient();
   }
 
@@ -198,6 +198,7 @@ public class NetnBusAmbassador implements OORTIambassador {
           AlreadyConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
+    System.out.println("Connect call 1");
     connect(federateReference, callbackModel);
   }
 
@@ -209,8 +210,7 @@ public class NetnBusAmbassador implements OORTIambassador {
           AlreadyConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-    // Store federate locally for callbacks
-    this.context.addFederate(federateReference);
+    System.out.println("Connect call 2");
 
     // Connect to the NetnBus server via socket
     String federateName =
@@ -224,6 +224,7 @@ public class NetnBusAmbassador implements OORTIambassador {
   @Override
   public void disconnect()
       throws FederateIsExecutionMember, CallNotAllowedFromWithinCallback, RTIinternalError {
+    System.out.println("Disconnect call 1");
     socketClient.disconnect();
   }
 
@@ -242,7 +243,9 @@ public class NetnBusAmbassador implements OORTIambassador {
           DesignatorIsHLAstandardMIM,
           FederationExecutionAlreadyExists,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Current method is currently unsupported");
+          }
 
   @Override
   public void createFederationExecution(
@@ -253,7 +256,9 @@ public class NetnBusAmbassador implements OORTIambassador {
           CouldNotOpenFDD,
           FederationExecutionAlreadyExists,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Current method is currently unsupported");
+          }
 
   @Override
   public void createFederationExecution(
@@ -266,16 +271,21 @@ public class NetnBusAmbassador implements OORTIambassador {
           DesignatorIsHLAstandardMIM,
           FederationExecutionAlreadyExists,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Current method is currently unsupported");
+          }
 
-  @Override
-  public void createFederationExecution(String federationExecutionName, URL[] fomModules)
-      throws InconsistentFDD,
-          ErrorReadingFDD,
-          CouldNotOpenFDD,
-          FederationExecutionAlreadyExists,
-          NotConnected,
-          RTIinternalError {}
+    @Override
+    public void createFederationExecution(String federationExecutionName, URL[] fomModules)
+        throws FederationExecutionAlreadyExists, NotConnected, RTIinternalError {
+    // For now, just create in context (no FDD/MIM parsing)
+    try {
+        // context.createFederationExecution(federationExecutionName);
+        System.out.println("[NetnBusAmbassador] Federation created: " + federationExecutionName);
+    } catch (Exception e) {
+        throw new RTIinternalError(e.getMessage());
+    }
+    }
 
   @Override
   public void createFederationExecution(String federationExecutionName, URL fomModule)
@@ -284,7 +294,9 @@ public class NetnBusAmbassador implements OORTIambassador {
           CouldNotOpenFDD,
           FederationExecutionAlreadyExists,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+          }
+    
 
   @Override
   public void destroyFederationExecution(String federationExecutionName)

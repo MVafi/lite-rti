@@ -9,3 +9,4 @@ launch.json
 nbactions.xml
 nb-configuration.xml
 %LOCALAPPDATA%
+*.java~

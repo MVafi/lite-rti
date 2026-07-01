@@ -1,4 +1,4 @@
-package nl.tno.netnbus.socket;
+package nl.tno.netnbus.client;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -6,6 +6,9 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import nl.tno.netnbus.server.NetnBusSocketServer;
+
+// TODO check this file
 /**
  * Socket client for connecting to the NETN Bus server. Used by federates to connect to a running
  * NetnBusApplication.
@@ -36,15 +39,19 @@ public class NetnBusSocketClient {
    */
   public boolean connect(String federateName) {
     try {
+      System.out.println("[NetnBusClient] Connecting to " + host + ":" + port);
       socket = new Socket(host, port);
       out = new PrintWriter(socket.getOutputStream(), true);
       in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
       // Send connect command
+      System.out.println("[NetnBusClient] Sending CONNECT|" + federateName);
       out.println("CONNECT|" + federateName);
 
       // Wait for response
+      System.out.println("[NetnBusClient] Waiting for response...");
       String response = in.readLine();
+      System.out.println("[NetnBusClient] Got response: " + response);
       if (response != null && response.startsWith("OK|CONNECTED")) {
         connected = true;
         return true;

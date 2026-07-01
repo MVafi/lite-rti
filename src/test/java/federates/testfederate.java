@@ -1,16 +1,17 @@
 package federates;
 
+import java.util.Set;
+import java.util.UUID;
+
 import hla.rti1516e.CallbackModel;
 import hla.rti1516e.OrderType;
 import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.exceptions.RTIexception;
-import java.util.Set;
-import java.util.UUID;
 import nl.tno.netn4.datatypes.EntityTypeStruct;
 import nl.tno.netn4.datatypes.SupplyStatusStruct;
 import nl.tno.netn4.interactions.SetSuppliesStatus;
-import nl.tno.netnbus.NetnBusAmbassador;
+import nl.tno.netnbus.client.NetnBusAmbassador;
 import nl.tno.oorti.NullOOFederateAmbassador;
 import nl.tno.oorti.OORTIambassador;
 import nl.tno.oorti.OOparameter;
