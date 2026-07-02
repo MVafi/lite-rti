@@ -151,6 +151,7 @@ import nl.tno.oorti.OOparameter;
 
 public class NetnBusAmbassador implements OORTIambassador {
   // Todo: remove non oorti logic
+  // todo: remove all output debug lines
 
   //   protected final NetnBusContext context;
   private final NetnBusSocketClient socketClient;
@@ -210,15 +211,33 @@ public class NetnBusAmbassador implements OORTIambassador {
           AlreadyConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-    System.out.println("Connect call 2");
 
-    // Connect to the NetnBus server via socket
+    // Used as UUID for the connected federate, not very robust but sufficient for now
     String federateName =
         federateReference.getClass().getName() + "@" + System.identityHashCode(federateReference);
-    boolean connected = socketClient.connect(federateName);
-    if (!connected) {
-      System.err.println("Warning: Could not connect to NetnBus server. Running in local mode.");
+
+    System.out.println(federateReference);
+    
+    int maxRetries = 5;
+    int retryDelay = 2000; // milliseconds
+    
+    for (int attempt = 1; attempt <= maxRetries; attempt++) {
+      if (socketClient.connect(federateName)) {
+        return;
+      }
+      
+      if (attempt < maxRetries) {
+        System.out.println("[NetnBusAmbassador] Connection attempt " + attempt + " failed. Retrying in " + retryDelay + "ms...");
+        try {
+          Thread.sleep(retryDelay);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new ConnectionFailed("Connection interrupted: " + e.getMessage());
+        }
+      }
     }
+    
+    throw new ConnectionFailed("Could not connect to NetnBus server after " + maxRetries + " attempts.");
   }
 
   @Override
@@ -280,7 +299,7 @@ public class NetnBusAmbassador implements OORTIambassador {
         throws FederationExecutionAlreadyExists, NotConnected, RTIinternalError {
     // For now, just create in context (no FDD/MIM parsing)
     try {
-        // context.createFederationExecution(federationExecutionName);
+        socketClient.createFederationExecution(federationExecutionName);
         System.out.println("[NetnBusAmbassador] Federation created: " + federationExecutionName);
     } catch (Exception e) {
         throw new RTIinternalError(e.getMessage());
@@ -326,7 +345,7 @@ public class NetnBusAmbassador implements OORTIambassador {
           NotConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-    return null;
+    return joinFederationExecution(federateType, federationExecutionName);
   }
 
   @Override
@@ -343,7 +362,7 @@ public class NetnBusAmbassador implements OORTIambassador {
           NotConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-    return null;
+    return joinFederationExecution(federateType, federationExecutionName);
   }
 
   @Override
@@ -358,7 +377,7 @@ public class NetnBusAmbassador implements OORTIambassador {
           NotConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-    return null;
+    return joinFederationExecution(federateType, federationExecutionName);
   }
 
   @Override
@@ -371,7 +390,15 @@ public class NetnBusAmbassador implements OORTIambassador {
           NotConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-    return null;
+    // For now, just join (no FDD/MIM parsing)
+    try {
+        System.out.println("[NetnBusAmbassador] Federation joined: " + federationExecutionName + " as federate type: " + federateType);
+
+        socketClient.joinFederationExecution(federateType, federationExecutionName);
+    } catch (Exception e) {
+        throw new RTIinternalError(e.getMessage());
+    }
+    return null; // Return null for now, as we don't have a proper FederateHandle
   }
 
   @Override

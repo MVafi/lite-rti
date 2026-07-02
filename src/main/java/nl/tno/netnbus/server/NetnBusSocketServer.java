@@ -17,14 +17,18 @@ public class NetnBusSocketServer {
   private volatile boolean running = false;
   private final NetnBusContext context;
 
-  public NetnBusSocketServer() {
+  public NetnBusSocketServer(NetnBusContext context) {
     this.executor = Executors.newCachedThreadPool();
     this.port = DEFAULT_PORT;
-    this.context = new NetnBusContext();
+    this.context = context;
   }
 
+  // public NetnBusSocketServer() {
+  //   this(new NetnBusContext());
+  // }
+
   public void start() throws IOException {
-    serverSocket = new ServerSocket(port);
+    this.serverSocket = new ServerSocket(port);
 
     System.out.println("[NetnBus] Socket server started on port " + port);
     System.out.println("[NetnBus] Ready to accept federate connections");

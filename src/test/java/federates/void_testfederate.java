@@ -16,7 +16,7 @@ import nl.tno.oorti.NullOOFederateAmbassador;
 import nl.tno.oorti.OORTIambassador;
 import nl.tno.oorti.OOparameter;
 
-public class testfederate extends NullOOFederateAmbassador {
+public class void_testfederate extends NullOOFederateAmbassador {
 
   OORTIambassador oortiamb;
 
@@ -73,7 +73,7 @@ public class testfederate extends NullOOFederateAmbassador {
   }
 
   public static void main(String[] args) throws RTIexception, Exception {
-    new testfederate().start();
+    new void_testfederate().start();
   }
 
   public void runTests(OORTIambassador oortiamb) throws Exception {

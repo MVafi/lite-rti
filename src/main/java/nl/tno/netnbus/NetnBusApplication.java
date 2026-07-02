@@ -1,6 +1,5 @@
 package nl.tno.netnbus;
 
-import nl.tno.netnbus.client.NetnBusAmbassador;
 import nl.tno.netnbus.server.NetnBusContext;
 import nl.tno.netnbus.server.NetnBusSocketServer;
 
@@ -14,23 +13,42 @@ public class NetnBusApplication {
     this.context = new NetnBusContext();
   }
 
-  public NetnBusAmbassador createRTIambassador() {
-    return new NetnBusAmbassador();
-  }
+  // public NetnBusAmbassador createRTIambassador() {
+  //   return new NetnBusAmbassador();
+  // }
 
   public void run() throws Exception {
-    // Start the socket server
-    socketServer = new NetnBusSocketServer();
-    socketServer.start();
+    // Start the socket server with shared context
+    this.socketServer = new NetnBusSocketServer(this.context);
+    this.socketServer.start();
 
     System.out.println("NETN Bus started. Waiting for federates...");
 
     int count = 0;
+    // TERMINAL STATE PRINTER
     while (running) {
-        String dots = ".".repeat(count % 4);
-        System.out.print("\r" + dots + "   "); // overwrite line + clear leftovers
-        count++;
         Thread.sleep(1000);
+        String dots = ".".repeat(count % 4);
+        StringBuilder status = new StringBuilder();
+        status.append("\r| Federations: ").append(this.context.getAllFederationExecutions().size());
+        status.append(" | Federates: ").append(this.context.getConnectedFederates().size());
+        status.append(" | ");
+        
+        for (String fedName : this.context.getAllFederationExecutions()) {
+          var fed = this.context.getFederation(fedName);
+          if (fed != null) {
+            status.append(fedName).append("{");
+            for (String federateName : fed.getJoinedFederateTypes()) {
+              status.append(federateName).append(",");
+            }
+            status.append("} ");
+          }
+        }
+        
+        status.append("|").append(dots).append("   ");
+        System.out.print(status);
+        System.out.flush();
+        count++;
     }
 
     socketServer.stop();
