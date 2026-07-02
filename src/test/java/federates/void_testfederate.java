@@ -1,20 +1,24 @@
 package federates;
 
-import java.util.Set;
-import java.util.UUID;
-
 import hla.rti1516e.CallbackModel;
 import hla.rti1516e.OrderType;
 import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.exceptions.RTIexception;
+import java.io.File;
+import java.net.URL;
+import java.util.Set;
+import java.util.UUID;
 import nl.tno.netn4.datatypes.EntityTypeStruct;
 import nl.tno.netn4.datatypes.SupplyStatusStruct;
 import nl.tno.netn4.interactions.SetSuppliesStatus;
 import nl.tno.netnbus.client.NetnBusAmbassador;
+import nl.tno.oorti.DefaultOOobjectFactory;
 import nl.tno.oorti.NullOOFederateAmbassador;
 import nl.tno.oorti.OORTIambassador;
 import nl.tno.oorti.OOparameter;
+import nl.tno.oorti.OOproperties;
+import nl.tno.oorti.impl.OORTIambassadorImpl;
 
 public class void_testfederate extends NullOOFederateAmbassador {
 
@@ -24,32 +28,40 @@ public class void_testfederate extends NullOOFederateAmbassador {
     // create the OORTI Ambassador
     // this.oortiamb = new OORTIfactory().getRtiAmbassador();
 
-    // Use the NETN bus ambassador, instead of the rti ambassador, to connect to the NETN Bus
-    OORTIambassador oortiamb = new NetnBusAmbassador();
+    // Get NETN Bus ambassador
+    OORTIambassador oortiamb =
+        new OORTIambassadorImpl(
+            new NetnBusAmbassador(), // RtiFactoryFactory.getRtiFactory().getRtiAmbassador()
+            new DefaultOOobjectFactory(),
+            new OOproperties());
 
     // connect to the RTI in evoked mode
     System.out.println("Connecting to the RTI...");
     oortiamb.connect(this, CallbackModel.HLA_EVOKED);
-    System.out.println("Sleeping for 10 seconds");
-    Thread.sleep(10000);
     System.out.println("Connected to the RTI.");
+    System.out.println("Sleeping for 1 second");
+    Thread.sleep(1000);
 
-    // // setup module URL
-    // URL fom = new File("config/NETN-Merged-FULL.xml").toURI().toURL();
-    // URL mim = new File("config/NETN-MIM.xml").toURI().toURL();
+    // setup module URL
+    URL fom = new File("config/NETN-Merged-FULL.xml").toURI().toURL();
+    URL mim = new File("config/NETN-MIM.xml").toURI().toURL();
 
-    // // Attempt to create a new federation
-    // try {
-    //   oortiamb.createFederationExecution("TheWorld", new URL[] {fom, mim});
-    // } catch (Exception ex) {
-    //   System.out.println("Federation already exists, continuing...");
-    // }
+    // Attempt to create a new federation
+    System.out.println("Try creating a new federation");
+    try {
+      oortiamb.createFederationExecution("TheWorld", new URL[] {fom, mim});
+    } catch (Exception ex) {
+      System.out.println("Federation already exists, continuing...");
+    }
 
-    // // join the federation execution
-    // oortiamb.joinFederationExecution("TestFedEC", "TheWorld", new URL[] {fom, mim});
+    // join the federation execution
+    System.out.println("Trying to join...");
+    oortiamb.joinFederationExecution("TestFedEC", "TheWorld", new URL[] {fom, mim});
+    Thread.sleep(1000);
 
-    // // publish and subscribe to the class of interest
-    // oortiamb.subscribeInteractionClass(SetSuppliesStatus.class);
+    // publish and subscribe to the class of interest
+    System.out.println("Trying to subscribe");
+    oortiamb.subscribeInteractionClass(SetSuppliesStatus.class);
     // oortiamb.publishInteractionClass(SetSuppliesStatus.class);
 
     // // Run tests
@@ -57,7 +69,12 @@ public class void_testfederate extends NullOOFederateAmbassador {
 
     // // resign and disconnect
     // oortiamb.resignFederationExecution(ResignAction.NO_ACTION);
-    // oortiamb.disconnect();
+
+    System.out.println("Waiting till shutdown...");
+    Thread.sleep(50000);
+    System.out.println("Manually disconnecting from the RTI...");
+    oortiamb.disconnect();
+    System.out.println("Disconnected from the RTI.");
   }
 
   @Override

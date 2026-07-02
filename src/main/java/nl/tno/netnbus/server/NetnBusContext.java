@@ -1,11 +1,10 @@
 package nl.tno.netnbus.server;
 
+import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
+import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
-import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
 import nl.tno.netnbus.FederationExecution;
 
 /** Context for keeping track of the states of the server and its federates */
@@ -13,9 +12,8 @@ public class NetnBusContext {
 
   private final Set<String> connectedFederates = ConcurrentHashMap.newKeySet();
   private final Map<String, FederationExecution> federationExecutions = new ConcurrentHashMap<>();
-  
-  public NetnBusContext() {
-  }
+
+  public NetnBusContext() {}
 
   void registerFederate(String name) {
     this.connectedFederates.add(name);
@@ -60,20 +58,28 @@ public class NetnBusContext {
     for (FederationExecution fedEx : this.federationExecutions.values()) {
       if (fedEx.getJoinedFederateKeys().contains(federateName)) {
         String fedtype = fedEx.removeFederate(federateName);
-        System.out.println("[NetnBusContext] Federate " + fedtype + " (" + federateName + ") removed from federation " + fedEx.getName());
+        System.out.println(
+            "[NetnBusContext] Federate "
+                + fedtype
+                + " ("
+                + federateName
+                + ") removed from federation "
+                + fedEx.getName());
       }
     }
   }
 
-  void joinFederationExecution(String federationName, String federateType, String federateName) throws FederationExecutionDoesNotExist {
+  void joinFederationExecution(String federationName, String federateType, String federateName)
+      throws FederationExecutionDoesNotExist {
     FederationExecution fedEx = this.federationExecutions.get(federationName);
     if (fedEx == null) {
       throw new FederationExecutionDoesNotExist("Federation not found: " + federationName);
     }
     fedEx.addFederate(federateType, federateName);
   }
-  
-  // FederationExecution getFederation(String federationName) throws FederationExecutionDoesNotExist {
+
+  // FederationExecution getFederation(String federationName) throws FederationExecutionDoesNotExist
+  // {
   //   FederationExecution fed = this.federationExecutions.get(federationName);
   //   if (fed == null) {
   //     throw new FederationExecutionDoesNotExist("Federation not found: " + federationName);

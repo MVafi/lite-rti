@@ -6,7 +6,7 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/** Socket server for the NETN Bus, handles only the TCP transport*/
+/** Socket server for the NETN Bus, handles only the TCP transport */
 public class NetnBusSocketServer {
 
   public static final int DEFAULT_PORT = 4567;
@@ -45,7 +45,8 @@ public class NetnBusSocketServer {
         // Accept a new connection
         System.out.println("[SocketServer] Waiting for connection...");
         Socket clientSocket = serverSocket.accept();
-        System.out.println("[SocketServer] Connection accepted from: " + clientSocket.getRemoteSocketAddress());
+        System.out.println(
+            "[SocketServer] Connection accepted from: " + clientSocket.getRemoteSocketAddress());
 
         // Allow the client handler to manage the connection
         NetnBusClientHandler handler = new NetnBusClientHandler(clientSocket, this.context);

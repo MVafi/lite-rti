@@ -22,33 +22,31 @@ public class NetnBusApplication {
     this.socketServer = new NetnBusSocketServer(this.context);
     this.socketServer.start();
 
-    System.out.println("NETN Bus started. Waiting for federates...");
-
     int count = 0;
     // TERMINAL STATE PRINTER
     while (running) {
-        Thread.sleep(1000);
-        String dots = ".".repeat(count % 4);
-        StringBuilder status = new StringBuilder();
-        status.append("\r| Federations: ").append(this.context.getAllFederationExecutions().size());
-        status.append(" | Federates: ").append(this.context.getConnectedFederates().size());
-        status.append(" | ");
-        
-        for (String fedName : this.context.getAllFederationExecutions()) {
-          var fed = this.context.getFederation(fedName);
-          if (fed != null) {
-            status.append(fedName).append("{");
-            for (String federateName : fed.getJoinedFederateTypes()) {
-              status.append(federateName).append(",");
-            }
-            status.append("} ");
+      Thread.sleep(1000);
+      String dots = ".".repeat(count % 4);
+      StringBuilder status = new StringBuilder();
+      status.append("\r| Federations: ").append(this.context.getAllFederationExecutions().size());
+      status.append(" | Federates: ").append(this.context.getConnectedFederates().size());
+      status.append(" | ");
+
+      for (String fedName : this.context.getAllFederationExecutions()) {
+        var fed = this.context.getFederation(fedName);
+        if (fed != null) {
+          status.append(fedName).append("{");
+          for (String federateName : fed.getJoinedFederateTypes()) {
+            status.append(federateName).append(",");
           }
+          status.append("} ");
         }
-        
-        status.append("|").append(dots).append("   ");
-        System.out.print(status);
-        System.out.flush();
-        count++;
+      }
+
+      status.append("|").append(dots).append("   ");
+      System.out.print(status);
+      System.out.flush();
+      count++;
     }
 
     socketServer.stop();

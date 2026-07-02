@@ -1,8 +1,5 @@
 package nl.tno.netnbus.client;
 
-import java.net.URL;
-import java.util.Set;
-
 import hla.rti1516e.AttributeHandle;
 import hla.rti1516e.AttributeHandleFactory;
 import hla.rti1516e.AttributeHandleSet;
@@ -37,6 +34,7 @@ import hla.rti1516e.ParameterHandle;
 import hla.rti1516e.ParameterHandleFactory;
 import hla.rti1516e.ParameterHandleValueMap;
 import hla.rti1516e.ParameterHandleValueMapFactory;
+import hla.rti1516e.RTIambassador;
 import hla.rti1516e.RangeBounds;
 import hla.rti1516e.RegionHandle;
 import hla.rti1516e.RegionHandleSet;
@@ -144,13 +142,11 @@ import hla.rti1516e.exceptions.TimeConstrainedIsNotEnabled;
 import hla.rti1516e.exceptions.TimeRegulationAlreadyEnabled;
 import hla.rti1516e.exceptions.TimeRegulationIsNotEnabled;
 import hla.rti1516e.exceptions.UnsupportedCallbackModel;
-import nl.tno.oorti.OOFederateAmbassador;
-import nl.tno.oorti.OORTIambassador;
-import nl.tno.oorti.OOattribute;
-import nl.tno.oorti.OOparameter;
+import java.net.URL;
+import java.util.Set;
 
-public class NetnBusAmbassador implements OORTIambassador {
-  // Todo: remove non oorti logic
+public class NetnBusAmbassador implements RTIambassador {
+  // Todo: remove oorti logic that is inherited
   // todo: remove all output debug lines
 
   //   protected final NetnBusContext context;
@@ -174,37 +170,11 @@ public class NetnBusAmbassador implements OORTIambassador {
           AlreadyConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-    System.out.println("Should not be used");
+    throw new UnsupportedOperationException("Current method is currently unsupported");
   }
 
   @Override
   public void connect(FederateAmbassador federateReference, CallbackModel callbackModel)
-      throws ConnectionFailed,
-          InvalidLocalSettingsDesignator,
-          UnsupportedCallbackModel,
-          AlreadyConnected,
-          CallNotAllowedFromWithinCallback,
-          RTIinternalError {
-    System.out.println("Should not be used");
-  }
-
-  @Override
-  public void connect(
-      OOFederateAmbassador federateReference,
-      CallbackModel callbackModel,
-      String localSettingsDesignator)
-      throws ConnectionFailed,
-          InvalidLocalSettingsDesignator,
-          UnsupportedCallbackModel,
-          AlreadyConnected,
-          CallNotAllowedFromWithinCallback,
-          RTIinternalError {
-    System.out.println("Connect call 1");
-    connect(federateReference, callbackModel);
-  }
-
-  @Override
-  public void connect(OOFederateAmbassador federateReference, CallbackModel callbackModel)
       throws ConnectionFailed,
           InvalidLocalSettingsDesignator,
           UnsupportedCallbackModel,
@@ -217,17 +187,22 @@ public class NetnBusAmbassador implements OORTIambassador {
         federateReference.getClass().getName() + "@" + System.identityHashCode(federateReference);
 
     System.out.println(federateReference);
-    
+
     int maxRetries = 5;
     int retryDelay = 2000; // milliseconds
-    
+
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
       if (socketClient.connect(federateName)) {
         return;
       }
-      
+
       if (attempt < maxRetries) {
-        System.out.println("[NetnBusAmbassador] Connection attempt " + attempt + " failed. Retrying in " + retryDelay + "ms...");
+        System.out.println(
+            "[NetnBusAmbassador] Connection attempt "
+                + attempt
+                + " failed. Retrying in "
+                + retryDelay
+                + "ms...");
         try {
           Thread.sleep(retryDelay);
         } catch (InterruptedException e) {
@@ -236,9 +211,20 @@ public class NetnBusAmbassador implements OORTIambassador {
         }
       }
     }
-    
-    throw new ConnectionFailed("Could not connect to NetnBus server after " + maxRetries + " attempts.");
+
+    throw new ConnectionFailed(
+        "Could not connect to NetnBus server after " + maxRetries + " attempts.");
   }
+
+  // OORTI method
+  // @Override
+  // public void connect(OOFederateAmbassador federateReference, CallbackModel callbackModel)
+  //     throws ConnectionFailed,
+  //         InvalidLocalSettingsDesignator,
+  //         UnsupportedCallbackModel,
+  //         AlreadyConnected,
+  //         CallNotAllowedFromWithinCallback,
+  //         RTIinternalError {}
 
   @Override
   public void disconnect()
@@ -263,8 +249,8 @@ public class NetnBusAmbassador implements OORTIambassador {
           FederationExecutionAlreadyExists,
           NotConnected,
           RTIinternalError {
-            throw new UnsupportedOperationException("Current method is currently unsupported");
-          }
+    throw new UnsupportedOperationException("Current method is currently unsupported");
+  }
 
   @Override
   public void createFederationExecution(
@@ -276,8 +262,8 @@ public class NetnBusAmbassador implements OORTIambassador {
           FederationExecutionAlreadyExists,
           NotConnected,
           RTIinternalError {
-            throw new UnsupportedOperationException("Current method is currently unsupported");
-          }
+    throw new UnsupportedOperationException("Current method is currently unsupported");
+  }
 
   @Override
   public void createFederationExecution(
@@ -291,20 +277,20 @@ public class NetnBusAmbassador implements OORTIambassador {
           FederationExecutionAlreadyExists,
           NotConnected,
           RTIinternalError {
-            throw new UnsupportedOperationException("Current method is currently unsupported");
-          }
+    throw new UnsupportedOperationException("Current method is currently unsupported");
+  }
 
-    @Override
-    public void createFederationExecution(String federationExecutionName, URL[] fomModules)
-        throws FederationExecutionAlreadyExists, NotConnected, RTIinternalError {
+  @Override
+  public void createFederationExecution(String federationExecutionName, URL[] fomModules)
+      throws FederationExecutionAlreadyExists, NotConnected, RTIinternalError {
     // For now, just create in context (no FDD/MIM parsing)
     try {
-        socketClient.createFederationExecution(federationExecutionName);
-        System.out.println("[NetnBusAmbassador] Federation created: " + federationExecutionName);
+      socketClient.createFederationExecution(federationExecutionName);
+      System.out.println("[NetnBusAmbassador] Federation created: " + federationExecutionName);
     } catch (Exception e) {
-        throw new RTIinternalError(e.getMessage());
+      throw new RTIinternalError(e.getMessage());
     }
-    }
+  }
 
   @Override
   public void createFederationExecution(String federationExecutionName, URL fomModule)
@@ -313,9 +299,7 @@ public class NetnBusAmbassador implements OORTIambassador {
           CouldNotOpenFDD,
           FederationExecutionAlreadyExists,
           NotConnected,
-          RTIinternalError {
-          }
-    
+          RTIinternalError {}
 
   @Override
   public void destroyFederationExecution(String federationExecutionName)
@@ -392,11 +376,14 @@ public class NetnBusAmbassador implements OORTIambassador {
           RTIinternalError {
     // For now, just join (no FDD/MIM parsing)
     try {
-        System.out.println("[NetnBusAmbassador] Federation joined: " + federationExecutionName + " as federate type: " + federateType);
-
-        socketClient.joinFederationExecution(federateType, federationExecutionName);
+      System.out.println(
+          "[NetnBusAmbassador] Federation joined: "
+              + federationExecutionName
+              + " as federate type: "
+              + federateType);
+      socketClient.joinFederationExecution(federateType, federationExecutionName);
     } catch (Exception e) {
-        throw new RTIinternalError(e.getMessage());
+      throw new RTIinternalError(e.getMessage());
     }
     return null; // Return null for now, as we don't have a proper FederateHandle
   }
@@ -597,7 +584,9 @@ public class NetnBusAmbassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+    System.out.println("OLD HLA SUBSCRIBE CALL");
+  }
 
   @Override
   public void subscribeObjectClassAttributes(
@@ -609,7 +598,9 @@ public class NetnBusAmbassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+    System.out.println("## not supported ## needs future support if the OORTI uses it");
+  }
 
   @Override
   public void subscribeObjectClassAttributesPassively(
@@ -654,6 +645,7 @@ public class NetnBusAmbassador implements OORTIambassador {
           NotConnected,
           RTIinternalError {}
 
+  // Standard RTI Method
   @Override
   public void subscribeInteractionClass(InteractionClassHandle theClass)
       throws FederateServiceInvocationsAreBeingReportedViaMOM,
@@ -662,8 +654,12 @@ public class NetnBusAmbassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+    System.out.println("standard RTI call? 1");
+    // Non oorti logic
+  }
 
+  // Standard RTI Method
   @Override
   public void subscribeInteractionClassPassively(InteractionClassHandle theClass)
       throws FederateServiceInvocationsAreBeingReportedViaMOM,
@@ -672,7 +668,9 @@ public class NetnBusAmbassador implements OORTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+    throw new RTIinternalError("Not implemented");
+  }
 
   @Override
   public void unsubscribeInteractionClass(InteractionClassHandle theClass)
@@ -1994,700 +1992,711 @@ public class NetnBusAmbassador implements OORTIambassador {
   ///
   /// OORTI STUFF
 
-  @Override
-  public FederateHandle joinFederationExecutionWithCurrentFDD(
-      String federateName,
-      String federateType,
-      String federationExecutionName,
-      URL[] additionalFomModules,
-      URL[] currentFddModules)
-      throws CouldNotCreateLogicalTimeFactory,
-          FederationExecutionDoesNotExist,
-          InconsistentFDD,
-          ErrorReadingFDD,
-          CouldNotOpenFDD,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateAlreadyExecutionMember,
-          NotConnected,
-          CallNotAllowedFromWithinCallback,
-          FederateNameAlreadyInUse,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public FederateHandle joinFederationExecutionWithCurrentFDD(
+  //     String federateName,
+  //     String federateType,
+  //     String federationExecutionName,
+  //     URL[] additionalFomModules,
+  //     URL[] currentFddModules)
+  //     throws CouldNotCreateLogicalTimeFactory,
+  //         FederationExecutionDoesNotExist,
+  //         InconsistentFDD,
+  //         ErrorReadingFDD,
+  //         CouldNotOpenFDD,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateAlreadyExecutionMember,
+  //         NotConnected,
+  //         CallNotAllowedFromWithinCallback,
+  //         FederateNameAlreadyInUse,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public FederateHandle joinFederationExecutionWithCurrentFDD(
-      String federateType,
-      String federationExecutionName,
-      URL[] additionalFomModules,
-      URL[] currentFddModules)
-      throws CouldNotCreateLogicalTimeFactory,
-          FederationExecutionDoesNotExist,
-          InconsistentFDD,
-          ErrorReadingFDD,
-          CouldNotOpenFDD,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateAlreadyExecutionMember,
-          NotConnected,
-          CallNotAllowedFromWithinCallback,
-          FederateNameAlreadyInUse,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public FederateHandle joinFederationExecutionWithCurrentFDD(
+  //     String federateType,
+  //     String federationExecutionName,
+  //     URL[] additionalFomModules,
+  //     URL[] currentFddModules)
+  //     throws CouldNotCreateLogicalTimeFactory,
+  //         FederationExecutionDoesNotExist,
+  //         InconsistentFDD,
+  //         ErrorReadingFDD,
+  //         CouldNotOpenFDD,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateAlreadyExecutionMember,
+  //         NotConnected,
+  //         CallNotAllowedFromWithinCallback,
+  //         FederateNameAlreadyInUse,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public FederateHandle joinFederationExecutionWithCurrentFDD(
-      String federateName,
-      String federateType,
-      String federationExecutionName,
-      URL[] currentFddModules)
-      throws CouldNotCreateLogicalTimeFactory,
-          FederationExecutionDoesNotExist,
-          InconsistentFDD,
-          ErrorReadingFDD,
-          CouldNotOpenFDD,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateAlreadyExecutionMember,
-          NotConnected,
-          CallNotAllowedFromWithinCallback,
-          FederateNameAlreadyInUse,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public FederateHandle joinFederationExecutionWithCurrentFDD(
+  //     String federateName,
+  //     String federateType,
+  //     String federationExecutionName,
+  //     URL[] currentFddModules)
+  //     throws CouldNotCreateLogicalTimeFactory,
+  //         FederationExecutionDoesNotExist,
+  //         InconsistentFDD,
+  //         ErrorReadingFDD,
+  //         CouldNotOpenFDD,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateAlreadyExecutionMember,
+  //         NotConnected,
+  //         CallNotAllowedFromWithinCallback,
+  //         FederateNameAlreadyInUse,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public FederateHandle joinFederationExecutionWithCurrentFDD(
-      String federateType, String federationExecutionName, URL[] currentFddModules)
-      throws CouldNotCreateLogicalTimeFactory,
-          FederationExecutionDoesNotExist,
-          InconsistentFDD,
-          ErrorReadingFDD,
-          CouldNotOpenFDD,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateAlreadyExecutionMember,
-          NotConnected,
-          CallNotAllowedFromWithinCallback,
-          FederateNameAlreadyInUse,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public FederateHandle joinFederationExecutionWithCurrentFDD(
+  //     String federateType, String federationExecutionName, URL[] currentFddModules)
+  //     throws CouldNotCreateLogicalTimeFactory,
+  //         FederationExecutionDoesNotExist,
+  //         InconsistentFDD,
+  //         ErrorReadingFDD,
+  //         CouldNotOpenFDD,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateAlreadyExecutionMember,
+  //         NotConnected,
+  //         CallNotAllowedFromWithinCallback,
+  //         FederateNameAlreadyInUse,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
   /////////////////////////////////////
   // Declaration Management Services //
   /////////////////////////////////////
 
-  @Override
-  public void publishObjectClass(Class clazz)
-      throws AttributeNotDefined,
-          ObjectClassNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void publishObjectClass(Class clazz)
+  //     throws AttributeNotDefined,
+  //         ObjectClassNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void publishObjectClass(Class clazz, Set<OOattribute> attributes)
-      throws AttributeNotDefined,
-          ObjectClassNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void publishObjectClass(Class clazz, Set<OOattribute> attributes)
+  //     throws AttributeNotDefined,
+  //         ObjectClassNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void subscribeObjectClass(Class clazz)
-      throws AttributeNotDefined,
-          ObjectClassNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void subscribeObjectClass(Class clazz)
+  //     throws AttributeNotDefined,
+  //         ObjectClassNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void subscribeObjectClass(Class clazz, Set<OOattribute> attributes)
-      throws AttributeNotDefined,
-          ObjectClassNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void subscribeObjectClass(Class clazz, Set<OOattribute> attributes)
+  //     throws AttributeNotDefined,
+  //         ObjectClassNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //           System.out.println("using oorti function");
+  //         }
 
-  @Override
-  public void unpublishObjectClass(Class clazz)
-      throws OwnershipAcquisitionPending,
-          AttributeNotDefined,
-          ObjectClassNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void unpublishObjectClass(Class clazz)
+  //     throws OwnershipAcquisitionPending,
+  //         AttributeNotDefined,
+  //         ObjectClassNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void unsubscribeObjectClass(Class clazz)
-      throws AttributeNotDefined,
-          ObjectClassNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void unsubscribeObjectClass(Class clazz)
+  //     throws AttributeNotDefined,
+  //         ObjectClassNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void publishInteractionClass(Class clazz)
-      throws InteractionClassNotDefined,
-          InteractionParameterNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void publishInteractionClass(Class clazz)
+  //     throws InteractionClassNotDefined,
+  //         InteractionParameterNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void publishInteractionClass(Class clazz, Set<OOparameter> parameters)
-      throws InteractionClassNotDefined,
-          InteractionParameterNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void publishInteractionClass(Class clazz, Set<OOparameter> parameters)
+  //     throws InteractionClassNotDefined,
+  //         InteractionParameterNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void subscribeInteractionClass(Class clazz)
-      throws FederateServiceInvocationsAreBeingReportedViaMOM,
-          InteractionClassNotDefined,
-          InteractionParameterNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void subscribeInteractionClass(Class clazz)
+  //     throws FederateServiceInvocationsAreBeingReportedViaMOM,
+  //         InteractionClassNotDefined,
+  //         InteractionParameterNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //           // OORTI call that defers the subscription to the standard RTI
+  // subscribeInteractionClass method
+  //         }
 
-  @Override
-  public void subscribeInteractionClass(Class clazz, Set<OOparameter> parameters)
-      throws FederateServiceInvocationsAreBeingReportedViaMOM,
-          InteractionClassNotDefined,
-          InteractionParameterNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void subscribeInteractionClass(Class clazz, Set<OOparameter> parameters)
+  //     throws FederateServiceInvocationsAreBeingReportedViaMOM,
+  //         InteractionClassNotDefined,
+  //         InteractionParameterNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //           // OORTI call that defers the subscription to the standard RTI
+  // subscribeInteractionClass method
+  //         }
 
-  @Override
-  public void unpublishInteractionClass(Class clazz)
-      throws InteractionClassNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void unpublishInteractionClass(Class clazz)
+  //     throws InteractionClassNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void unsubscribeInteractionClass(Class clazz)
-      throws InteractionClassNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void unsubscribeInteractionClass(Class clazz)
+  //     throws InteractionClassNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  ////////////////////////////////
-  // Object Management Services //
-  ////////////////////////////////
+  // ////////////////////////////////
+  // // Object Management Services //
+  // ////////////////////////////////
 
-  @Override
-  public void registerObjectInstance(Object theObject)
-      throws ObjectClassNotPublished,
-          ObjectClassNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void registerObjectInstance(Object theObject)
+  //     throws ObjectClassNotPublished,
+  //         ObjectClassNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void updateAttributeValues(Object theObject, byte[] userSuppliedTag)
-      throws AttributeNotOwned,
-          AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void updateAttributeValues(Object theObject, byte[] userSuppliedTag)
+  //     throws AttributeNotOwned,
+  //         AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void updateAttributeValues(String theObjectName, Object theObject, byte[] userSuppliedTag)
-      throws AttributeNotOwned,
-          AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void updateAttributeValues(String theObjectName, Object theObject, byte[]
+  // userSuppliedTag)
+  //     throws AttributeNotOwned,
+  //         AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void updateAttributeValues(
-      Object theObject, Set<OOattribute> theAttributes, byte[] userSuppliedTag)
-      throws AttributeNotOwned,
-          AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void updateAttributeValues(
+  //     Object theObject, Set<OOattribute> theAttributes, byte[] userSuppliedTag)
+  //     throws AttributeNotOwned,
+  //         AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public MessageRetractionReturn updateAttributeValues(
-      Object theObject, byte[] userSuppliedTag, LogicalTime theTime)
-      throws InvalidLogicalTime,
-          AttributeNotOwned,
-          AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public MessageRetractionReturn updateAttributeValues(
+  //     Object theObject, byte[] userSuppliedTag, LogicalTime theTime)
+  //     throws InvalidLogicalTime,
+  //         AttributeNotOwned,
+  //         AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public MessageRetractionReturn updateAttributeValues(
-      String theObjectName, Object theObject, byte[] userSuppliedTag, LogicalTime theTime)
-      throws InvalidLogicalTime,
-          AttributeNotOwned,
-          AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public MessageRetractionReturn updateAttributeValues(
+  //     String theObjectName, Object theObject, byte[] userSuppliedTag, LogicalTime theTime)
+  //     throws InvalidLogicalTime,
+  //         AttributeNotOwned,
+  //         AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public MessageRetractionReturn updateAttributeValues(
-      Object theObject, Set<OOattribute> theAttributes, byte[] userSuppliedTag, LogicalTime theTime)
-      throws InvalidLogicalTime,
-          AttributeNotOwned,
-          AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public MessageRetractionReturn updateAttributeValues(
+  //     Object theObject, Set<OOattribute> theAttributes, byte[] userSuppliedTag, LogicalTime
+  // theTime)
+  //     throws InvalidLogicalTime,
+  //         AttributeNotOwned,
+  //         AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public void deleteObjectInstance(Object theObject, byte[] userSuppliedTag)
-      throws DeletePrivilegeNotHeld,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void deleteObjectInstance(Object theObject, byte[] userSuppliedTag)
+  //     throws DeletePrivilegeNotHeld,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void deleteObjectInstance(String theObjectName, byte[] userSuppliedTag)
-      throws DeletePrivilegeNotHeld,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void deleteObjectInstance(String theObjectName, byte[] userSuppliedTag)
+  //     throws DeletePrivilegeNotHeld,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public MessageRetractionReturn deleteObjectInstance(
-      Object theObject, byte[] userSuppliedTag, LogicalTime theTime)
-      throws InvalidLogicalTime,
-          DeletePrivilegeNotHeld,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public MessageRetractionReturn deleteObjectInstance(
+  //     Object theObject, byte[] userSuppliedTag, LogicalTime theTime)
+  //     throws InvalidLogicalTime,
+  //         DeletePrivilegeNotHeld,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public MessageRetractionReturn deleteObjectInstance(
-      String theObjectName, byte[] userSuppliedTag, LogicalTime theTime)
-      throws InvalidLogicalTime,
-          DeletePrivilegeNotHeld,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public MessageRetractionReturn deleteObjectInstance(
+  //     String theObjectName, byte[] userSuppliedTag, LogicalTime theTime)
+  //     throws InvalidLogicalTime,
+  //         DeletePrivilegeNotHeld,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public void requestAttributeValueUpdate(Class clazz, byte[] userSuppliedTag)
-      throws AttributeNotDefined,
-          ObjectClassNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void requestAttributeValueUpdate(Class clazz, byte[] userSuppliedTag)
+  //     throws AttributeNotDefined,
+  //         ObjectClassNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void requestAttributeValueUpdate(
-      Class clazz, Set<OOattribute> theAttributes, byte[] userSuppliedTag)
-      throws AttributeNotDefined,
-          ObjectClassNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void requestAttributeValueUpdate(
+  //     Class clazz, Set<OOattribute> theAttributes, byte[] userSuppliedTag)
+  //     throws AttributeNotDefined,
+  //         ObjectClassNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void requestAttributeValueUpdate(Object theObject, byte[] userSuppliedTag)
-      throws AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void requestAttributeValueUpdate(Object theObject, byte[] userSuppliedTag)
+  //     throws AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void requestAttributeValueUpdate(
-      Object theObject, Set<OOattribute> theAttributes, byte[] userSuppliedTag)
-      throws AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void requestAttributeValueUpdate(
+  //     Object theObject, Set<OOattribute> theAttributes, byte[] userSuppliedTag)
+  //     throws AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void sendInteraction(Object theInteraction, byte[] userSuppliedTag)
-      throws InteractionClassNotPublished,
-          InteractionParameterNotDefined,
-          InteractionClassNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void sendInteraction(Object theInteraction, byte[] userSuppliedTag)
+  //     throws InteractionClassNotPublished,
+  //         InteractionParameterNotDefined,
+  //         InteractionClassNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void sendInteraction(
-      Object theInteraction, Set<OOparameter> theParameters, byte[] userSuppliedTag)
-      throws InteractionClassNotPublished,
-          InteractionParameterNotDefined,
-          InteractionClassNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void sendInteraction(
+  //     Object theInteraction, Set<OOparameter> theParameters, byte[] userSuppliedTag)
+  //     throws InteractionClassNotPublished,
+  //         InteractionParameterNotDefined,
+  //         InteractionClassNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public MessageRetractionReturn sendInteraction(
-      Object theInteraction, byte[] userSuppliedTag, LogicalTime theTime)
-      throws InvalidLogicalTime,
-          InteractionClassNotPublished,
-          InteractionParameterNotDefined,
-          InteractionClassNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public MessageRetractionReturn sendInteraction(
+  //     Object theInteraction, byte[] userSuppliedTag, LogicalTime theTime)
+  //     throws InvalidLogicalTime,
+  //         InteractionClassNotPublished,
+  //         InteractionParameterNotDefined,
+  //         InteractionClassNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public MessageRetractionReturn sendInteraction(
-      Object theInteraction,
-      Set<OOparameter> theParameters,
-      byte[] userSuppliedTag,
-      LogicalTime theTime)
-      throws InvalidLogicalTime,
-          InteractionClassNotPublished,
-          InteractionParameterNotDefined,
-          InteractionClassNotDefined,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public MessageRetractionReturn sendInteraction(
+  //     Object theInteraction,
+  //     Set<OOparameter> theParameters,
+  //     byte[] userSuppliedTag,
+  //     LogicalTime theTime)
+  //     throws InvalidLogicalTime,
+  //         InteractionClassNotPublished,
+  //         InteractionParameterNotDefined,
+  //         InteractionClassNotDefined,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
   ///////////////////////////////////
   // Ownership Management Services //
   ///////////////////////////////////
 
-  @Override
-  public void unconditionalAttributeOwnershipDivestiture(
-      Object theObject, Set<OOattribute> theAttributes)
-      throws AttributeNotOwned,
-          AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void unconditionalAttributeOwnershipDivestiture(
+  //     Object theObject, Set<OOattribute> theAttributes)
+  //     throws AttributeNotOwned,
+  //         AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void negotiatedAttributeOwnershipDivestiture(
-      Object theObject, Set<OOattribute> theAttributes, byte[] userSuppliedTag)
-      throws AttributeAlreadyBeingDivested,
-          AttributeNotOwned,
-          AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void negotiatedAttributeOwnershipDivestiture(
+  //     Object theObject, Set<OOattribute> theAttributes, byte[] userSuppliedTag)
+  //     throws AttributeAlreadyBeingDivested,
+  //         AttributeNotOwned,
+  //         AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void confirmDivestiture(
-      Object theObject, Set<OOattribute> theAttributes, byte[] userSuppliedTag)
-      throws NoAcquisitionPending,
-          AttributeDivestitureWasNotRequested,
-          AttributeNotOwned,
-          AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void confirmDivestiture(
+  //     Object theObject, Set<OOattribute> theAttributes, byte[] userSuppliedTag)
+  //     throws NoAcquisitionPending,
+  //         AttributeDivestitureWasNotRequested,
+  //         AttributeNotOwned,
+  //         AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void attributeOwnershipAcquisition(
-      Object theObject, Set<OOattribute> desiredAttributes, byte[] userSuppliedTag)
-      throws AttributeNotPublished,
-          ObjectClassNotPublished,
-          FederateOwnsAttributes,
-          AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void attributeOwnershipAcquisition(
+  //     Object theObject, Set<OOattribute> desiredAttributes, byte[] userSuppliedTag)
+  //     throws AttributeNotPublished,
+  //         ObjectClassNotPublished,
+  //         FederateOwnsAttributes,
+  //         AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void attributeOwnershipAcquisitionIfAvailable(
-      Object theObject, Set<OOattribute> desiredAttributes)
-      throws AttributeAlreadyBeingAcquired,
-          AttributeNotPublished,
-          ObjectClassNotPublished,
-          FederateOwnsAttributes,
-          AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void attributeOwnershipAcquisitionIfAvailable(
+  //     Object theObject, Set<OOattribute> desiredAttributes)
+  //     throws AttributeAlreadyBeingAcquired,
+  //         AttributeNotPublished,
+  //         ObjectClassNotPublished,
+  //         FederateOwnsAttributes,
+  //         AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void attributeOwnershipReleaseDenied(Object theObject, Set<OOattribute> theAttributes)
-      throws AttributeNotOwned,
-          AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void attributeOwnershipReleaseDenied(Object theObject, Set<OOattribute> theAttributes)
+  //     throws AttributeNotOwned,
+  //         AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public Set<OOattribute> attributeOwnershipDivestitureIfWanted(
-      Object theObject, Set<OOattribute> theAttributes)
-      throws AttributeNotOwned,
-          AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public Set<OOattribute> attributeOwnershipDivestitureIfWanted(
+  //     Object theObject, Set<OOattribute> theAttributes)
+  //     throws AttributeNotOwned,
+  //         AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public void cancelNegotiatedAttributeOwnershipDivestiture(
-      Object theObject, Set<OOattribute> theAttributes)
-      throws AttributeDivestitureWasNotRequested,
-          AttributeNotOwned,
-          AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void cancelNegotiatedAttributeOwnershipDivestiture(
+  //     Object theObject, Set<OOattribute> theAttributes)
+  //     throws AttributeDivestitureWasNotRequested,
+  //         AttributeNotOwned,
+  //         AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void cancelAttributeOwnershipAcquisition(Object theObject, Set<OOattribute> theAttributes)
-      throws AttributeAcquisitionWasNotRequested,
-          AttributeAlreadyOwned,
-          AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void cancelAttributeOwnershipAcquisition(Object theObject, Set<OOattribute>
+  // theAttributes)
+  //     throws AttributeAcquisitionWasNotRequested,
+  //         AttributeAlreadyOwned,
+  //         AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public void queryAttributeOwnership(Object theObject, OOattribute theAttribute)
-      throws AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {}
+  // @Override
+  // public void queryAttributeOwnership(Object theObject, OOattribute theAttribute)
+  //     throws AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {}
 
-  @Override
-  public boolean isAttributeOwnedByFederate(Object theObject, OOattribute theAttribute)
-      throws AttributeNotDefined,
-          ObjectInstanceNotKnown,
-          SaveInProgress,
-          RestoreInProgress,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return false;
-  }
+  // @Override
+  // public boolean isAttributeOwnedByFederate(Object theObject, OOattribute theAttribute)
+  //     throws AttributeNotDefined,
+  //         ObjectInstanceNotKnown,
+  //         SaveInProgress,
+  //         RestoreInProgress,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return false;
+  // }
 
   //////////////////////////
   // RTI Support Services //
   //////////////////////////
 
-  @Override
-  public String getObjectClassName(Class theClass)
-      throws ObjectClassNotDefined, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public String getObjectClassName(Class theClass)
+  //     throws ObjectClassNotDefined, FederateNotExecutionMember, NotConnected, RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public Class getObjectClass(String theClassName)
-      throws ObjectClassNotDefined, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public Class getObjectClass(String theClassName)
+  //     throws ObjectClassNotDefined, FederateNotExecutionMember, NotConnected, RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public String getInteractionClassName(Class theClass)
-      throws InteractionClassNotDefined,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public String getInteractionClassName(Class theClass)
+  //     throws InteractionClassNotDefined,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public Class getInteractionClass(String theClassName)
-      throws InteractionClassNotDefined,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public Class getInteractionClass(String theClassName)
+  //     throws InteractionClassNotDefined,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public String getObjectName(Object theObject)
-      throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public String getObjectName(Object theObject)
+  //     throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public Object getObject(String theObjectName)
-      throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public Object getObject(String theObjectName)
+  //     throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public OOattribute getAttribute(Class clazz, String attributeName)
-      throws ObjectClassNotDefined,
-          AttributeNotDefined,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public OOattribute getAttribute(Class clazz, String attributeName)
+  //     throws ObjectClassNotDefined,
+  //         AttributeNotDefined,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public Set<OOattribute> getAttributes(Class clazz, String... attributeName)
-      throws ObjectClassNotDefined,
-          AttributeNotDefined,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public Set<OOattribute> getAttributes(Class clazz, String... attributeName)
+  //     throws ObjectClassNotDefined,
+  //         AttributeNotDefined,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public Set<OOattribute> getAttributes(Class clazz)
-      throws ObjectClassNotDefined,
-          AttributeNotDefined,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public Set<OOattribute> getAttributes(Class clazz)
+  //     throws ObjectClassNotDefined,
+  //         AttributeNotDefined,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public OOparameter getParameter(Class clazz, String parameterName)
-      throws InteractionClassNotDefined,
-          InteractionParameterNotDefined,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public OOparameter getParameter(Class clazz, String parameterName)
+  //     throws InteractionClassNotDefined,
+  //         InteractionParameterNotDefined,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public Set<OOparameter> getParameters(Class clazz, String... parameterName)
-      throws InteractionClassNotDefined,
-          InteractionParameterNotDefined,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public Set<OOparameter> getParameters(Class clazz, String... parameterName)
+  //     throws InteractionClassNotDefined,
+  //         InteractionParameterNotDefined,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return null;
+  // }
 
-  @Override
-  public Set<OOparameter> getParameters(Class clazz)
-      throws InteractionClassNotDefined,
-          InteractionParameterNotDefined,
-          FederateNotExecutionMember,
-          NotConnected,
-          RTIinternalError {
-    return null;
-  }
+  // @Override
+  // public Set<OOparameter> getParameters(Class clazz)
+  //     throws InteractionClassNotDefined,
+  //         InteractionParameterNotDefined,
+  //         FederateNotExecutionMember,
+  //         NotConnected,
+  //         RTIinternalError {
+  //   return null;
+  // }
 }

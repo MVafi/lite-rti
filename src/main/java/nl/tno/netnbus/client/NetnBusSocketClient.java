@@ -1,11 +1,10 @@
 package nl.tno.netnbus.client;
 
+import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-
-import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import nl.tno.netnbus.server.NetnBusSocketServer;
 
 // TODO check this file
@@ -43,7 +42,7 @@ public class NetnBusSocketClient {
 
       // Open TCP connection to host server and get input/output streams
       this.socket = new Socket(host, port);
-      this.socket.setSoTimeout(5000);  // 5 second timeout for socket reads
+      this.socket.setSoTimeout(5000); // 5 second timeout for socket reads
       this.out = new DataOutputStream(socket.getOutputStream());
       this.in = new DataInputStream(socket.getInputStream());
 
@@ -91,18 +90,22 @@ public class NetnBusSocketClient {
 
   // ===== Federation API =====
 
-  public void createFederationExecution(String federationExecutionName) throws FederationExecutionAlreadyExists {
+  public void createFederationExecution(String federationExecutionName)
+      throws FederationExecutionAlreadyExists {
     this.checkConnection();
     try {
       sendTextMessage("CREATE_FEDERATION|" + federationExecutionName);
 
       String response = receiveTextMessage();
-      if (response == null){
-        throw new RuntimeException("[NetnBusClient] No response received from server when creating federation: " + federationExecutionName);
+      if (response == null) {
+        throw new RuntimeException(
+            "[NetnBusClient] No response received from server when creating federation: "
+                + federationExecutionName);
       } else if (response.startsWith("OK|FEDERATION_CREATED")) {
         System.out.println("[NetnBusClient] Federation created: " + federationExecutionName);
       } else if (response.startsWith("ERROR|FEDERATION_ALREADY_EXISTS")) {
-        throw new FederationExecutionAlreadyExists("Federation already exists: " + federationExecutionName);
+        throw new FederationExecutionAlreadyExists(
+            "Federation already exists: " + federationExecutionName);
       } else {
         throw new RuntimeException("[NetnBusClient] Failed to create federation: " + response);
       }
@@ -118,16 +121,23 @@ public class NetnBusSocketClient {
       sendTextMessage("JOIN_FEDERATION|" + federationExecutionName + "|" + federateType);
 
       String response = receiveTextMessage();
-      if (response == null){
-        throw new RuntimeException("[NetnBusClient] No response received from server when joining federation: " + federationExecutionName);
+      if (response == null) {
+        throw new RuntimeException(
+            "[NetnBusClient] No response received from server when joining federation: "
+                + federationExecutionName);
       } else if (response.startsWith("OK|JOINED_FEDERATION")) {
-        System.out.println("[NetnBusClient] Joined federation: " + federationExecutionName + " as " + federateType);
+        System.out.println(
+            "[NetnBusClient] Joined federation: "
+                + federationExecutionName
+                + " as "
+                + federateType);
       }
       // TODO: more debug statements
 
       //   System.out.println("[NetnBusClient] Federation created: " + federationExecutionName);
       // } else if (response.startsWith("ERROR|FEDERATION_ALREADY_EXISTS")) {
-      //   throw new FederationExecutionAlreadyExists("Federation already exists: " + federationExecutionName);
+      //   throw new FederationExecutionAlreadyExists("Federation already exists: " +
+      // federationExecutionName);
       // } else {
       //   throw new RuntimeException("[NetnBusClient] Failed to create federation: " + response);
       // }
@@ -137,20 +147,46 @@ public class NetnBusSocketClient {
     }
   }
 
-  /** Get federate count from server. */
-  public int getFederateCount() {
-    if (!connected) return 0;
-    try {
-      sendTextMessage("COUNT");
-      String response = receiveTextMessage();
-      if (response != null && response.startsWith("OK|")) {
-        return Integer.parseInt(response.substring(3));
-      }
-    } catch (Exception e) {
-      // Ignore
-    }
-    return 0;
-  }
+  // /** Get federate count from server. */
+  // public int getFederateCount() {
+  //   if (!connected) return 0;
+  //   try {
+  //     sendTextMessage("COUNT");
+  //     String response = receiveTextMessage();
+  //     if (response != null && response.startsWith("OK|")) {
+  //       return Integer.parseInt(response.substring(3));
+  //     }
+  //   } catch (Exception e) {
+  //     // Ignore
+  //   }
+  //   return 0;
+  // }
+
+  // ===== Objects API =====
+
+  // ===== Interactions API =====
+  // public void subscribeInteractionClass(Class clazz) {
+  //   this.checkConnection(); //Not sure if needed
+  //   try {
+  //     sendTextMessage("SUBSCRIBE_INTERACTION|" + federationExecutionName + "|" + federateType);
+
+  //     String response = receiveTextMessage();
+  //     if (response == null){
+  //       throw new RuntimeException("[NetnBusClient] No response received from server when
+  // subscribing to interaction class: " + federationExecutionName);
+  //     } else if (response.startsWith("OK|SUBSCRIBED_INTERACTION")) {
+  //       System.out.println("[NetnBusClient] Subscribed to interaction class: " +
+  // federationExecutionName + " as " + federateType);
+  //     } else {
+  //       throw new RuntimeException("[NetnBusClient] Failed to subscribe to interaction class: " +
+  // response);
+  //     }
+
+  //   } catch (IOException e) {
+  //     throw new RuntimeException("[NetnBusClient] Error subscribing to interaction class: " +
+  // e.getMessage(), e);
+  //   }
+  // }
 
   // ===== Hybrid Messaging API =====
 
