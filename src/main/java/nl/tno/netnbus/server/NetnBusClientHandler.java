@@ -1,11 +1,15 @@
 package nl.tno.netnbus.server;
 
-import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
-import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+
+import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
+import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
+import nl.tno.netnbus.BinaryHelper;
+import nl.tno.netnbus.client.requests.CreateFederationRequest;
+import nl.tno.netnbus.fom.FederationObjectModel;
 
 /**
  * Client handler (server-side endpoint) for managing communication with an individual federate
@@ -17,12 +21,13 @@ public class NetnBusClientHandler {
   private final Socket socket;
 
   // Reference to the context to manage federate events and state
-  private final NetnBusContext context;
+  private final NetnBusServerContext context;
 
   // todo: atm federateName is used as the handle, but this is not very robust. Consider using a
   // federate handle in the future.
   private String federateName; // e.g. "simfederate@12345678"
   private String federateType; // e.g. "SimFederate"
+  private String federationName; // e.g. "ExampleFederation"
   private DataOutputStream out;
   private DataInputStream in;
 
@@ -30,7 +35,7 @@ public class NetnBusClientHandler {
   private static final byte MSG_TEXT = 0;
   private static final byte MSG_BINARY = 1;
 
-  NetnBusClientHandler(Socket socket, NetnBusContext context) {
+  NetnBusClientHandler(Socket socket, NetnBusServerContext context) {
     this.socket = socket;
     this.context = context;
   }
@@ -111,6 +116,15 @@ public class NetnBusClientHandler {
         case "JOIN_FEDERATION":
           handleJoinFederation(payload);
           break;
+        case "CONFIRM_JOIN":
+          handleConfirmJoin(payload);
+          break;
+        case "GET_INTERACTION_HANDLE":
+          handleGetInteractionHandle(payload);
+          break;
+        case "GET_PARAMETER_HANDLE":
+          handleGetParameterHandle(payload);
+          break;
         // case "COUNT":
         //   int count = context.getFederateCount();
         //   sendTextMessage("OK|" + count);
@@ -154,17 +168,47 @@ public class NetnBusClientHandler {
   }
 
   private void handleJoinFederation(String payload) throws IOException {
-    String[] parts = payload.split("\\|", 2);
+    String federationName = payload;
+    try {
+      // Get the federation to retrieve its FOM
+      FederationObjectModel fom = context.retreiveFederationFom(federationName);
+      if (fom == null) {
+        sendTextMessage("ERROR|FEDERATION_DOES_NOT_EXIST");
+        return;
+      }
+
+      byte[] serializedFom = BinaryHelper.serializeRequestObject(fom);
+      
+      // Send the FOM as a binary message
+      System.out.println("[ClientHandler] Sending federation FOM to joining federate...");
+      sendMessage(serializedFom);
+      
+    } catch (FederationExecutionDoesNotExist e) {
+      sendTextMessage("ERROR|FEDERATION_DOES_NOT_EXIST");
+    } catch (Exception e) {
+      System.err.println("[ClientHandler] Error sending FOM: " + e.getMessage());
+      sendTextMessage("ERROR|" + e.getMessage());
+    }
+  }
+
+  private void handleConfirmJoin(String payload) throws IOException {
+    // Client has validated the FOM and confirmed join - extract federation/federate info from payload
+    String[] parts = payload.split("\\|");
     if (parts.length != 2) {
-      sendTextMessage("ERROR|Invalid JOIN_FEDERATION format");
+      sendTextMessage("ERROR|Invalid CONFIRM_JOIN format");
       return;
     }
     String federationName = parts[0];
     String federateType = parts[1];
+    
     try {
-      context.joinFederationExecution(federationName, federateType, this.federateName);
-      sendTextMessage("OK|JOINED_FEDERATION");
+      // Store federation/federate info now that client has confirmed
+      this.federationName = federationName;
       this.federateType = federateType;
+      
+      context.joinFederationExecution(this.federationName, this.federateType, this.federateName);
+      sendTextMessage("OK|JOINED_FEDERATION");
+      System.out.println("[ClientHandler] Federate " + this.federateName + " confirmed join to " + this.federationName);
     } catch (FederationExecutionDoesNotExist e) {
       sendTextMessage("ERROR|FEDERATION_DOES_NOT_EXIST");
     } catch (Exception e) {
@@ -172,14 +216,81 @@ public class NetnBusClientHandler {
     }
   }
 
+  private void handleGetInteractionHandle(String interactionName) throws IOException {
+    if (federationName == null) {
+      sendTextMessage("ERROR|Not joined to a federation");
+      return;
+    }
+    nl.tno.netnbus.FederationExecution fed = context.getFederation(federationName);
+    if (fed == null) {
+      sendTextMessage("ERROR|Federation not found");
+      return;
+    }
+    int handle = fed.getHandleRegistry().getInteractionClassHandle(interactionName);
+    sendTextMessage("OK|" + handle);
+  }
+
+  private void handleGetParameterHandle(String parameterName) throws IOException {
+    if (federationName == null) {
+      sendTextMessage("ERROR|Not joined to a federation");
+      return;
+    }
+    nl.tno.netnbus.FederationExecution fed = context.getFederation(federationName);
+    if (fed == null) {
+      sendTextMessage("ERROR|Federation not found");
+      return;
+    }
+    int handle = fed.getHandleRegistry().getParameterHandle(parameterName);
+    sendTextMessage("OK|" + handle);
+  }
+
   // ===== Binary message API =====
 
   private void handleBinaryMessage(byte[] data) {
-    // TODO: Handle binary HLA messages
-    System.out.println("[ClientHandler] Binary message handler not yet implemented");
+    try {
+      // Deserialize the binary data into a Request object
+      Object obj = BinaryHelper.deserializeBinaryMessage(data);
+
+      if (obj instanceof CreateFederationRequest reqObj) {
+        context.createFederationExecutionWithFOM(reqObj.getFederationName(), reqObj.getFom());
+        sendTextMessage("OK|FEDERATION_CREATED");
+      }
+      
+      
+  
+
+
+
+
+    // TODO: have a better look at these exceptions
+    } catch (FederationExecutionAlreadyExists e) {
+      // Federation with this name already exists
+      try {
+        sendTextMessage("ERROR|FEDERATION_ALREADY_EXISTS");
+      } catch (IOException ex) {
+        System.err.println("[ClientHandler] Error sending error response: " + ex.getMessage());
+      }
+    } catch (ClassNotFoundException e) {
+      // Failed to deserialize the request
+      System.err.println("[ClientHandler] Failed to deserialize CreateFederationRequest: " + e.getMessage());
+      try {
+        sendTextMessage("ERROR|Failed to deserialize request");
+      } catch (IOException ex) {
+        System.err.println("[ClientHandler] Error sending error response: " + ex.getMessage());
+      }
+    } catch (Exception e) {
+      // General error handling
+      System.err.println("[ClientHandler] Error handling binary message: " + e.getMessage());
+      e.printStackTrace();
+      try {
+        sendTextMessage("ERROR|" + e.getMessage());
+      } catch (IOException ex) {
+        System.err.println("[ClientHandler] Error sending error response: " + ex.getMessage());
+      }
+    }
   }
 
-  public void sendBinaryMessage(byte[] data) throws IOException {
+  public void sendMessage(byte[] data) throws IOException {
     out.writeByte(MSG_BINARY);
     out.writeInt(data.length);
     out.write(data);

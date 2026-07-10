@@ -1,19 +1,21 @@
 package nl.tno.netnbus.server;
 
-import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
-import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
+import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
 import nl.tno.netnbus.FederationExecution;
+import nl.tno.netnbus.fom.FederationObjectModel;
 
 /** Context for keeping track of the states of the server and its federates */
-public class NetnBusContext {
+public class NetnBusServerContext {
 
   private final Set<String> connectedFederates = ConcurrentHashMap.newKeySet();
   private final Map<String, FederationExecution> federationExecutions = new ConcurrentHashMap<>();
 
-  public NetnBusContext() {}
+  public NetnBusServerContext() {}
 
   void registerFederate(String name) {
     this.connectedFederates.add(name);
@@ -32,6 +34,18 @@ public class NetnBusContext {
     FederationExecution fed = new FederationExecution(federationName);
     this.federationExecutions.put(federationName, fed);
     System.out.println("[NetnBusContext] Federation created: " + federationName);
+  }
+
+  void createFederationExecutionWithFOM(String federationName, FederationObjectModel fom) 
+      throws FederationExecutionAlreadyExists {
+    if (this.federationExecutions.containsKey(federationName)) {
+      throw new FederationExecutionAlreadyExists("Federation already exists: " + federationName);
+    }
+    // Create federation and store the FOM
+    FederationExecution fedEx = new FederationExecution(federationName);
+    fedEx.setFOM(fom);
+    this.federationExecutions.put(federationName, fedEx);
+    System.out.println("[NetnBusContext] Federation created with FOM: " + federationName);
   }
 
   public Set<String> getAllFederationExecutions() {
@@ -78,13 +92,11 @@ public class NetnBusContext {
     fedEx.addFederate(federateType, federateName);
   }
 
-  // FederationExecution getFederation(String federationName) throws FederationExecutionDoesNotExist
-  // {
-  //   FederationExecution fed = this.federationExecutions.get(federationName);
-  //   if (fed == null) {
-  //     throw new FederationExecutionDoesNotExist("Federation not found: " + federationName);
-  //   }
-  //   return fed;
-  // }
-
+  FederationObjectModel retreiveFederationFom(String federationName) throws FederationExecutionDoesNotExist {
+    FederationExecution fedEx = this.federationExecutions.get(federationName);
+    if (fedEx == null) {
+      return null;
+    }
+    return fedEx.getFOM();
+  }
 }

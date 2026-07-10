@@ -7,7 +7,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /** Socket server for the NETN Bus, handles only the TCP transport */
-public class NetnBusSocketServer {
+public class NetnBusServerSocket {
 
   public static final int DEFAULT_PORT = 4567;
 
@@ -15,9 +15,9 @@ public class NetnBusSocketServer {
   private ServerSocket serverSocket;
   private final ExecutorService executor;
   private volatile boolean running = false;
-  private final NetnBusContext context;
+  private final NetnBusServerContext context;
 
-  public NetnBusSocketServer(NetnBusContext context) {
+  public NetnBusServerSocket(NetnBusServerContext context) {
     this.executor = Executors.newCachedThreadPool();
     this.port = DEFAULT_PORT;
     this.context = context;

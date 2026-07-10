@@ -2,6 +2,8 @@ package federates;
 
 import hla.rti1516e.CallbackModel;
 import hla.rti1516e.OrderType;
+import hla.rti1516e.RTIambassador;
+import hla.rti1516e.RtiFactoryFactory;
 import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.exceptions.RTIexception;
@@ -26,7 +28,7 @@ public class void_testfederate extends NullOOFederateAmbassador {
 
   public void start() throws Exception {
     // create the OORTI Ambassador
-    // this.oortiamb = new OORTIfactory().getRtiAmbassador();
+    RTIambassador dummy = new RtiFactoryFactory().getRtiFactory().getRtiAmbassador();
 
     // Get NETN Bus ambassador
     OORTIambassador oortiamb =

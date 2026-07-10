@@ -1,5 +1,8 @@
 package nl.tno.netnbus.client;
 
+import java.net.URL;
+import java.util.Set;
+
 import hla.rti1516e.AttributeHandle;
 import hla.rti1516e.AttributeHandleFactory;
 import hla.rti1516e.AttributeHandleSet;
@@ -142,18 +145,16 @@ import hla.rti1516e.exceptions.TimeConstrainedIsNotEnabled;
 import hla.rti1516e.exceptions.TimeRegulationAlreadyEnabled;
 import hla.rti1516e.exceptions.TimeRegulationIsNotEnabled;
 import hla.rti1516e.exceptions.UnsupportedCallbackModel;
-import java.net.URL;
-import java.util.Set;
 
 public class NetnBusAmbassador implements RTIambassador {
   // Todo: remove oorti logic that is inherited
   // todo: remove all output debug lines
 
   //   protected final NetnBusContext context;
-  private final NetnBusSocketClient socketClient;
+  private final NetnBusClientSocket socketClient;
 
   public NetnBusAmbassador() {
-    this.socketClient = new NetnBusSocketClient();
+    this.socketClient = new NetnBusClientSocket();
   }
 
   ////////////////////////////////////
@@ -170,7 +171,7 @@ public class NetnBusAmbassador implements RTIambassador {
           AlreadyConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-    throw new UnsupportedOperationException("Current method is currently unsupported");
+    throw new UnsupportedOperationException("Current method is currently unsupported 1");
   }
 
   @Override
@@ -249,7 +250,7 @@ public class NetnBusAmbassador implements RTIambassador {
           FederationExecutionAlreadyExists,
           NotConnected,
           RTIinternalError {
-    throw new UnsupportedOperationException("Current method is currently unsupported");
+    throw new UnsupportedOperationException("Current method is currently unsupported 2");
   }
 
   @Override
@@ -262,7 +263,7 @@ public class NetnBusAmbassador implements RTIambassador {
           FederationExecutionAlreadyExists,
           NotConnected,
           RTIinternalError {
-    throw new UnsupportedOperationException("Current method is currently unsupported");
+    throw new UnsupportedOperationException("Current method is currently unsupported 3");
   }
 
   @Override
@@ -277,7 +278,7 @@ public class NetnBusAmbassador implements RTIambassador {
           FederationExecutionAlreadyExists,
           NotConnected,
           RTIinternalError {
-    throw new UnsupportedOperationException("Current method is currently unsupported");
+    throw new UnsupportedOperationException("Current method is currently unsupported 4");
   }
 
   @Override
@@ -285,7 +286,7 @@ public class NetnBusAmbassador implements RTIambassador {
       throws FederationExecutionAlreadyExists, NotConnected, RTIinternalError {
     // For now, just create in context (no FDD/MIM parsing)
     try {
-      socketClient.createFederationExecution(federationExecutionName);
+      socketClient.createFederationExecution(federationExecutionName, fomModules);
       System.out.println("[NetnBusAmbassador] Federation created: " + federationExecutionName);
     } catch (Exception e) {
       throw new RTIinternalError(e.getMessage());
@@ -329,7 +330,7 @@ public class NetnBusAmbassador implements RTIambassador {
           NotConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-    return joinFederationExecution(federateType, federationExecutionName);
+    return joinFederationExecution(federateType, federationExecutionName, additionalFomModules);
   }
 
   @Override
@@ -346,7 +347,19 @@ public class NetnBusAmbassador implements RTIambassador {
           NotConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-    return joinFederationExecution(federateType, federationExecutionName);
+
+    // For now, just join (no FDD/MIM parsing)
+    try {
+      System.out.println(
+          "[NetnBusAmbassador] Federation joined: "
+              + federationExecutionName
+              + " as federate type: "
+              + federateType);
+      socketClient.joinFederationExecution(federateType, federationExecutionName, additionalFomModules);
+    } catch (Exception e) {
+      throw new RTIinternalError(e.getMessage());
+    }
+    return null; // Return null for now, as we don't have a proper FederateHandle
   }
 
   @Override
@@ -361,7 +374,11 @@ public class NetnBusAmbassador implements RTIambassador {
           NotConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-    return joinFederationExecution(federateType, federationExecutionName);
+    try {
+        return joinFederationExecution(federateType, federationExecutionName, new URL[] {});
+    } catch (Exception e) {
+        throw new RTIinternalError(e.getMessage());
+    }
   }
 
   @Override
@@ -374,18 +391,11 @@ public class NetnBusAmbassador implements RTIambassador {
           NotConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-    // For now, just join (no FDD/MIM parsing)
     try {
-      System.out.println(
-          "[NetnBusAmbassador] Federation joined: "
-              + federationExecutionName
-              + " as federate type: "
-              + federateType);
-      socketClient.joinFederationExecution(federateType, federationExecutionName);
+        return joinFederationExecution(federateType, federationExecutionName, new URL[] {});
     } catch (Exception e) {
-      throw new RTIinternalError(e.getMessage());
+        throw new RTIinternalError(e.getMessage());
     }
-    return null; // Return null for now, as we don't have a proper FederateHandle
   }
 
   @Override
@@ -669,7 +679,7 @@ public class NetnBusAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    throw new RTIinternalError("Not implemented");
+    throw new RTIinternalError("Not implemented 1");
   }
 
   @Override
@@ -1651,7 +1661,28 @@ public class NetnBusAmbassador implements RTIambassador {
   @Override
   public InteractionClassHandle getInteractionClassHandle(String theName)
       throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
+
+    // map string of class to its numeric value
+
+    // 1 check joined
+    // 2 FOM lookup: Queries the Federated Object Model (FOM) to find the interaction class by name
+    // 3 Return handle: Returns the handle wrapped in a version-specific type (or as int for HLA
+    // 1.3)
+
+    System.out.println("HIERrrrrrrrrrrrrr 1");
+
+    int handle = socketClient.getInteractionClassHandle(theName);
+
+    // Check for error
+    if (handle == -1) {
+      throw new NameNotFound("Interaction class not found: " + theName);
+    }
+    if (true) {
+      throw new UnsupportedOperationException("Current method is currently unsupported 5");
+    }
+
+    // Wrap the integer handle in an InteractionClassHandleImpl and return it
+    return new nl.tno.netnbus.impl.InteractionClassHandleImpl(handle);
   }
 
   @Override
@@ -1660,6 +1691,16 @@ public class NetnBusAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
+    if (true) {
+      throw new UnsupportedOperationException("Current method is currently unsupported 6");
+    }
+
+    if (theHandle instanceof nl.tno.netnbus.impl.InteractionClassHandleImpl) {
+      int handle = ((nl.tno.netnbus.impl.InteractionClassHandleImpl) theHandle).getHandle();
+      // For now, we can't reverse-lookup the name from handle without server support
+      // This would require adding GET_INTERACTION_CLASS_NAME message type
+      return null;
+    }
     return null;
   }
 
@@ -1670,7 +1711,12 @@ public class NetnBusAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    System.out.println("HIERrrrrrrrrrrrrr1 get param handle");
+    int handle = socketClient.getParameterHandle(theName);
+    if (handle == -1) {
+      throw new NameNotFound("Parameter not found: " + theName);
+    }
+    return new nl.tno.netnbus.impl.ParameterHandleImpl(handle);
   }
 
   @Override
@@ -1681,6 +1727,15 @@ public class NetnBusAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
+    if (true) {
+      throw new UnsupportedOperationException("Current method is currently unsupported 7");
+    }
+    if (theHandle instanceof nl.tno.netnbus.impl.ParameterHandleImpl) {
+      int handle = ((nl.tno.netnbus.impl.ParameterHandleImpl) theHandle).getHandle();
+      // For now, we can't reverse-lookup the name from handle without server support
+      // This would require adding GET_PARAMETER_NAME message type
+      return null;
+    }
     return null;
   }
 
@@ -1937,6 +1992,12 @@ public class NetnBusAmbassador implements RTIambassador {
   @Override
   public InteractionClassHandleFactory getInteractionClassHandleFactory()
       throws FederateNotExecutionMember, NotConnected {
+
+    System.out.println("HIERrrrrrrrrrrrrr 2");
+
+    if (true) {
+      throw new UnsupportedOperationException("Current method is currently unsupported 8");
+    }
     return null;
   }
 

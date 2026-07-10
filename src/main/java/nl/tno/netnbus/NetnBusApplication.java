@@ -1,16 +1,16 @@
 package nl.tno.netnbus;
 
-import nl.tno.netnbus.server.NetnBusContext;
-import nl.tno.netnbus.server.NetnBusSocketServer;
+import nl.tno.netnbus.server.NetnBusServerContext;
+import nl.tno.netnbus.server.NetnBusServerSocket;
 
 public class NetnBusApplication {
 
-  private final NetnBusContext context;
-  private NetnBusSocketServer socketServer;
+  private final NetnBusServerContext context;
+  private NetnBusServerSocket socketServer;
   private volatile boolean running = true;
 
   public NetnBusApplication() {
-    this.context = new NetnBusContext();
+    this.context = new NetnBusServerContext();
   }
 
   // public NetnBusAmbassador createRTIambassador() {
@@ -19,7 +19,7 @@ public class NetnBusApplication {
 
   public void run() throws Exception {
     // Start the socket server with shared context
-    this.socketServer = new NetnBusSocketServer(this.context);
+    this.socketServer = new NetnBusServerSocket(this.context);
     this.socketServer.start();
 
     int count = 0;
