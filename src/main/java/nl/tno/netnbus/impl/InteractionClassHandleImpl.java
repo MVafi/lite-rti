@@ -31,10 +31,9 @@ public class InteractionClassHandleImpl implements InteractionClassHandle {
     return handle;
   }
 
-  // 32-bit integer = 4 bytes
   @Override
   public int encodedLength() {
-    return 4;
+    return Integer.BYTES;
   }
 
   @Override

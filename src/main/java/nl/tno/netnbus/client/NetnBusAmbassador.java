@@ -145,16 +145,19 @@ import hla.rti1516e.exceptions.TimeConstrainedIsNotEnabled;
 import hla.rti1516e.exceptions.TimeRegulationAlreadyEnabled;
 import hla.rti1516e.exceptions.TimeRegulationIsNotEnabled;
 import hla.rti1516e.exceptions.UnsupportedCallbackModel;
+import nl.tno.netnbus.utils.AttributeHandleSetFactoryImpl;
 
 public class NetnBusAmbassador implements RTIambassador {
   // Todo: remove oorti logic that is inherited
   // todo: remove all output debug lines
 
   //   protected final NetnBusContext context;
+  private final NetnBusClientContext clientContext;
   private final NetnBusClientSocket socketClient;
 
   public NetnBusAmbassador() {
-    this.socketClient = new NetnBusClientSocket();
+    this.clientContext = new NetnBusClientContext();
+    this.socketClient = new NetnBusClientSocket(clientContext);
   }
 
   ////////////////////////////////////
@@ -543,7 +546,21 @@ public class NetnBusAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+    if (theClass == null) {
+      throw new RTIinternalError("ObjectClassHandle cannot be null");
+    }
+    // Validate no null attribute handles if set is provided
+    if (attributeList != null && !attributeList.isEmpty()) {
+      for (AttributeHandle attr : attributeList) {
+        if (attr == null) {
+          throw new RTIinternalError("AttributeHandle cannot be null in AttributeHandleSet");
+        }
+      }
+    }
+    System.out.println("OLD HLA PUBLISH CALL");
+    socketClient.publishObjectClassAttributes(theClass, attributeList);
+  }
 
   @Override
   public void unpublishObjectClass(ObjectClassHandle theClass)
@@ -595,7 +612,21 @@ public class NetnBusAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
+
+    System.out.println(">>>>>> NETN BUS AMBASSADOR SUBSCRIBE CALL");
+    if (theClass == null) {
+      throw new RTIinternalError("ObjectClassHandle cannot be null");
+    }
+    // Validate no null attribute handles if set is provided
+    if (attributeList != null && !attributeList.isEmpty()) {
+      for (AttributeHandle attr : attributeList) {
+        if (attr == null) {
+          throw new RTIinternalError("AttributeHandle cannot be null in AttributeHandleSet");
+        }
+      }
+    }
     System.out.println("OLD HLA SUBSCRIBE CALL");
+    socketClient.subscribeObjectClassAttributes(theClass, attributeList);
   }
 
   @Override
@@ -740,6 +771,8 @@ public class NetnBusAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
+
+        // Register object instance
     return null;
   }
 
@@ -755,7 +788,7 @@ public class NetnBusAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new RTIinternalError("Not implemented method");
   }
 
   @Override
@@ -1590,7 +1623,14 @@ public class NetnBusAmbassador implements RTIambassador {
   @Override
   public ObjectClassHandle getObjectClassHandle(String theName)
       throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
+    
+    try {
+      return clientContext.getObjectClassHandle(theName);
+    } catch (NameNotFound e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RTIinternalError("Error looking up object class handle: " + e.getMessage(), e);
+    }
   }
 
   @Override
@@ -1624,7 +1664,13 @@ public class NetnBusAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    try {
+      return clientContext.getAttributeHandle(whichClass, theName);
+    } catch (NameNotFound e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RTIinternalError("Error looking up attribute handle: " + e.getMessage(), e);
+    }
   }
 
   @Override
@@ -1950,7 +1996,7 @@ public class NetnBusAmbassador implements RTIambassador {
   @Override
   public AttributeHandleSetFactory getAttributeHandleSetFactory()
       throws FederateNotExecutionMember, NotConnected {
-    return null;
+    return new AttributeHandleSetFactoryImpl();
   }
 
   @Override

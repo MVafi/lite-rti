@@ -134,7 +134,14 @@ public class FederationObjectModel implements Serializable {
 
   public FomObjectClass getObjectClass(String name) {
     name = name.toLowerCase();                // names are meant to be case-insensitive
-    name = name.substring(14);    // cut off any hla 1516e specific notations on the front //"hlaobjectroot.<name>"
+
+    for( FomObjectClass oc : this.oclasses.values() )
+		{
+			if( oc.getQualifiedName().equalsIgnoreCase(name) )
+			{
+				return oc;
+			}
+		}
 
     // Search with name in the local object class map
     for (FomObjectClass oc : this.oclasses.values()) {
@@ -146,6 +153,8 @@ public class FederationObjectModel implements Serializable {
     // Check for object root
     if (name.equalsIgnoreCase("hlaobjectroot"))
       return this.getObjectRoot();
+
+    System.out.println("[FOM] getObjectClass: " + name + " not found");
 
     // Check for MOM object classes
     throw new IllegalArgumentException("Not implemented 2");

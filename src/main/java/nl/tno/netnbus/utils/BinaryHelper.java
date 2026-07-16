@@ -1,4 +1,4 @@
-package nl.tno.netnbus;
+package nl.tno.netnbus.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

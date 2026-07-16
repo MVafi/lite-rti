@@ -8,13 +8,16 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import hla.rti1516e.AttributeHandle;
+import hla.rti1516e.AttributeHandleSet;
+import hla.rti1516e.ObjectClassHandle;
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
-import nl.tno.netnbus.BinaryHelper;
 import nl.tno.netnbus.client.requests.CreateFederationRequest;
 import nl.tno.netnbus.fom.FederationObjectModel;
 import nl.tno.netnbus.fom.FomMerger;
 import nl.tno.netnbus.fom.parser.FomParser;
 import nl.tno.netnbus.server.NetnBusServerSocket;
+import nl.tno.netnbus.utils.BinaryHelper;
 
 // TODO check this file
 /**
@@ -52,14 +55,14 @@ public class NetnBusClientSocket {
   private static final byte MSG_TEXT = 0;
   private static final byte MSG_BINARY = 1;
 
-  public NetnBusClientSocket(String host, int port) {
+  public NetnBusClientSocket(String host, int port, NetnBusClientContext clientContext) {
     this.host = host;
     this.port = port;
-    this.clientContext = new NetnBusClientContext();
+    this.clientContext = clientContext;
   }
 
-  public NetnBusClientSocket() {
-    this("localhost", NetnBusServerSocket.DEFAULT_PORT);
+  public NetnBusClientSocket(NetnBusClientContext clientContext) {
+    this("localhost", NetnBusServerSocket.DEFAULT_PORT, clientContext);
   }
 
   // ===== Connection API =====
@@ -131,6 +134,24 @@ public class NetnBusClientSocket {
     for (URL module : fomModules) {
       System.out.println("[NetnBusClient] Parsing FOM module: " + module);
       foms.add(FomParser.parse(module));
+    }
+
+    // Sort FOMs: put MIM first (if present), then others
+    // MIM should be identified by filename containing "MIM" or "mim"
+    // TODO: Currently FOM merging is hyrachical, not sure whether this can be an issue in the future
+    foms.sort((a, b) -> {
+      String aFileName = a.getFileName() != null ? a.getFileName().toLowerCase() : "";
+      String bFileName = b.getFileName() != null ? b.getFileName().toLowerCase() : "";
+      boolean aIsMim = aFileName.contains("mim");
+      boolean bIsMim = bFileName.contains("mim");
+      if (aIsMim && !bIsMim) return -1; // a comes first (MIM)
+      if (!aIsMim && bIsMim) return 1;  // b comes first (MIM)
+      return 0; // maintain original order for others
+    });
+
+    System.out.println("[NetnBusClient] FOM merge order:");
+    for (FederationObjectModel fom : foms) {
+      System.out.println("  - " + (fom.getFileName() != null ? fom.getFileName() : "unknown"));
     }
 
     // Merge Foms
@@ -230,6 +251,97 @@ public class NetnBusClientSocket {
       throw new RuntimeException("[NetnBusClient] Error joining federation: " + e.getMessage(), e);
     } catch (ClassNotFoundException e) {
       throw new RuntimeException("[NetnBusClient] Failed to deserialize federation FOM: " + e.getMessage(), e);
+    }
+  }
+
+  public void subscribeObjectClassAttributes(ObjectClassHandle theClass, AttributeHandleSet attributeList) {
+    this.checkConnection();
+    try {
+      if (theClass == null) {
+        throw new RuntimeException("[NetnBusClient] ObjectClassHandle cannot be null");
+      }
+      
+      // Build comma-separated list of attribute handles
+      // null/empty attributeList means subscribe to all attributes
+      StringBuilder attributeIds = new StringBuilder();
+      if (attributeList != null && !attributeList.isEmpty()) {
+        boolean first = true;
+        for (AttributeHandle attrHandle : attributeList) {
+          if (attrHandle == null) {
+            throw new RuntimeException("[NetnBusClient] AttributeHandle cannot be null in AttributeHandleSet");
+          }
+          if (!first) attributeIds.append(",");
+          attributeIds.append(attrHandle.toString());
+          first = false;
+        }
+      } else {
+        // Empty set or null means "all attributes"
+        attributeIds.append("*");
+      }
+      
+      // Send subscription request to server
+      sendTextMessage("SUBSCRIBE_OBJECT_CLASS|" + theClass.toString() + "|" + attributeIds.toString());
+      
+      // Wait for server response
+      String response = receiveTextMessage();
+      if (response == null) {
+        throw new RuntimeException("[NetnBusClient] No response received from server when subscribing to object class");
+      } else if (response.startsWith("OK|")) {
+        System.out.println("[NetnBusClient] Successfully subscribed to object class");
+      } else if (response.startsWith("ERROR|")) {
+        String errorMsg = response.substring(6);
+        throw new RuntimeException("[NetnBusClient] Server error subscribing to object class: " + errorMsg);
+      } else {
+        throw new RuntimeException("[NetnBusClient] Unexpected response from server: " + response);
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("[NetnBusClient] Error subscribing to object class attributes: " + e.getMessage(), e);
+    }
+  }
+
+  public void publishObjectClassAttributes(ObjectClassHandle theClass, AttributeHandleSet attributeList) {
+    this.checkConnection();
+    try {
+      if (theClass == null) {
+        throw new RuntimeException("[NetnBusClient] ObjectClassHandle cannot be null");
+      }
+      
+      // Build comma-separated list of attribute handles
+      // null/empty attributeList means publish all attributes
+      StringBuilder attributeIds = new StringBuilder();
+      if (attributeList != null && !attributeList.isEmpty()) {
+        boolean first = true;
+        for (AttributeHandle attrHandle : attributeList) {
+          if (attrHandle == null) {
+            throw new RuntimeException("[NetnBusClient] AttributeHandle cannot be null in AttributeHandleSet");
+          }
+          if (!first) attributeIds.append(",");
+          attributeIds.append(attrHandle.toString());
+          first = false;
+        }
+      } else {
+        // Empty set or null means "all attributes"
+        attributeIds.append("*");
+      }
+      
+      // Send publication request to server
+      sendTextMessage("PUBLISH_OBJECT_CLASS|" + theClass.toString() + "|" + attributeIds.toString());
+      
+      // Wait for server response
+      String response = receiveTextMessage();
+      if (response == null) {
+        throw new RuntimeException("[NetnBusClient] No response received from server when publishing to object class");
+      } else if (response.startsWith("OK|")) {
+        String status = response.substring(3);
+        System.out.println("[NetnBusClient] Successfully published to object class: " + status);
+      } else if (response.startsWith("ERROR|")) {
+        String errorMsg = response.substring(6);
+        throw new RuntimeException("[NetnBusClient] Server error publishing to object class: " + errorMsg);
+      } else {
+        throw new RuntimeException("[NetnBusClient] Unexpected response from server: " + response);
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("[NetnBusClient] Error publishing to object class attributes: " + e.getMessage(), e);
     }
   }
 

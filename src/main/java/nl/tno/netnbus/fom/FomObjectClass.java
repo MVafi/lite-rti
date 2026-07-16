@@ -265,6 +265,7 @@ public class FomObjectClass implements Serializable {
 
     // check parent classes
     if (this.parent == null) {
+      System.out.println("Attribute not found in this class, there is no parent for attribute: " + name);
       // there is nothing higher to check, ensure that we're not talking about privToDelete,
       // if we haven't found it yet it might because we've got the wrong HLA version
       if (name != null
@@ -276,6 +277,7 @@ public class FomObjectClass implements Serializable {
         return FederationObjectModel.INVALID_HANDLE;
       }
     } else {
+      System.out.println("checking the parent for attribute: " + name);
       return this.parent.getAttributeHandle(name);
     }
   }

@@ -7,9 +7,10 @@ import java.net.Socket;
 
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
-import nl.tno.netnbus.BinaryHelper;
+import nl.tno.netnbus.FederationExecution;
 import nl.tno.netnbus.client.requests.CreateFederationRequest;
 import nl.tno.netnbus.fom.FederationObjectModel;
+import nl.tno.netnbus.utils.BinaryHelper;
 
 /**
  * Client handler (server-side endpoint) for managing communication with an individual federate
@@ -119,11 +120,17 @@ public class NetnBusClientHandler {
         case "CONFIRM_JOIN":
           handleConfirmJoin(payload);
           break;
-        case "GET_INTERACTION_HANDLE":
-          handleGetInteractionHandle(payload);
+        // case "GET_INTERACTION_HANDLE":
+        //   handleGetInteractionHandle(payload);
+        //   break;
+        // case "GET_PARAMETER_HANDLE":
+        //   handleGetParameterHandle(payload);
+        //   break;
+        case "SUBSCRIBE_OBJECT_CLASS":
+          handleSubscribeObjectClass(payload);
           break;
-        case "GET_PARAMETER_HANDLE":
-          handleGetParameterHandle(payload);
+        case "PUBLISH_OBJECT_CLASS":
+          handlePublishObjectClass(payload);
           break;
         // case "COUNT":
         //   int count = context.getFederateCount();
@@ -216,32 +223,99 @@ public class NetnBusClientHandler {
     }
   }
 
-  private void handleGetInteractionHandle(String interactionName) throws IOException {
-    if (federationName == null) {
-      sendTextMessage("ERROR|Not joined to a federation");
+  // private void handleGetInteractionHandle(String interactionName) throws IOException {
+  //   if (federationName == null) {
+  //     sendTextMessage("ERROR|Not joined to a federation");
+  //     return;
+  //   }
+  //   nl.tno.netnbus.FederationExecution fed = context.getFederation(federationName);
+  //   if (fed == null) {
+  //     sendTextMessage("ERROR|Federation not found");
+  //     return;
+  //   }
+  //   int handle = fed.getHandleRegistry().getInteractionClassHandle(interactionName);
+  //   sendTextMessage("OK|" + handle);
+  // }
+
+  // private void handleGetParameterHandle(String parameterName) throws IOException {
+  //   if (federationName == null) {
+  //     sendTextMessage("ERROR|Not joined to a federation");
+  //     return;
+  //   }
+  //   nl.tno.netnbus.FederationExecution fed = context.getFederation(federationName);
+  //   if (fed == null) {
+  //     sendTextMessage("ERROR|Federation not found");
+  //     return;
+  //   }
+  //   int handle = fed.getHandleRegistry().getParameterHandle(parameterName);
+  //   sendTextMessage("OK|" + handle);
+  // }
+
+  private void handleSubscribeObjectClass(String payload) throws IOException {
+    // Parse: classHandle|attr1,attr2,...
+    String[] parts = payload.split("\\|", 2);
+    if (parts.length != 2) {
+      sendTextMessage("ERROR|Invalid SUBSCRIBE_OBJECT_CLASS format");
       return;
     }
-    nl.tno.netnbus.FederationExecution fed = context.getFederation(federationName);
-    if (fed == null) {
-      sendTextMessage("ERROR|Federation not found");
-      return;
+    
+    String classHandle = parts[0];
+    String attributeIds = parts[1];
+    
+    try {
+      if (federationName == null) {
+        sendTextMessage("ERROR|Not joined to a federation");
+        return;
+      }
+      
+      FederationExecution fedEx = context.getFederation(federationName);
+      if (fedEx == null) {
+        sendTextMessage("ERROR|Federation not found");
+        return;
+      }
+      
+      // Store subscription in federation
+      fedEx.subscribeToObjectClass(federateName, classHandle, attributeIds);
+      
+      System.out.println("[ClientHandler] Federate " + federateName + " subscribed to object class " + classHandle + " with attributes: " + attributeIds);
+      sendTextMessage("OK|SUBSCRIBED");
+    } catch (Exception e) {
+      sendTextMessage("ERROR|" + e.getMessage());
     }
-    int handle = fed.getHandleRegistry().getInteractionClassHandle(interactionName);
-    sendTextMessage("OK|" + handle);
   }
 
-  private void handleGetParameterHandle(String parameterName) throws IOException {
-    if (federationName == null) {
-      sendTextMessage("ERROR|Not joined to a federation");
+  private void handlePublishObjectClass(String payload) throws IOException {
+    // Parse: classHandle|attr1,attr2,...
+    String[] parts = payload.split("\\|", 2);
+    if (parts.length != 2) {
+      sendTextMessage("ERROR|Invalid PUBLISH_OBJECT_CLASS format");
       return;
     }
-    nl.tno.netnbus.FederationExecution fed = context.getFederation(federationName);
-    if (fed == null) {
-      sendTextMessage("ERROR|Federation not found");
-      return;
+    
+    String classHandle = parts[0];
+    String attributeIds = parts[1];
+    
+    try {
+      if (federationName == null) {
+        sendTextMessage("ERROR|Not joined to a federation");
+        return;
+      }
+      
+      FederationExecution fedEx = context.getFederation(federationName);
+      if (fedEx == null) {
+        sendTextMessage("ERROR|Federation not found");
+        return;
+      }
+      
+      // Store publication in federation
+      fedEx.publishObjectClass(federateName, classHandle, attributeIds);
+      
+      System.out.println("[ClientHandler] Federate " + federateName + " publishing object class " + classHandle + " with attributes: " + attributeIds);
+      sendTextMessage("OK|PUBLISHED");
+
+    } catch (Exception e) {
+      sendTextMessage("ERROR|" + e.getMessage());
     }
-    int handle = fed.getHandleRegistry().getParameterHandle(parameterName);
-    sendTextMessage("OK|" + handle);
   }
 
   // ===== Binary message API =====
