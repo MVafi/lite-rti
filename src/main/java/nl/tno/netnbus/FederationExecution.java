@@ -4,21 +4,34 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import nl.tno.netnbus.fom.FederationObjectModel;
-
+// TODO: create handleRegistery that keeps tracks of all the int handles for object classes, attributes, interactions, parameters, etc.
 public class FederationExecution {
   private final String name;
   private final Map<String, String> joinedFederates = new ConcurrentHashMap<>(); // federateName -> federateType
   private final long createdAt = System.currentTimeMillis();
-  private final HandleRegistry handleRegistry = new HandleRegistry();
   private FederationObjectModel fom; // The Federation Object Model
-  
+
+  // ------------- PUB SUB ----------------
   // Store subscriptions: federateName -> (objectClassHandle -> comma-separated attribute IDs)
   private final Map<String, Map<String, String>> federateSubscriptions = new ConcurrentHashMap<>();
   
   // Store publications: federateName -> (objectClassHandle -> comma-separated attribute IDs)
   private final Map<String, Map<String, String>> federatePublications = new ConcurrentHashMap<>();
+
+  // ------------- Object registration ----------------
+  // Counter for generating unique object instance handles
+  private final AtomicInteger nextObjectInstanceHandle = new AtomicInteger(3000);
+
+  // Store registered object instances: objectInstanceName -> objectInstanceHandle
+  private final Map<String, Integer> registeredObjectInstances = new ConcurrentHashMap<>();
+  
+  // Track which federate owns each object instance: objectInstanceHandle -> federateName
+  private final Map<Integer, String> objectInstanceOwner = new ConcurrentHashMap<>();
+  
+
 
   public FederationExecution(String name) {
     this.name = name;
@@ -55,9 +68,9 @@ public class FederationExecution {
     return Set.copyOf(joinedFederates.values());
   }
 
-  public HandleRegistry getHandleRegistry() {
-    return handleRegistry;
-  }
+  // public HandleRegistry getHandleRegistry() {
+  //   return handleRegistry;
+  // }
 
   /**
    * Subscribe a federate to object class attributes.
@@ -119,6 +132,105 @@ public class FederationExecution {
     
     System.err.println("[FederationExecution] Federate " + federateName + " published to object class " + objectClassHandle + " with attributes: " + attributeIds);
   }
+
+  /**
+   * Register an object instance with an auto-generated name.
+   *
+   * @param federateName The name of the federate registering the object
+   * @param objectClassHandle The object class handle
+   * @return The object instance handle assigned to this instance
+   * @throws IllegalArgumentException if the federate has not published the object class
+   */
+  public int registerObjectInstance(String federateName, String objectClassHandle) {
+
+    // Verify federate has published this object class
+    Map<String, String> fedPubs = federatePublications.get(federateName);
+    if (fedPubs == null || !fedPubs.containsKey(objectClassHandle)) {
+      throw new IllegalArgumentException(
+          "Federate '" + federateName + "' has not published object class " + objectClassHandle);
+    }
+
+    // Generate new unique handle and auto-name for the object instance
+    int handle = nextObjectInstanceHandle.getAndIncrement();
+    String autoName = objectClassHandle + "_instance_" + handle;
+
+    // Register new object instance within map, and its owner federate
+    registeredObjectInstances.put(autoName, handle);
+    objectInstanceOwner.put(handle, federateName);
+    
+    System.err.println("[FederationExecution] Federate " + federateName + " registered object instance: " + autoName + " with handle: " + handle);
+    return handle;
+  }
+
+  // /**
+  //  * Register an object instance with a specific name.
+  //  *
+  //  * @param federateName The name of the federate registering the object
+  //  * @param objectClassHandle The object class handle
+  //  * @param objectInstanceName The specific name for this object instance
+  //  * @return The object instance handle assigned to this instance
+  //  * @throws IllegalArgumentException if the federate has not published the object class or if the name is already in use
+  //  */
+  // public int registerObjectInstance(String federateName, String objectClassHandle, String objectInstanceName) {
+  //   // Verify federate has published this object class
+  //   Map<String, String> fPubs = federatePublications.get(federateName);
+  //   if (fPubs == null || !fPubs.containsKey(objectClassHandle)) {
+  //     throw new IllegalArgumentException(
+  //         "Federate '" + federateName + "' has not published object class " + objectClassHandle);
+  //   }
+
+  //   // Verify object instance name is not already in use
+  //   if (registeredObjectInstances.containsKey(objectInstanceName)) {
+  //     throw new IllegalArgumentException(
+  //         "Object instance name '" + objectInstanceName + "' is already in use");
+  //   }
+
+  //   // Generate new unique handle for the object instance
+  //   int handle = nextObjectInstanceHandle.getAndIncrement();
+
+  //   // Register new object instance within map, and its owner federate
+  //   registeredObjectInstances.put(objectInstanceName, handle);
+  //   objectInstanceOwner.put(handle, federateName);
+    
+  //   System.err.println("[FederationExecution] Federate " + federateName + " registered object instance: " + objectInstanceName + " with handle: " + handle);
+  //   return handle;
+  // }
+
+  /**
+   * Get the handle for a registered object instance.
+   *
+   * @param objectInstanceName The name of the object instance
+   * @return The object instance handle, or -1 if not found
+   */
+  // public int getObjectInstanceHandle(String objectInstanceName) {
+  //   Integer handle = registeredObjectInstances.get(objectInstanceName);
+  //   return handle != null ? handle : -1;
+  // }
+
+  /**
+   * Get the name for a registered object instance handle.
+   *
+   * @param objectInstanceHandle The object instance handle
+   * @return The object instance name, or null if not found
+   */
+  public String getObjectInstanceName(int objectInstanceHandle) {
+    for (Map.Entry<String, Integer> entry : registeredObjectInstances.entrySet()) {
+      if (entry.getValue().equals(objectInstanceHandle)) {
+        return entry.getKey();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get the owner (federate) of an object instance.
+   *
+   * @param objectInstanceHandle The object instance handle
+   * @return The federate name that owns this instance, or null if not found
+   */
+  // public String getObjectInstanceOwner(int objectInstanceHandle) {
+  //   return objectInstanceOwner.get(objectInstanceHandle);
+  // }
 
   // /**
   //  * Get the published attributes for a federate's object class.

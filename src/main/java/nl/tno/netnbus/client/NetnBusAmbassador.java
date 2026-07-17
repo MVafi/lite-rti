@@ -145,7 +145,9 @@ import hla.rti1516e.exceptions.TimeConstrainedIsNotEnabled;
 import hla.rti1516e.exceptions.TimeRegulationAlreadyEnabled;
 import hla.rti1516e.exceptions.TimeRegulationIsNotEnabled;
 import hla.rti1516e.exceptions.UnsupportedCallbackModel;
+import nl.tno.netnbus.impl.ObjectInstanceHandleImpl;
 import nl.tno.netnbus.utils.AttributeHandleSetFactoryImpl;
+import nl.tno.netnbus.utils.AttributeHandleValueMapFactoryImpl;
 
 public class NetnBusAmbassador implements RTIambassador {
   // Todo: remove oorti logic that is inherited
@@ -772,8 +774,21 @@ public class NetnBusAmbassador implements RTIambassador {
           NotConnected,
           RTIinternalError {
 
-        // Register object instance
-    return null;
+    if (theClass == null) {
+      throw new RTIinternalError("ObjectClassHandle cannot be null");
+    }
+
+    try {
+      // Delegate to socket client to register object instance
+      return socketClient.registerObjectInstance(theClass);
+    } catch (RuntimeException e) {
+      // Convert RuntimeException to appropriate RTI exception
+      String errorMsg = e.getMessage();
+      if (errorMsg != null && errorMsg.contains("has not published")) {
+        throw new ObjectClassNotPublished("Object class has not been published by this federate");
+      }
+      throw new RTIinternalError("Failed to register object instance: " + errorMsg);
+    }
   }
 
   @Override
@@ -788,7 +803,30 @@ public class NetnBusAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
+    
     throw new RTIinternalError("Not implemented method");
+    // if (theClass == null) {
+    //   throw new RTIinternalError("ObjectClassHandle cannot be null");
+    // }
+
+    // if (theObjectName == null || theObjectName.isEmpty()) {
+    //   throw new RTIinternalError("Object instance name cannot be null or empty");
+    // }
+
+    // try {
+    //   // Delegate to socket client to register object instance with a specific name
+    //   return socketClient.registerObjectInstance(theClass, theObjectName);
+    // } catch (RuntimeException e) {
+    //   // Convert RuntimeException to appropriate RTI exception
+    //   String errorMsg = e.getMessage();
+    //   if (errorMsg != null && errorMsg.contains("has not published")) {
+    //     throw new ObjectClassNotPublished("Object class has not been published by this federate");
+    //   }
+    //   if (errorMsg != null && errorMsg.contains("already in use")) {
+    //     throw new ObjectInstanceNameInUse("Object instance name '" + theObjectName + "' is already in use");
+    //   }
+    //   throw new RTIinternalError("Failed to register object instance: " + errorMsg);
+    // }
   }
 
   @Override
@@ -1654,7 +1692,26 @@ public class NetnBusAmbassador implements RTIambassador {
   @Override
   public String getObjectInstanceName(ObjectInstanceHandle theHandle)
       throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
+    try {
+      if (theHandle == null) {
+        throw new RTIinternalError("ObjectInstanceHandle cannot be null");
+      }
+      
+      int handle = ((ObjectInstanceHandleImpl) theHandle).getHandle();
+      
+      // Query server for the object instance name
+      String name = socketClient.getObjectInstanceName(handle);
+      if (name != null) {
+        System.out.println("[NetnBusAmbassador] Retrieved object instance name: " + name + " for handle: " + handle);
+        return name;
+      } else {
+        throw new ObjectInstanceNotKnown("Object instance with handle " + handle + " not found");
+      }
+    } catch (ObjectInstanceNotKnown e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RTIinternalError("Error getting object instance name: " + e.getMessage(), e);
+    }
   }
 
   @Override
@@ -2002,7 +2059,7 @@ public class NetnBusAmbassador implements RTIambassador {
   @Override
   public AttributeHandleValueMapFactory getAttributeHandleValueMapFactory()
       throws FederateNotExecutionMember, NotConnected {
-    return null;
+    return new AttributeHandleValueMapFactoryImpl();
   }
 
   @Override

@@ -30,3 +30,14 @@ This repo separates communication between the servers and the client using the T
 This repo has been inspired heavily by the OpenSource RTI implementation Portico
 
 Current system has been developed with 1515e in mind
+
+ATM the repo is dependend on FOM parsing order, currently first the MIM is to be parsed before the NETN-Merged-FULL is parsed
+
+
+
+Distributed network (distributed RTI) en cloud native
+https://yggdrasil-network.github.io/about.html
+
+HLA handle allocation:
+int handles are allocated to all components of the HLA components by the RTI, e.g. 0-999 for the MOM, 1000-1999 for the interactions, 2000-2999 for objects and their attributes, 3000+ for instances of objects
+todo: implement handleRegistry that actually keeps track of the handles, currently they are part of the federationExecution

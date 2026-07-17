@@ -11,8 +11,10 @@ import java.util.List;
 import hla.rti1516e.AttributeHandle;
 import hla.rti1516e.AttributeHandleSet;
 import hla.rti1516e.ObjectClassHandle;
+import hla.rti1516e.ObjectInstanceHandle;
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import nl.tno.netnbus.client.requests.CreateFederationRequest;
+import nl.tno.netnbus.impl.ObjectInstanceHandleImpl;
 import nl.tno.netnbus.fom.FederationObjectModel;
 import nl.tno.netnbus.fom.FomMerger;
 import nl.tno.netnbus.fom.parser.FomParser;
@@ -399,6 +401,95 @@ public class NetnBusClientSocket {
   }
 
   // ===== Objects API =====
+
+  public ObjectInstanceHandle registerObjectInstance(ObjectClassHandle theClass) {
+    this.checkConnection();
+    try {
+      if (theClass == null) {
+        throw new RuntimeException("[NetnBusClient] ObjectClassHandle cannot be null");
+      }
+      
+      // Send registration request to server without a specific name (auto-generated)
+      sendTextMessage("REGISTER_OBJECT_INSTANCE|" + theClass.toString());
+      
+      // Wait for server response
+      String response = receiveTextMessage();
+      if (response == null) {
+        throw new RuntimeException("[NetnBusClient] No response received from server when registering object instance");
+      } else if (response.startsWith("OK|")) {
+        // Extract the object instance handle from response
+        String handleStr = response.substring(3);
+        try {
+          int handle = Integer.parseInt(handleStr);
+          System.out.println("[NetnBusClient] Successfully registered object instance with handle: " + handle);
+          return new ObjectInstanceHandleImpl(handle);
+        } catch (NumberFormatException e) {
+          throw new RuntimeException("[NetnBusClient] Invalid object instance handle in server response: " + handleStr, e);
+        }
+      } else if (response.startsWith("ERROR|")) {
+        String errorMsg = response.substring(6);
+        throw new RuntimeException("[NetnBusClient] Server error registering object instance: " + errorMsg);
+      } else {
+        throw new RuntimeException("[NetnBusClient] Unexpected response from server: " + response);
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("[NetnBusClient] Error registering object instance: " + e.getMessage(), e);
+    }
+  }
+
+  // public ObjectInstanceHandle registerObjectInstance(ObjectClassHandle theClass, String theObjectName) {
+  //   this.checkConnection();
+  //   try {
+  //     if (theClass == null) {
+  //       throw new RuntimeException("[NetnBusClient] ObjectClassHandle cannot be null");
+  //     }
+  //     if (theObjectName == null || theObjectName.isEmpty()) {
+  //       throw new RuntimeException("[NetnBusClient] Object name cannot be null or empty");
+  //     }
+      
+  //     // Send registration request to server with a specific name
+  //     sendTextMessage("REGISTER_OBJECT_INSTANCE|" + theClass.toString() + "|" + theObjectName);
+      
+  //     // Wait for server response
+  //     String response = receiveTextMessage();
+  //     if (response == null) {
+  //       throw new RuntimeException("[NetnBusClient] No response received from server when registering object instance");
+  //     } else if (response.startsWith("OK|")) {
+  //       // Extract the object instance handle from response
+  //       String handleStr = response.substring(3);
+  //       try {
+  //         int handle = Integer.parseInt(handleStr);
+  //         System.out.println("[NetnBusClient] Successfully registered object instance '" + theObjectName + "' with handle: " + handle);
+  //         return new ObjectInstanceHandleImpl(handle);
+  //       } catch (NumberFormatException e) {
+  //         throw new RuntimeException("[NetnBusClient] Invalid object instance handle in server response: " + handleStr, e);
+  //       }
+  //     } else if (response.startsWith("ERROR|")) {
+  //       String errorMsg = response.substring(6);
+  //       throw new RuntimeException("[NetnBusClient] Server error registering object instance: " + errorMsg);
+  //     } else {
+  //       throw new RuntimeException("[NetnBusClient] Unexpected response from server: " + response);
+  //     }
+  //   } catch (IOException e) {
+  //     throw new RuntimeException("[NetnBusClient] Error registering object instance: " + e.getMessage(), e);
+  //   }
+  // }
+
+  public String getObjectInstanceName(int objectInstanceHandle) {
+    this.checkConnection();
+    try {
+      sendTextMessage("GET_OBJECT_INSTANCE_NAME|" + objectInstanceHandle);
+      String response = receiveTextMessage();
+      if (response != null && response.startsWith("OK|")) {
+        return response.substring(3);
+      } else if (response != null && response.startsWith("ERROR|")) {
+        System.err.println("[NetnBusClient] Server error getting object instance name: " + response.substring(6));
+      }
+    } catch (IOException e) {
+      System.err.println("[NetnBusClient] Error getting object instance name: " + e.getMessage());
+    }
+    return null;
+  }
 
   // ===== Interactions API =====
   // public void subscribeInteractionClass(Class clazz) {

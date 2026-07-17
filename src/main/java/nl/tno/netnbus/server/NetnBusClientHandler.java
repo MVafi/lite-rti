@@ -132,6 +132,12 @@ public class NetnBusClientHandler {
         case "PUBLISH_OBJECT_CLASS":
           handlePublishObjectClass(payload);
           break;
+        case "REGISTER_OBJECT_INSTANCE":
+          handleRegisterObjectInstance(payload);
+          break;
+        case "GET_OBJECT_INSTANCE_NAME":
+          handleGetObjectInstanceName(payload);
+          break;
         // case "COUNT":
         //   int count = context.getFederateCount();
         //   sendTextMessage("OK|" + count);
@@ -313,6 +319,68 @@ public class NetnBusClientHandler {
       System.out.println("[ClientHandler] Federate " + federateName + " publishing object class " + classHandle + " with attributes: " + attributeIds);
       sendTextMessage("OK|PUBLISHED");
 
+    } catch (Exception e) {
+      sendTextMessage("ERROR|" + e.getMessage());
+    }
+  }
+
+  private void handleRegisterObjectInstance(String payload) throws IOException {
+    // Parse: classHandle
+    String[] parts = payload.split("\\|", 2);
+    String classHandle = parts[0];
+    
+    try {
+      if (federationName == null) {
+        sendTextMessage("ERROR|Not joined to a federation");
+        return;
+      }
+      
+      FederationExecution fedEx = context.getFederation(federationName);
+      if (fedEx == null) {
+        sendTextMessage("ERROR|Federation not found");
+        return;
+      }
+      
+      // Register object instance
+      int handle;
+      handle = fedEx.registerObjectInstance(federateName, classHandle);
+      System.out.println("[ClientHandler] Federate " + federateName + " registered object instance (auto-named) with handle: " + handle);
+      
+      // Send back the handle
+      sendTextMessage("OK|" + handle);
+      
+    } catch (IllegalArgumentException e) {
+      sendTextMessage("ERROR|" + e.getMessage());
+    } catch (Exception e) {
+      sendTextMessage("ERROR|" + e.getMessage());
+    }
+  }
+
+  private void handleGetObjectInstanceName(String payload) throws IOException {
+    // Parse: objectInstanceHandle
+    try {
+      int handle = Integer.parseInt(payload);
+      
+      if (federationName == null) {
+        sendTextMessage("ERROR|Not joined to a federation");
+        return;
+      }
+      
+      FederationExecution fedEx = context.getFederation(federationName);
+      if (fedEx == null) {
+        sendTextMessage("ERROR|Federation not found");
+        return;
+      }
+      
+      // Get object instance name by handle
+      String name = fedEx.getObjectInstanceName(handle);
+      if (name != null) {
+        sendTextMessage("OK|" + name);
+      } else {
+        sendTextMessage("ERROR|Object instance not found");
+      }
+    } catch (NumberFormatException e) {
+      sendTextMessage("ERROR|Invalid object instance handle: " + payload);
     } catch (Exception e) {
       sendTextMessage("ERROR|" + e.getMessage());
     }
