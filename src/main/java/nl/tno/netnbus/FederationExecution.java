@@ -7,7 +7,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import nl.tno.netnbus.fom.FederationObjectModel;
+
 // TODO: create handleRegistery that keeps tracks of all the int handles for object classes, attributes, interactions, parameters, etc.
+
 public class FederationExecution {
   private final String name;
   private final Map<String, String> joinedFederates = new ConcurrentHashMap<>(); // federateName -> federateType
@@ -31,6 +33,8 @@ public class FederationExecution {
   // Track which federate owns each object instance: objectInstanceHandle -> federateName
   private final Map<Integer, String> objectInstanceOwner = new ConcurrentHashMap<>();
   
+  // Track which object class each instance belongs to: objectInstanceHandle -> objectClassHandle
+  private final Map<Integer, String> objectInstanceClass = new ConcurrentHashMap<>();
 
 
   public FederationExecution(String name) {
@@ -154,9 +158,10 @@ public class FederationExecution {
     int handle = nextObjectInstanceHandle.getAndIncrement();
     String autoName = objectClassHandle + "_instance_" + handle;
 
-    // Register new object instance within map, and its owner federate
+    // Register new object instance within map, its owner federate, and its class
     registeredObjectInstances.put(autoName, handle);
     objectInstanceOwner.put(handle, federateName);
+    objectInstanceClass.put(handle, objectClassHandle);
     
     System.err.println("[FederationExecution] Federate " + federateName + " registered object instance: " + autoName + " with handle: " + handle);
     return handle;
@@ -264,4 +269,14 @@ public class FederationExecution {
   //   }
   //   return result;
   // }
+
+  /**
+   * Get the object class handle for an object instance.
+   *
+   * @param objectInstanceHandle The object instance handle
+   * @return The object class handle, or null if not found
+   */
+  public String getObjectInstanceClass(int objectInstanceHandle) {
+    return objectInstanceClass.get(objectInstanceHandle);
+  }
 }

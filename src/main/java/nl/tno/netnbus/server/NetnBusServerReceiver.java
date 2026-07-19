@@ -4,25 +4,24 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Map;
 
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
 import nl.tno.netnbus.FederationExecution;
 import nl.tno.netnbus.client.requests.CreateFederationRequest;
+import nl.tno.netnbus.client.requests.MessageObject;
+import nl.tno.netnbus.client.requests.UpdateAttributeValuesRequest;
 import nl.tno.netnbus.fom.FederationObjectModel;
 import nl.tno.netnbus.utils.BinaryHelper;
 
 /**
- * Client handler (server-side endpoint) for managing communication with an individual federate
- * SocketClient
+ * Transportation layer for handling messages received by the client (server-side), handling communication that is received from the client side. Each federate has its own receiver
  */
-public class NetnBusClientHandler {
+public class NetnBusServerReceiver {
 
-  // Handles communication with federate client
-  private final Socket socket;
-
-  // Reference to the context to manage federate events and state
-  private final NetnBusServerContext context;
+  private final Socket socket;                  // Handles communication with federate client
+  private final NetnBusServerContext context;   // Reference to the context to manage federate events and state
 
   // todo: atm federateName is used as the handle, but this is not very robust. Consider using a
   // federate handle in the future.
@@ -36,20 +35,20 @@ public class NetnBusClientHandler {
   private static final byte MSG_TEXT = 0;
   private static final byte MSG_BINARY = 1;
 
-  NetnBusClientHandler(Socket socket, NetnBusServerContext context) {
+  NetnBusServerReceiver(Socket socket, NetnBusServerContext context) {
     this.socket = socket;
     this.context = context;
   }
 
   // Keep handling messages while still receiving them (within separate thread)
   public void handle() {
-    System.out.println("[ClientHandler] New connection, starting handler");
+    System.out.println("[ServerReceiver] New connection, starting handler");
     try {
       // Data streams from client socket
       this.out = new DataOutputStream(socket.getOutputStream());
       this.in = new DataInputStream(socket.getInputStream());
 
-      System.out.println("[ClientHandler] Waiting for messages...");
+      System.out.println("[ServerReceiver] Waiting for messages...");
       while (true) {
         try {
           byte messageType = in.readByte();
@@ -57,7 +56,7 @@ public class NetnBusClientHandler {
           // Handling string messages (for commands and debugging)
           if (messageType == MSG_TEXT) {
             String message = in.readUTF();
-            System.out.println("[ClientHandler] Received: " + message);
+            System.out.println("[ServerReceiver] Received: " + message);
             handleStringMessage(message);
 
             // Handling binary messages (for HLA)
@@ -65,11 +64,11 @@ public class NetnBusClientHandler {
             int length = in.readInt();
             byte[] data = new byte[length];
             in.readFully(data);
-            System.out.println("[ClientHandler] Received binary message, " + length + " bytes");
+            System.out.println("[ServerReceiver] Received binary message, " + length + " bytes");
             handleBinaryMessage(data);
 
           } else {
-            System.err.println("[ClientHandler] Unknown message type: " + messageType);
+            System.err.println("[ServerReceiver] Unknown message type: " + messageType);
           }
         } catch (IOException e) {
           // Connection closed or error reading
@@ -77,7 +76,7 @@ public class NetnBusClientHandler {
         }
       }
     } catch (IOException e) {
-      System.out.println("[ClientHandler] Connection closed: " + e.getMessage());
+      System.out.println("[ServerReceiver] Connection closed: " + e.getMessage());
     } finally {
       // Currently this is sometimes done double
       cleanupClient();
@@ -86,7 +85,8 @@ public class NetnBusClientHandler {
 
   private void cleanupClient() {
     if (federateName != null) {
-      System.out.println("[ClientHandler] Cleaning up federate: " + federateName);
+      System.out.println("[ServerReceiver] Cleaning up federate: " + federateName);
+      context.unregisterFederateHandler(federateName);
       context.removeFederateFromAllFederations(federateName);
       context.unregisterFederate(federateName);
     }
@@ -146,12 +146,12 @@ public class NetnBusClientHandler {
           sendTextMessage("ERROR|Unknown command: " + command);
       }
     } catch (IOException e) {
-      System.err.println("[ClientHandler] Error handling message: " + e.getMessage());
+      System.err.println("[ServerReceiver] Error handling message: " + e.getMessage());
     }
   }
 
   private void sendTextMessage(String message) throws IOException {
-    System.out.println("[ClientHandler] Sending response: " + message);
+    System.out.println("[ServerReceiver] Sending response: " + message);
     out.writeByte(MSG_TEXT);
     out.writeUTF(message);
     out.flush();
@@ -193,13 +193,13 @@ public class NetnBusClientHandler {
       byte[] serializedFom = BinaryHelper.serializeRequestObject(fom);
       
       // Send the FOM as a binary message
-      System.out.println("[ClientHandler] Sending federation FOM to joining federate...");
+      System.out.println("[ServerReceiver] Sending federation FOM to joining federate...");
       sendMessage(serializedFom);
       
     } catch (FederationExecutionDoesNotExist e) {
       sendTextMessage("ERROR|FEDERATION_DOES_NOT_EXIST");
     } catch (Exception e) {
-      System.err.println("[ClientHandler] Error sending FOM: " + e.getMessage());
+      System.err.println("[ServerReceiver] Error sending FOM: " + e.getMessage());
       sendTextMessage("ERROR|" + e.getMessage());
     }
   }
@@ -215,13 +215,17 @@ public class NetnBusClientHandler {
     String federateType = parts[1];
     
     try {
-      // Store federation/federate info now that client has confirmed
       this.federationName = federationName;
       this.federateType = federateType;
       
+      // Join the federation execution in the context
       context.joinFederationExecution(this.federationName, this.federateType, this.federateName);
+      
+      // Register this handler so other federates can find this handler for message updates
+      context.registerFederateHandler(this.federateName, this);
+      
       sendTextMessage("OK|JOINED_FEDERATION");
-      System.out.println("[ClientHandler] Federate " + this.federateName + " confirmed join to " + this.federationName);
+      System.out.println("[ServerReceiver] Federate " + this.federateName + " confirmed join to " + this.federationName);
     } catch (FederationExecutionDoesNotExist e) {
       sendTextMessage("ERROR|FEDERATION_DOES_NOT_EXIST");
     } catch (Exception e) {
@@ -283,7 +287,7 @@ public class NetnBusClientHandler {
       // Store subscription in federation
       fedEx.subscribeToObjectClass(federateName, classHandle, attributeIds);
       
-      System.out.println("[ClientHandler] Federate " + federateName + " subscribed to object class " + classHandle + " with attributes: " + attributeIds);
+      System.out.println("[ServerReceiver] Federate " + federateName + " subscribed to object class " + classHandle + " with attributes: " + attributeIds);
       sendTextMessage("OK|SUBSCRIBED");
     } catch (Exception e) {
       sendTextMessage("ERROR|" + e.getMessage());
@@ -316,7 +320,7 @@ public class NetnBusClientHandler {
       // Store publication in federation
       fedEx.publishObjectClass(federateName, classHandle, attributeIds);
       
-      System.out.println("[ClientHandler] Federate " + federateName + " publishing object class " + classHandle + " with attributes: " + attributeIds);
+      System.out.println("[ServerReceiver] Federate " + federateName + " publishing object class " + classHandle + " with attributes: " + attributeIds);
       sendTextMessage("OK|PUBLISHED");
 
     } catch (Exception e) {
@@ -344,7 +348,7 @@ public class NetnBusClientHandler {
       // Register object instance
       int handle;
       handle = fedEx.registerObjectInstance(federateName, classHandle);
-      System.out.println("[ClientHandler] Federate " + federateName + " registered object instance (auto-named) with handle: " + handle);
+      System.out.println("[ServerReceiver] Federate " + federateName + " registered object instance (auto-named) with handle: " + handle);
       
       // Send back the handle
       sendTextMessage("OK|" + handle);
@@ -395,7 +399,14 @@ public class NetnBusClientHandler {
 
       if (obj instanceof CreateFederationRequest reqObj) {
         context.createFederationExecutionWithFOM(reqObj.getFederationName(), reqObj.getFom());
-        sendTextMessage("OK|FEDERATION_CREATED");
+
+        // Response logic should to somewhere else
+        MessageObject response = new MessageObject(reqObj.getMsgHandle());
+        response.setMsgString("OK|FEDERATION_CREATED");
+        sendMessage(BinaryHelper.serializeRequestObject(response));
+      }
+      else if (obj instanceof UpdateAttributeValuesRequest reqObj) {
+        handleUpdateAttributeValues(reqObj);
       }
       
       
@@ -410,25 +421,86 @@ public class NetnBusClientHandler {
       try {
         sendTextMessage("ERROR|FEDERATION_ALREADY_EXISTS");
       } catch (IOException ex) {
-        System.err.println("[ClientHandler] Error sending error response: " + ex.getMessage());
+        System.err.println("[ServerReceiver] Error sending error response: " + ex.getMessage());
       }
     } catch (ClassNotFoundException e) {
       // Failed to deserialize the request
-      System.err.println("[ClientHandler] Failed to deserialize CreateFederationRequest: " + e.getMessage());
+      System.err.println("[ServerReceiver] Failed to deserialize request: " + e.getMessage());
       try {
         sendTextMessage("ERROR|Failed to deserialize request");
       } catch (IOException ex) {
-        System.err.println("[ClientHandler] Error sending error response: " + ex.getMessage());
+        System.err.println("[ServerReceiver] Error sending error response: " + ex.getMessage());
       }
     } catch (Exception e) {
       // General error handling
-      System.err.println("[ClientHandler] Error handling binary message: " + e.getMessage());
+      System.err.println("[ServerReceiver] Error handling binary message: " + e.getMessage());
       e.printStackTrace();
       try {
         sendTextMessage("ERROR|" + e.getMessage());
       } catch (IOException ex) {
-        System.err.println("[ClientHandler] Error sending error response: " + ex.getMessage());
+        System.err.println("[ServerReceiver] Error sending error response: " + ex.getMessage());
       }
+    }
+  }
+
+  private void handleUpdateAttributeValues(UpdateAttributeValuesRequest request) throws IOException {
+    try {
+      if (federationName == null) {
+        sendTextMessage("ERROR|Not joined to a federation");
+        return;
+      }
+
+      FederationExecution fedEx = context.getFederation(federationName);
+      if (fedEx == null) {
+        sendTextMessage("ERROR|Federation not found");
+        return;
+      }
+
+      int objectInstanceHandle = request.getObjectInstanceHandle();
+      Map<Integer, byte[]> attributeValues = request.getAttributeValues();
+
+      // Get the object class for this instance
+      String objectClassHandle = fedEx.getObjectInstanceClass(objectInstanceHandle);
+      if (objectClassHandle == null) {
+        sendTextMessage("ERROR|Object instance not found");
+        return;
+      }
+
+      // Find federates subscribed to this object class
+      Map<String, String> subscribedFederates = fedEx.getSubscribedFederates(objectClassHandle);
+      
+      // Forward the update to each subscribed federate (except the publisher)
+      for (Map.Entry<String, String> entry : subscribedFederates.entrySet()) {
+        String subscriberName = entry.getKey();
+        if (subscriberName.equals(federateName)) {
+          // Don't send to ourselves
+          continue;
+        }
+
+        // Get the handler for this 
+        // TODO: might want to create a better map, that combines the subscribed federates and their handlers, to avoid looking up the handler each time
+        NetnBusServerReceiver subscriberHandler = context.getFederateHandler(subscriberName);
+        if (subscriberHandler != null) {
+          try {
+            // Send the attribute update as a binary message
+            byte[] serializedUpdate = BinaryHelper.serializeRequestObject(request);
+            subscriberHandler.sendMessage(serializedUpdate);
+            System.out.println("[ServerReceiver] Forwarded attribute update to federate: " + subscriberName);
+          } catch (Exception e) {
+            System.err.println("[ServerReceiver] Failed to forward update to " + subscriberName + ": " + e.getMessage());
+          }
+        }
+      }
+
+      System.out.println("[ServerReceiver] Federate " + federateName + 
+          " updated " + attributeValues.size() + 
+          " attribute(s) for object instance: " + objectInstanceHandle +
+          " (forwarded to " + (subscribedFederates.size() - 1) + " subscriber(s))");
+
+      sendTextMessage("OK|ATTRIBUTE_VALUES_UPDATED");
+    } catch (Exception e) {
+      System.err.println("[ServerReceiver] Error updating attribute values: " + e.getMessage());
+      sendTextMessage("ERROR|" + e.getMessage());
     }
   }
 

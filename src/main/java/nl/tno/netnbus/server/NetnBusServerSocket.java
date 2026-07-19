@@ -49,10 +49,10 @@ public class NetnBusServerSocket {
             "[SocketServer] Connection accepted from: " + clientSocket.getRemoteSocketAddress());
 
         // Allow the client handler to manage the connection
-        NetnBusClientHandler handler = new NetnBusClientHandler(clientSocket, this.context);
+        NetnBusServerReceiver clientReceiver = new NetnBusServerReceiver(clientSocket, this.context);
 
         // Add client handling on a separate thread
-        executor.submit(() -> handler.handle());
+        executor.submit(() -> clientReceiver.handle());
       } catch (IOException e) {
         if (running) {
           System.err.println("[NetnBus] Error accepting connection: " + e.getMessage());

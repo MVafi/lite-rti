@@ -187,6 +187,9 @@ public class NetnBusAmbassador implements RTIambassador {
           AlreadyConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
+    
+    // Store the federate ambassador reference in the client context for callbacks
+    clientContext.setFederateAmbassador(federateReference);
 
     // Used as UUID for the connected federate, not very robust but sufficient for now
     String federateName =
@@ -839,7 +842,9 @@ public class NetnBusAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            socketClient.updateAttributeValues(theObject, theAttributes, userSuppliedTag);
+          }
 
   @Override
   public MessageRetractionReturn updateAttributeValues(
@@ -856,7 +861,7 @@ public class NetnBusAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new RTIinternalError("updateAttributeValues with LogicalTime not implemented");
   }
 
   @Override
@@ -2863,4 +2868,53 @@ public class NetnBusAmbassador implements RTIambassador {
   //         RTIinternalError {
   //   return null;
   // }
+
+//   /**
+//    * Called by the socket when receiving attribute updates from other federates.
+//    * This delivers the attribute values to the federate via its FederateAmbassador callback.
+//    *
+//    * @param objectInstanceHandle The object instance handle
+//    * @param attributeValues Map of attribute handle -> byte[] values from the server
+//    */
+//   public void deliverReflectedAttributeValues(
+//       int objectInstanceHandle, java.util.Map<Integer, byte[]> attributeValues) {
+//     if (federateAmbassador == null) {
+//       System.err.println("[NetnBusAmbassador] No federate ambassador set, cannot deliver reflected attributes");
+//       return;
+//     }
+
+//     try {
+//       // Convert Map<Integer, byte[]> to AttributeHandleValueMap
+//       AttributeHandleValueMap attrMap = getAttributeHandleValueMapFactory().create(attributeValues.size());
+      
+//       for (java.util.Map.Entry<Integer, byte[]> entry : attributeValues.entrySet()) {
+//         int attrHandle = entry.getKey();
+//         byte[] value = entry.getValue();
+//         attrMap.put(
+//             new nl.tno.netnbus.impl.AttributeHandleImpl(attrHandle),
+//             value);
+//       }
+
+//       // Create ObjectInstanceHandle from the integer
+//       ObjectInstanceHandle objHandle = new nl.tno.netnbus.impl.ObjectInstanceHandleImpl(objectInstanceHandle);
+
+//       // Call the federate ambassador's reflectAttributeValues callback
+//       // Note: Some HLA implementations have different signatures - this calls the most common one
+//       federateAmbassador.reflectAttributeValues(
+//           objHandle,
+//           attrMap,
+//           null, // userSuppliedTag
+//           OrderType.RECEIVE,
+//           null, // transportationTypeHandle
+//           null); // reflectInfo
+
+//       System.out.println(
+//           "[NetnBusAmbassador] Delivered reflected attribute values for object instance: "
+//               + objectInstanceHandle);
+//     } catch (Exception e) {
+//       System.err.println(
+//           "[NetnBusAmbassador] Error delivering reflected attribute values: " + e.getMessage());
+//       e.printStackTrace();
+//     }
+//   }
 }

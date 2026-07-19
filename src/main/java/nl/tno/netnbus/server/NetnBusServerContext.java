@@ -13,7 +13,8 @@ import nl.tno.netnbus.fom.FederationObjectModel;
 public class NetnBusServerContext {
 
   private final Set<String> connectedFederates = ConcurrentHashMap.newKeySet();
-  private final Map<String, FederationExecution> federationExecutions = new ConcurrentHashMap<>();
+  private final Map<String, FederationExecution> federationExecutions = new ConcurrentHashMap<>();  //Keep track of all federation executions by name
+  private final Map<String, NetnBusServerReceiver> federateHandlers = new ConcurrentHashMap<>();     //Keep track of all federate handlers by federate name
 
   public NetnBusServerContext() {}
 
@@ -98,5 +99,20 @@ public class NetnBusServerContext {
       return null;
     }
     return fedEx.getFOM();
+  }
+
+  // ---- Federate Handler Management ----
+  // Keeping track of the client handlers for each federate, so that we can send messages to them when needed
+
+  void registerFederateHandler(String federateName, NetnBusServerReceiver handler) {
+    federateHandlers.put(federateName, handler);
+  }
+
+  void unregisterFederateHandler(String federateName) {
+    federateHandlers.remove(federateName);
+  }
+
+  NetnBusServerReceiver getFederateHandler(String federateName) {
+    return federateHandlers.get(federateName);
   }
 }

@@ -7,24 +7,34 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import hla.rti1516e.AttributeHandle;
 import hla.rti1516e.AttributeHandleSet;
+import hla.rti1516e.AttributeHandleValueMap;
 import hla.rti1516e.ObjectClassHandle;
 import hla.rti1516e.ObjectInstanceHandle;
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import nl.tno.netnbus.client.requests.CreateFederationRequest;
-import nl.tno.netnbus.impl.ObjectInstanceHandleImpl;
+import nl.tno.netnbus.client.requests.MessageObject;
+import nl.tno.netnbus.client.requests.UpdateAttributeValuesRequest;
 import nl.tno.netnbus.fom.FederationObjectModel;
 import nl.tno.netnbus.fom.FomMerger;
 import nl.tno.netnbus.fom.parser.FomParser;
+import nl.tno.netnbus.impl.ObjectInstanceHandleImpl;
 import nl.tno.netnbus.server.NetnBusServerSocket;
 import nl.tno.netnbus.utils.BinaryHelper;
 
 // TODO check this file
 /**
- * Socket client for connecting to the NETN Bus server. Used by federates to connect to a running
- * NetnBusApplication.
+ * Socket client for connecting to the NETN Bus server. This class handles the communication towards the server.
  */
 public class NetnBusClientSocket {
 
@@ -35,6 +45,11 @@ public class NetnBusClientSocket {
   private DataInputStream in;
   private boolean connected = false;
   private NetnBusClientContext clientContext;
+  private NetnBusClientReceiver clientReceiver;
+
+  // Map for storing pending responses by request handle
+  private final Map<Integer, CompletableFuture<String>> pendingResponses = new ConcurrentHashMap<>();
+  private final AtomicInteger requestId = new AtomicInteger(0);
 
 //   1. Sender (CreateFederation Handler)
 //    ├─ ObjectModel fom (in memory)
@@ -83,12 +98,18 @@ public class NetnBusClientSocket {
       System.out.println("[NetnBusClient] Sending CONNECT|" + federateName);
       sendTextMessage("CONNECT|" + federateName);
 
-      // Wait for response
+      // Blocking, Wait for response
       System.out.println("[NetnBusClient] Waiting for response...");
       String response = receiveTextMessage();
       System.out.println("[NetnBusClient] Got response: " + response);
+
       if (response != null && response.startsWith("OK|CONNECTED")) {
         this.connected = true;
+
+        // Spin up a client receiver thread for handling messages received from the server
+        this.clientReceiver = new NetnBusClientReceiver(this.socket, this.clientContext, this);
+        ExecutorService executor = Executors.newCachedThreadPool();
+        executor.submit(() -> clientReceiver.handle());
         return true;
       }
     } catch (IOException e) {
@@ -110,7 +131,7 @@ public class NetnBusClientSocket {
     }
   }
 
-  public void checkConnection() {
+  private void checkConnection() {
     if (!this.connected) {
       System.err.println("[NetnBusClient] Not connected to bus, cannot create federation");
     }
@@ -121,10 +142,43 @@ public class NetnBusClientSocket {
   //   return connected;
   // }
 
+  // ===== Messaging API =====
+  
+  private String serializeSendRequestAndWait(MessageObject request) throws IOException {
+    byte[] requestBytes = BinaryHelper.serializeRequestObject(request);
+    CompletableFuture<String> future = new CompletableFuture<>();
+    pendingResponses.put(request.getMsgHandle(), future);
+    
+    try {
+        sendMessage(requestBytes); // Send binary message
+        return future.get(5, TimeUnit.SECONDS); // Wait for response with timeout
+    } catch (TimeoutException e) {
+        throw new IOException("Timeout waiting for response from server", e);
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException("Interrupted while waiting for response", e);
+    } catch (Exception e) {
+        throw new IOException("Error waiting for response: " + e.getMessage(), e);
+    } finally {
+        pendingResponses.remove(request.getMsgHandle());
+    }
+  }
+  
+  /**
+   * Complete a pending response. Called by NetnBusClientReceiver when a response is received.
+   */
+  public void completeResponse(int msgHandle, String responseMsg) {
+    CompletableFuture<String> future = pendingResponses.get(msgHandle);
+    if (future != null) {
+        future.complete(responseMsg);
+    } else {
+        System.err.println("[NetnBusClient] No pending response found for message handle: " + msgHandle);
+    }
+  }
+
   // ===== Federation API =====
 
-  public void createFederationExecution(String federationExecutionName, URL[] fomModules)
-      throws FederationExecutionAlreadyExists, Exception {
+  public void createFederationExecution(String federationExecutionName, URL[] fomModules) throws FederationExecutionAlreadyExists, Exception {
     this.checkConnection();
 
     if (federationExecutionName == null) {
@@ -160,21 +214,12 @@ public class NetnBusClientSocket {
     FederationObjectModel combinedFOM = FomMerger.merge( foms );
     System.out.println("[NetnBusClient] Merged FOM modules into combined FOM");
 
-    // Try sending serialized message
+    // Send serialized message and wait for response
     try {
-      CreateFederationRequest request = new CreateFederationRequest(federationExecutionName, combinedFOM);
-      byte[] requestBytes = BinaryHelper.serializeRequestObject(request);
-
-      // Send serialized request to server
       System.out.println("[NetnBusClient] Sending federation creation request to server...");
-      sendMessage(requestBytes);
-    } catch (IOException e) {
-      throw new RuntimeException("[NetnBusClient] Error creating federation: " + e.getMessage(), e);
-    }
+      CreateFederationRequest request = new CreateFederationRequest(federationExecutionName, combinedFOM, requestId.incrementAndGet());
+      String response = serializeSendRequestAndWait(request);
 
-    // Wait for response from server
-    try {
-      String response = receiveTextMessage();
       if (response == null) {
         throw new RuntimeException(
             "[NetnBusClient] No response received from server when creating federation: "
@@ -187,10 +232,13 @@ public class NetnBusClientSocket {
       } else {
         throw new RuntimeException("[NetnBusClient] Failed to create federation: " + response);
       }
+    } catch (FederationExecutionAlreadyExists e) {
+      throw e;
     } catch (IOException e) {
-      throw new RuntimeException("[NetnBusClient] Error receiving response from server: " + e.getMessage(), e);
+      throw new RuntimeException("[NetnBusClient] Error creating federation: " + e.getMessage(), e);
     }
   }
+
 
 
   public void joinFederationExecution(String federateType, String federationExecutionName, URL[] fomModules) {
@@ -489,6 +537,52 @@ public class NetnBusClientSocket {
       System.err.println("[NetnBusClient] Error getting object instance name: " + e.getMessage());
     }
     return null;
+  }
+
+  public void updateAttributeValues(
+      ObjectInstanceHandle theObject, 
+      AttributeHandleValueMap theAttributes, 
+      byte[] userSuppliedTag) {
+    this.checkConnection();
+    try {
+      if (theObject == null) {
+        throw new RuntimeException("[NetnBusClient] ObjectInstanceHandle cannot be null");
+      }
+      if (theAttributes == null || theAttributes.isEmpty()) {
+        throw new RuntimeException("[NetnBusClient] AttributeHandleValueMap cannot be null or empty");
+      }
+
+      // Extract handle value from ObjectInstanceHandleImpl
+      // Todo: understand this whole process, why is it necessary to cast to ObjectInstanceHandleImpl?
+      int objectHandle = ((ObjectInstanceHandleImpl) theObject).getHandle();
+
+      // Create an UpdateAttributeValuesRequest and serialize it
+      // UpdateAttributeValuesRequest request = new UpdateAttributeValuesRequest(
+      //     objectHandle,
+      //     theAttributes,
+      //     userSuppliedTag);
+      
+      // byte[] requestBytes = BinaryHelper.serializeRequestObject(request);
+
+      // Send serialized request to server
+      System.out.println("[NetnBusClient] Sending update attribute values request for object instance: " + objectHandle);
+      // sendMessage(requestBytes);
+
+      // Wait for response from server
+      String response = receiveTextMessage();
+      if (response == null) {
+        throw new RuntimeException("[NetnBusClient] No response received from server when updating attribute values");
+      } else if (response.startsWith("OK|")) {
+        System.out.println("[NetnBusClient] Successfully updated attribute values for object instance: " + objectHandle);
+      } else if (response.startsWith("ERROR|")) {
+        String errorMsg = response.substring(6);
+        throw new RuntimeException("[NetnBusClient] Server error updating attribute values: " + errorMsg);
+      } else {
+        throw new RuntimeException("[NetnBusClient] Unexpected response from server: " + response);
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("[NetnBusClient] Error updating attribute values: " + e.getMessage(), e);
+    }
   }
 
   // ===== Interactions API =====
