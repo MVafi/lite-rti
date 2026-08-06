@@ -1,8 +1,9 @@
-package nl.tno.netnbus.client.requests;
+package nl.tno.netnbus.messages.requests;
 
 import nl.tno.netnbus.fom.FederationObjectModel;
+import nl.tno.netnbus.messages.MessageObject;
 
-public class CreateFederationRequest extends MessageObject {
+public class RequestCreateFederation extends MessageObject {
   
   // Serialization ID for this class
   private static final long serialVersionUID = 98121116105109L;
@@ -10,7 +11,7 @@ public class CreateFederationRequest extends MessageObject {
   private String federationName;
   private FederationObjectModel fom;
 
-  public CreateFederationRequest(String federationName, FederationObjectModel fom, int requestHandle) {
+  public RequestCreateFederation(String federationName, FederationObjectModel fom, int requestHandle) {
     super(requestHandle);
     this.federationName = federationName;
     this.fom = fom;

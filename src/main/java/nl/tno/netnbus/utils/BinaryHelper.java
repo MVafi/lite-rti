@@ -16,10 +16,15 @@ public class BinaryHelper {
         return requestBytes;
     }
 
-    static public Object deserializeBinaryMessage(byte[] data) throws IOException, ClassNotFoundException {
+    static public Object deserializeBinaryMessage(byte[] data) throws IOException {
         ByteArrayInputStream bais = new ByteArrayInputStream(data);     // Create an in-memory stream from the received bytes
         ObjectInputStream ois = new ObjectInputStream(bais);            // Wrap the stream with ObjectInputStream to deserialize Java objects
-        Object obj = ois.readObject();                                  // Read and reconstruct the object from the byte stream
+        Object obj = null;
+        try{
+            obj = ois.readObject();                                     // Read and reconstruct the object from the byte stream
+        } catch (ClassNotFoundException e) {
+            throw new IOException("Class not found during deserialization", e);
+        }
         return obj;
     }
 }

@@ -1,4 +1,4 @@
-package nl.tno.netnbus.client.requests;
+package nl.tno.netnbus.messages;
 import java.io.Serializable;
 
 public class MessageObject implements Serializable, Cloneable {

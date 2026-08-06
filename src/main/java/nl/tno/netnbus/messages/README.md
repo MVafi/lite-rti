@@ -1,0 +1,1 @@
+This folder contains the request that the client sends to the server, aswell as the responses the client receives from the server. The objects are filled and serialized before sending to the receivers over TCP.

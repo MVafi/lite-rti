@@ -145,7 +145,6 @@ import hla.rti1516e.exceptions.TimeConstrainedIsNotEnabled;
 import hla.rti1516e.exceptions.TimeRegulationAlreadyEnabled;
 import hla.rti1516e.exceptions.TimeRegulationIsNotEnabled;
 import hla.rti1516e.exceptions.UnsupportedCallbackModel;
-import nl.tno.netnbus.impl.ObjectInstanceHandleImpl;
 import nl.tno.netnbus.utils.AttributeHandleSetFactoryImpl;
 import nl.tno.netnbus.utils.AttributeHandleValueMapFactoryImpl;
 
@@ -153,13 +152,10 @@ public class NetnBusAmbassador implements RTIambassador {
   // Todo: remove oorti logic that is inherited
   // todo: remove all output debug lines
 
-  //   protected final NetnBusContext context;
   private final NetnBusClientContext clientContext;
-  private final NetnBusClientSocket socketClient;
 
   public NetnBusAmbassador() {
     this.clientContext = new NetnBusClientContext();
-    this.socketClient = new NetnBusClientSocket(clientContext);
   }
 
   ////////////////////////////////////
@@ -187,21 +183,22 @@ public class NetnBusAmbassador implements RTIambassador {
           AlreadyConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-    
-    // Store the federate ambassador reference in the client context for callbacks
-    clientContext.setFederateAmbassador(federateReference);
 
     // Used as UUID for the connected federate, not very robust but sufficient for now
     String federateName =
         federateReference.getClass().getName() + "@" + System.identityHashCode(federateReference);
 
-    System.out.println(federateReference);
+    System.out.println("[Ambassador] Connecting federate: " + federateName);  
 
     int maxRetries = 5;
     int retryDelay = 2000; // milliseconds
 
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
-      if (socketClient.connect(federateName)) {
+      if (clientContext.connectFederate(federateName)) {
+
+        // Store the federate ambassador reference in the client context for callbacks
+        System.out.println("[Ambassador] Setting FederateAmbassador for: " + federateName);  
+        clientContext.setFederateAmbassador(federateReference);
         return;
       }
 
@@ -239,7 +236,7 @@ public class NetnBusAmbassador implements RTIambassador {
   public void disconnect()
       throws FederateIsExecutionMember, CallNotAllowedFromWithinCallback, RTIinternalError {
     System.out.println("Disconnect call 1");
-    socketClient.disconnect();
+    clientContext.disconnect();
   }
 
   @Override
@@ -292,9 +289,8 @@ public class NetnBusAmbassador implements RTIambassador {
   @Override
   public void createFederationExecution(String federationExecutionName, URL[] fomModules)
       throws FederationExecutionAlreadyExists, NotConnected, RTIinternalError {
-    // For now, just create in context (no FDD/MIM parsing)
     try {
-      socketClient.createFederationExecution(federationExecutionName, fomModules);
+      clientContext.createFederationExecution(federationExecutionName, fomModules);
       System.out.println("[NetnBusAmbassador] Federation created: " + federationExecutionName);
     } catch (Exception e) {
       throw new RTIinternalError(e.getMessage());
@@ -358,12 +354,13 @@ public class NetnBusAmbassador implements RTIambassador {
 
     // For now, just join (no FDD/MIM parsing)
     try {
+        clientContext.joinFederationExecution(federateType, federationExecutionName, additionalFomModules);
       System.out.println(
           "[NetnBusAmbassador] Federation joined: "
               + federationExecutionName
               + " as federate type: "
               + federateType);
-      socketClient.joinFederationExecution(federateType, federationExecutionName, additionalFomModules);
+    
     } catch (Exception e) {
       throw new RTIinternalError(e.getMessage());
     }
@@ -564,7 +561,7 @@ public class NetnBusAmbassador implements RTIambassador {
       }
     }
     System.out.println("OLD HLA PUBLISH CALL");
-    socketClient.publishObjectClassAttributes(theClass, attributeList);
+    clientContext.publishObjectClassAttributes(theClass, attributeList);
   }
 
   @Override
@@ -618,7 +615,6 @@ public class NetnBusAmbassador implements RTIambassador {
           NotConnected,
           RTIinternalError {
 
-    System.out.println(">>>>>> NETN BUS AMBASSADOR SUBSCRIBE CALL");
     if (theClass == null) {
       throw new RTIinternalError("ObjectClassHandle cannot be null");
     }
@@ -630,8 +626,7 @@ public class NetnBusAmbassador implements RTIambassador {
         }
       }
     }
-    System.out.println("OLD HLA SUBSCRIBE CALL");
-    socketClient.subscribeObjectClassAttributes(theClass, attributeList);
+    clientContext.subscribeObjectClassAttributes(theClass, attributeList);
   }
 
   @Override
@@ -776,14 +771,15 @@ public class NetnBusAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-
+    
     if (theClass == null) {
       throw new RTIinternalError("ObjectClassHandle cannot be null");
     }
 
     try {
       // Delegate to socket client to register object instance
-      return socketClient.registerObjectInstance(theClass);
+      return clientContext.registerObjectInstance(theClass, theClass.toString());
+      
     } catch (RuntimeException e) {
       // Convert RuntimeException to appropriate RTI exception
       String errorMsg = e.getMessage();
@@ -843,7 +839,7 @@ public class NetnBusAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-            socketClient.updateAttributeValues(theObject, theAttributes, userSuppliedTag);
+            clientContext.updateAttributeValues(theObject, theAttributes, userSuppliedTag);
           }
 
   @Override
@@ -1702,15 +1698,13 @@ public class NetnBusAmbassador implements RTIambassador {
         throw new RTIinternalError("ObjectInstanceHandle cannot be null");
       }
       
-      int handle = ((ObjectInstanceHandleImpl) theHandle).getHandle();
-      
       // Query server for the object instance name
-      String name = socketClient.getObjectInstanceName(handle);
+      String name = clientContext.getObjectInstanceName(theHandle);
       if (name != null) {
-        System.out.println("[NetnBusAmbassador] Retrieved object instance name: " + name + " for handle: " + handle);
+        System.out.println("[NetnBusAmbassador] Retrieved object instance name: " + name + " for handle: " + theHandle);
         return name;
       } else {
-        throw new ObjectInstanceNotKnown("Object instance with handle " + handle + " not found");
+        throw new ObjectInstanceNotKnown("Object instance with handle " + theHandle + " not found");
       }
     } catch (ObjectInstanceNotKnown e) {
       throw e;
@@ -1779,7 +1773,8 @@ public class NetnBusAmbassador implements RTIambassador {
 
     System.out.println("HIERrrrrrrrrrrrrr 1");
 
-    int handle = socketClient.getInteractionClassHandle(theName);
+    // int handle = socketClient.getInteractionClassHandle(theName);
+    int handle = -1;
 
     // Check for error
     if (handle == -1) {
@@ -1820,7 +1815,8 @@ public class NetnBusAmbassador implements RTIambassador {
           NotConnected,
           RTIinternalError {
     System.out.println("HIERrrrrrrrrrrrrr1 get param handle");
-    int handle = socketClient.getParameterHandle(theName);
+    // int handle = socketClient.getParameterHandle(theName);
+    int handle = -1;
     if (handle == -1) {
       throw new NameNotFound("Parameter not found: " + theName);
     }

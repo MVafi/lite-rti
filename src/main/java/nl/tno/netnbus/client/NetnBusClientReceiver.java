@@ -1,124 +1,87 @@
 package nl.tno.netnbus.client;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.CompletableFuture;
 
-import nl.tno.netnbus.client.requests.MessageObject;
-import nl.tno.netnbus.client.requests.UpdateAttributeValuesRequest;
+import nl.tno.netnbus.AbstractNetnBusReceiver;
+import nl.tno.netnbus.messages.MessageObject;
+import nl.tno.netnbus.messages.requests.UpdateAttributeValues;
+import nl.tno.netnbus.messages.responses.ResponseFederateConnected;
+import nl.tno.netnbus.messages.responses.ResponseFederationCreated;
+import nl.tno.netnbus.messages.responses.ResponseFederationFom;
+import nl.tno.netnbus.messages.responses.ResponseJoinFederation;
+import nl.tno.netnbus.messages.responses.ResponseObjectInstanceName;
+import nl.tno.netnbus.messages.responses.ResponsePublishObject;
+import nl.tno.netnbus.messages.responses.ResponseRegisterObjectInstance;
+import nl.tno.netnbus.messages.responses.ResponseSubscribeObject;
 import nl.tno.netnbus.utils.BinaryHelper;
 
 /**
- * Transportation layer for handling messages received by the server (client-side), handling communication that is received from the server side
+ * Transportation layer for handling binary messages received by the server (client-side), handling communication that is received from the server side
  */
+public class NetnBusClientReceiver extends AbstractNetnBusReceiver {
 
-// TODO: clean up this class, and create an abstract message handler
-public class NetnBusClientReceiver {
+  private final NetnBusClientContext clientContext;
 
-  private final Socket socket;                    // TCP connection to server
-  private final NetnBusClientContext context;     // Context to handle client (federate) events and state
-  private final NetnBusClientSocket clientSocket; // Reference to socket for completing responses
-  private DataInputStream in;  
-
-  // Message type constants (hybrid messaging protocol for easy debugging)
-  private static final byte MSG_TEXT = 0;
-  private static final byte MSG_BINARY = 1; 
-
-
-    NetnBusClientReceiver(Socket socket, NetnBusClientContext context, NetnBusClientSocket clientSocket) {
-        this.socket = socket;
-        this.context = context;
-        this.clientSocket = clientSocket;
-    }
-
-    
-    // Keep handling messages while still receiving them (within separate thread)
-    public void handle() {
-      System.out.println("[ClientReceiver] New connection, starting handler");
-      try {
-      // Data stream from server
-      this.in = new DataInputStream(socket.getInputStream());
-
-      System.out.println("[ClientReceiver] Waiting for messages...");
-      while (true) {
-          try {
-          byte messageType = in.readByte();
-
-          // Handling string messages (for commands and debugging)
-          if (messageType == MSG_TEXT) {
-              String message = in.readUTF();
-              System.out.println("[ClientReceiver] Received: " + message);
-              handleStringMessage(message);
-
-              // Handling binary messages (for HLA)
-          } else if (messageType == MSG_BINARY) {
-              int length = in.readInt();
-              byte[] data = new byte[length];
-              in.readFully(data);
-              System.out.println("[ClientReceiver] Received binary message, " + length + " bytes");
-              handleBinaryMessage(data);
-
-          } else {
-              System.err.println("[ClientReceiver] Unknown message type: " + messageType);
-          }
-          } catch (IOException e) {
-          // Connection closed or error reading
-          throw e;
-          }
-      }
-      } catch (IOException e) {
-      System.out.println("[ClientReceiver] Connection closed: " + e.getMessage());
-      } finally {
-      // Currently this is sometimes done double
-      cleanupClient();
-      }
-    }
-
-  private void cleanupClient() {
-    try {
-      socket.close();
-    } catch (IOException e) {
-      // Ignore
-    }
+  NetnBusClientReceiver(Socket socket, NetnBusClientContext clientContext) throws IOException {
+    super(socket);
+    this.clientContext = clientContext;
   }
 
-  private void handleStringMessage(String message) {
+  // ===== Binary message handling =====
+  
+  @Override
+  protected void handleBinaryMessage(byte[] data) throws IOException {
+    Object obj = BinaryHelper.deserializeBinaryMessage(data);
+    if (!(obj instanceof MessageObject msgObj)) {
+      return;
+    }
+    CompletableFuture<Object> future = clientContext.getPendingResponse(msgObj.getMsgHandle());
+
+    // Route responses, futures created in the clientSender will be completed here when the response is received
     try {
-      System.out.println("[ClientReceiver] Receiving string message: " + message);
+      switch (obj) {
+        case ResponseFederateConnected response -> {
+          clientContext.handleConnectFederateResponse(response.getMsgString());
+          future.complete(response.getMsgString());
+        }
+        case ResponseFederationCreated response -> {
+          clientContext.handleCreateFederationResponse(response.getMsgString());
+          future.complete(response.getMsgString());
+        }
+        case ResponseFederationFom response -> {
+          future.complete(response.getFom()); // Let the future in the clientSender return with the FOM object
+        }
+        case ResponseJoinFederation response -> {
+          clientContext.handleJoinFederationResponse(response.getMsgString());
+          future.complete(response.getMsgString());
+        }
+        case ResponsePublishObject response -> {
+          clientContext.handlePublishObjectResponse(response.getMsgString());
+          future.complete(response.getMsgString());
+        }
+        case ResponseSubscribeObject response -> {
+          clientContext.handleSubscribeObjectResponse(response.getMsgString());
+          future.complete(response.getMsgString());
+        }
+        case ResponseRegisterObjectInstance response -> {
+          future.complete(response.getObjectInstanceHandle()); // Complete with the actual handle object
+        }
+        case ResponseObjectInstanceName response -> {
+          future.complete(response.getObjectInstanceName()); // Complete with the name string
+        }
+        case UpdateAttributeValues update -> {
+          System.out.println("[ClientReceiver] Received UpdateAttributeValues");
+          clientContext.handleUpdateAttributeValues(update);
+        }
+        default -> {
+          throw new RuntimeException("Unknown message type: " + obj.getClass().getName());
+        }
+      }
     } catch (Exception e) {
-      throw new RuntimeException("[ClientReceiver] Interrupted while queuing response: " + e.getMessage(), e);
-      // System.err.println("[ClientReceiver] Interrupted while queuing response: " + e.getMessage());
-      // Thread.currentThread().interrupt();
-    }
-  }
-
-  private void handleBinaryMessage(byte[] data) {
-    try {
-      Object obj = BinaryHelper.deserializeBinaryMessage(data);
-      
-      // Handle different message types
-      if (obj instanceof UpdateAttributeValuesRequest) {
-      } 
-      
-      // Else
-      if (!(obj instanceof MessageObject msgObj)) {
-        System.err.println("[ClientReceiver] Received unknown binary message type: " + obj.getClass().getName());
-        return;
-      }
-
-      if (msgObj.getMsgString().startsWith("OK|FEDERATION_CREATED")) {
-        System.out.println("[ClientReceiver] >>>>>>>>>>>>>>>>> Receiving federation created response: " + msgObj.getMsgString());
-        // context.handleFederationCreated();
-        int msgHandle = msgObj.getMsgHandle();
-        clientSocket.completeResponse(msgHandle, msgObj.getMsgString());
-      }
-
-
-
-
-
-    } catch (ClassNotFoundException | IOException e) {
-      System.err.println("[ClientReceiver] Error deserializing binary message: " + e.getMessage());
+      System.err.println("[ClientReceiver] THE FUTURE HAS FAILED: " + e.getMessage());
+      future.completeExceptionally(e);
     }
   }
 }
