@@ -14,7 +14,16 @@ to be Not Supported Features
 
 ==== General Architecture ====
 
-Current implementation involves a centralized TCP server that transfers the messages the the client federates. Current goal is to first implement a working centralized achitecture where TCP is to handle HLA Reliable and UDP Best-Effort messages using Receive Order delivery.
+Current implementation involves a centralized TCP server that transfers the messages to the client federates. Current goal is to first implement a working centralized achitecture where TCP is to handle HLA Reliable and UDP Best-Effort messages using Receive Order delivery.
+
+Current status is that federates can:
+- Connect
+- Create a federation with a supplied fom
+- Join a federation
+- Publish Objects
+- Subscribe Objects
+- Register Object Instances
+(to be added more)
 
 ==== How to run ====
 
