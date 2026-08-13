@@ -3,9 +3,8 @@
 .project
 .settings/
 /bin/
-launch.json
 .devcontainer
-.vscode
+.vscode/settings.json
 nbactions.xml
 nb-configuration.xml
 %LOCALAPPDATA%
