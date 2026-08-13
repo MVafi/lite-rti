@@ -7,10 +7,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import nl.literti.client.LiteRtiClientReceiver;
-import nl.literti.client.LiteRtiClientSender;
-
-/** Socket server for the NETN Bus, handles only the TCP transport */
+/** Socket server for the LiteRti, handles only the TCP transport */
 public class LiteRtiServerSocket {
 
   public static final int DEFAULT_PORT = 4567;
@@ -20,7 +17,7 @@ public class LiteRtiServerSocket {
   private final ExecutorService executor;
   private volatile boolean running = false;
   private final LiteRtiServerContext serverContext;
-  private final AtomicInteger connectionHandleCounter = new AtomicInteger(1); 
+  private final AtomicInteger connectionHandleCounter = new AtomicInteger(1);
 
   public LiteRtiServerSocket(LiteRtiServerContext serverContext) {
     this.executor = Executors.newCachedThreadPool();
@@ -48,7 +45,8 @@ public class LiteRtiServerSocket {
 
         // Establish transport channels
         int connectionHandle = connectionHandleCounter.getAndIncrement();
-        LiteRtiServerReceiver serverReceiver = new LiteRtiServerReceiver(socketToClient, this.serverContext, connectionHandle);
+        LiteRtiServerReceiver serverReceiver =
+            new LiteRtiServerReceiver(socketToClient, this.serverContext, connectionHandle);
 
         // Add client handling on a separate thread
         executor.submit(() -> serverReceiver.handle());

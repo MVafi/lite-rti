@@ -20,7 +20,7 @@ public class UpdateAttributeValues extends MessageObject {
     this.objectInstanceHandle = objectInstanceHandle;
     this.theAttributes = theAttributes;
     this.userSuppliedTag = userSuppliedTag;
-    
+
     // // Convert AttributeHandleValueMap to a serializable Map<Integer, byte[]>
     // this.attributeValues = new HashMap<>();
     // if (theAttributes != null && !theAttributes.isEmpty()) {

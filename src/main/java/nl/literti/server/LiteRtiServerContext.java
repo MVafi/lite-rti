@@ -1,14 +1,13 @@
 package nl.literti.server;
 
+import hla.rti1516e.ObjectInstanceHandle;
+import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
+import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import hla.rti1516e.ObjectInstanceHandle;
-import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
-import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
 import nl.literti.FederationExecution;
 import nl.literti.fom.FederationObjectModel;
 import nl.literti.messages.requests.RequestConnectFederate;
@@ -27,10 +26,15 @@ public class LiteRtiServerContext {
   private final LiteRtiServerSender serverSender;
 
   // Connection map
-  private final Map<Integer, String> connectionHandle2Socket = new ConcurrentHashMap<>();  // This map is used when messages need forwarding to other federates, to find the socket for a given connection handle. These handles are global as they can be re-used for connecting to different federations, unlike federate handles
+  private final Map<Integer, String> connectionHandle2Socket =
+      new ConcurrentHashMap<>(); // This map is used when messages need forwarding to other
+                                 // federates, to find the socket for a given connection handle.
+                                 // These handles are global as they can be re-used for connecting
+                                 // to different federations, unlike federate handles
 
   // Federation map
-  private final Map<String, FederationExecution> federationName2FederationExecutions = new ConcurrentHashMap<>();    // Keep track of all federation executions by federation name
+  private final Map<String, FederationExecution> federationName2FederationExecutions =
+      new ConcurrentHashMap<>(); // Keep track of all federation executions by federation name
 
   public LiteRtiServerContext() {
     this.serverSender = new LiteRtiServerSender();
@@ -38,9 +42,11 @@ public class LiteRtiServerContext {
 
   // ==== Connect Federate =====
 
-  public void handleConnectFederateRequest(Socket socket, RequestConnectFederate reqObj, int connectionHandle) throws IOException {
+  public void handleConnectFederateRequest(
+      Socket socket, RequestConnectFederate reqObj, int connectionHandle) throws IOException {
     registerFederateConnection(socket, connectionHandle);
-    serverSender.sendFederateConnectedResponse(socket, reqObj.getMsgHandle()); //<< this is strictly not needed from the spec
+    serverSender.sendFederateConnectedResponse(
+        socket, reqObj.getMsgHandle()); // << this is strictly not needed from the spec
   }
 
   public void registerFederateConnection(Socket socket, int connectionHandle) {
@@ -49,7 +55,8 @@ public class LiteRtiServerContext {
 
   // ==== Disconnect Federate =====
 
-  public void handleDisconnectFederateRequest(Socket socket, RequestDisconnectFederate reqObj, int connectionHandle) throws IOException {
+  public void handleDisconnectFederateRequest(
+      Socket socket, RequestDisconnectFederate reqObj, int connectionHandle) throws IOException {
     unregisterFederateConnection(connectionHandle);
   }
 
@@ -59,9 +66,10 @@ public class LiteRtiServerContext {
 
   // ==== Create Federation =====
 
-  public void handleCreateFederationRequest(Socket socket, RequestCreateFederation reqObj) throws IOException {
+  public void handleCreateFederationRequest(Socket socket, RequestCreateFederation reqObj)
+      throws IOException {
     String msg;
-    try{
+    try {
       createFederationExecutionWithFOM(reqObj.getFederationName(), reqObj.getFom());
       msg = "OK|FEDERATION_CREATED";
     } catch (FederationExecutionAlreadyExists e) {
@@ -70,9 +78,10 @@ public class LiteRtiServerContext {
     serverSender.sendFederationCreatedResponse(socket, reqObj.getMsgHandle(), msg);
   }
 
-   void createFederationExecutionWithFOM(String federationName, FederationObjectModel fom) throws FederationExecutionAlreadyExists {
+  void createFederationExecutionWithFOM(String federationName, FederationObjectModel fom)
+      throws FederationExecutionAlreadyExists {
     // TODO: Check if federation already exists??
-    
+
     if (this.federationName2FederationExecutions.containsKey(federationName)) {
       throw new FederationExecutionAlreadyExists("Federation already exists: " + federationName);
     }
@@ -88,7 +97,7 @@ public class LiteRtiServerContext {
   void handleFederationFomRequest(Socket socket, RequestFederationFom reqObj) throws IOException {
     String msg;
     FederationObjectModel fom = null;
-    try{
+    try {
       fom = retreiveFederationFom(reqObj.getFederationName());
       msg = "OK|FEDERATION_FOM_RETRIEVED";
     } catch (FederationExecutionDoesNotExist e) {
@@ -99,7 +108,8 @@ public class LiteRtiServerContext {
     serverSender.sendFederationFomResponse(socket, reqObj.getMsgHandle(), fom, msg);
   }
 
-  FederationObjectModel retreiveFederationFom(String federationName) throws FederationExecutionDoesNotExist {
+  FederationObjectModel retreiveFederationFom(String federationName)
+      throws FederationExecutionDoesNotExist {
     FederationExecution fedEx = this.federationName2FederationExecutions.get(federationName);
     if (fedEx == null) {
       throw new FederationExecutionDoesNotExist("Federation not found: " + federationName);
@@ -111,7 +121,7 @@ public class LiteRtiServerContext {
 
   void handleJoinFederationRequest(Socket socket, RequestJoinFederation reqObj) throws IOException {
     String msg;
-    try{
+    try {
       joinFederationExecution(reqObj.getFederationName(), reqObj.getFederateType());
       msg = "OK|JOINED_FEDERATION";
     } catch (FederationExecutionDoesNotExist e) {
@@ -122,7 +132,8 @@ public class LiteRtiServerContext {
     serverSender.sendJoinFederationResponse(socket, reqObj.getMsgHandle(), msg);
   }
 
-  void joinFederationExecution(String federationName, String federateType) throws FederationExecutionDoesNotExist {
+  void joinFederationExecution(String federationName, String federateType)
+      throws FederationExecutionDoesNotExist {
     FederationExecution fedEx = this.federationName2FederationExecutions.get(federationName);
     if (fedEx == null) {
       throw new FederationExecutionDoesNotExist("Federation not found: " + federationName);
@@ -140,9 +151,11 @@ public class LiteRtiServerContext {
 
   // ==== Publish Object Class =====
 
-  void handlePublishObjectClass(Socket socket, RequestPublishObject reqObj, String federationName, String federateType) throws IOException {   
+  void handlePublishObjectClass(
+      Socket socket, RequestPublishObject reqObj, String federationName, String federateType)
+      throws IOException {
     String msg;
-    
+
     if (federationName == null) {
       msg = "ERROR|FEDERATION_NAME_NOT_PROVIDED";
       serverSender.sendPublishObjectResponse(socket, reqObj.getMsgHandle(), msg);
@@ -156,14 +169,17 @@ public class LiteRtiServerContext {
       return;
     }
 
-    fedEx.publishObjectClass(federateType, reqObj.getObjectClassHandle(), reqObj.getAttributeHandleSet());
+    fedEx.publishObjectClass(
+        federateType, reqObj.getObjectClassHandle(), reqObj.getAttributeHandleSet());
     msg = "OK|OBJECT_CLASS_PUBLISHED";
     serverSender.sendPublishObjectResponse(socket, reqObj.getMsgHandle(), msg);
   }
 
   // ==== Subscribe Object Class =====
 
-  void handleSubscribeObjectClass(Socket socket, RequestSubscribeObject reqObj, String federationName, String federateType) throws IOException {
+  void handleSubscribeObjectClass(
+      Socket socket, RequestSubscribeObject reqObj, String federationName, String federateType)
+      throws IOException {
     String msg;
 
     if (federationName == null) {
@@ -179,14 +195,20 @@ public class LiteRtiServerContext {
       return;
     }
 
-    fedEx.subscribeToObjectClass(federateType, reqObj.getObjectClassHandle(), reqObj.getAttributeHandleSet());
+    fedEx.subscribeToObjectClass(
+        federateType, reqObj.getObjectClassHandle(), reqObj.getAttributeHandleSet());
     msg = "OK|OBJECT_CLASS_SUBSCRIBED";
     serverSender.sendSubscribeObjectResponse(socket, reqObj.getMsgHandle(), msg);
   }
 
   // ==== Register Object Instance =====
 
-  void handleRegisterObjectInstance(Socket socket, RequestRegisterObjectInstance reqObj, String federationName, String federateType) throws IOException {
+  void handleRegisterObjectInstance(
+      Socket socket,
+      RequestRegisterObjectInstance reqObj,
+      String federationName,
+      String federateType)
+      throws IOException {
     String msg;
 
     if (federationName == null) {
@@ -202,12 +224,16 @@ public class LiteRtiServerContext {
       return;
     }
 
-    ObjectInstanceHandle objectInstanceHandle = fedEx.registerObjectInstance(federateType, reqObj.getObjectClassHandle());
+    ObjectInstanceHandle objectInstanceHandle =
+        fedEx.registerObjectInstance(federateType, reqObj.getObjectClassHandle());
     msg = "OK|OBJECT_INSTANCE_REGISTERED";
-    serverSender.sendRegisterObjectInstanceResponse(socket, reqObj.getMsgHandle(), objectInstanceHandle, msg);
+    serverSender.sendRegisterObjectInstanceResponse(
+        socket, reqObj.getMsgHandle(), objectInstanceHandle, msg);
   }
 
-  void handleObjectInstanceNameRequest(Socket socket, RequestObjectInstanceName reqObj, String federationName, String federateType) throws IOException {
+  void handleObjectInstanceNameRequest(
+      Socket socket, RequestObjectInstanceName reqObj, String federationName, String federateType)
+      throws IOException {
     String msg;
 
     if (federationName == null) {
@@ -225,7 +251,8 @@ public class LiteRtiServerContext {
 
     String objectInstanceName = fedEx.getObjectInstanceName(reqObj.getObjectInstanceHandle());
     msg = "OK|OBJECT_INSTANCE_NAME_RETRIEVED";
-    serverSender.sendObjectInstanceNameResponse(socket, reqObj.getMsgHandle(), objectInstanceName, msg);
+    serverSender.sendObjectInstanceNameResponse(
+        socket, reqObj.getMsgHandle(), objectInstanceName, msg);
   }
 
   // ===== ONLY FOR DEBUG ATM, might delete this later =====
@@ -241,5 +268,4 @@ public class LiteRtiServerContext {
   public FederationExecution getFederation(String federationName) {
     return this.federationName2FederationExecutions.get(federationName);
   }
-
 }

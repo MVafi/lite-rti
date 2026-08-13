@@ -15,5 +15,4 @@ public class ResponseRegisterObjectInstance extends MessageObject {
   public ObjectInstanceHandle getObjectInstanceHandle() {
     return objectInstanceHandle;
   }
-    
 }

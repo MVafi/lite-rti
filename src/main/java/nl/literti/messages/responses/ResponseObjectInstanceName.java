@@ -4,7 +4,7 @@ import nl.literti.messages.MessageObject;
 
 public class ResponseObjectInstanceName extends MessageObject {
 
-    String objectInstanceName;
+  String objectInstanceName;
 
   public ResponseObjectInstanceName(int msgHandle, String objectInstanceName) {
     super(msgHandle);

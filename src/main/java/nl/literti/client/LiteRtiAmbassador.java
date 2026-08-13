@@ -1,8 +1,5 @@
 package nl.literti.client;
 
-import java.net.URL;
-import java.util.Set;
-
 import hla.rti1516e.AttributeHandle;
 import hla.rti1516e.AttributeHandleFactory;
 import hla.rti1516e.AttributeHandleSet;
@@ -145,6 +142,8 @@ import hla.rti1516e.exceptions.TimeConstrainedIsNotEnabled;
 import hla.rti1516e.exceptions.TimeRegulationAlreadyEnabled;
 import hla.rti1516e.exceptions.TimeRegulationIsNotEnabled;
 import hla.rti1516e.exceptions.UnsupportedCallbackModel;
+import java.net.URL;
+import java.util.Set;
 import nl.literti.utils.AttributeHandleSetFactoryImpl;
 import nl.literti.utils.AttributeHandleValueMapFactoryImpl;
 
@@ -188,7 +187,7 @@ public class LiteRtiAmbassador implements RTIambassador {
     String federateName =
         federateReference.getClass().getName() + "@" + System.identityHashCode(federateReference);
 
-    System.out.println("[Ambassador] Connecting federate: " + federateName);  
+    System.out.println("[Ambassador] Connecting federate: " + federateName);
 
     int maxRetries = 5;
     int retryDelay = 2000; // milliseconds
@@ -197,7 +196,7 @@ public class LiteRtiAmbassador implements RTIambassador {
       if (clientContext.connectFederate(federateName)) {
 
         // Store the federate ambassador reference in the client context for callbacks
-        System.out.println("[Ambassador] Setting FederateAmbassador for: " + federateName);  
+        System.out.println("[Ambassador] Setting FederateAmbassador for: " + federateName);
         clientContext.setFederateAmbassador(federateReference);
         return;
       }
@@ -354,13 +353,14 @@ public class LiteRtiAmbassador implements RTIambassador {
 
     // For now, just join (no FDD/MIM parsing)
     try {
-        clientContext.joinFederationExecution(federateType, federationExecutionName, additionalFomModules);
+      clientContext.joinFederationExecution(
+          federateType, federationExecutionName, additionalFomModules);
       System.out.println(
           "[LiteRtiAmbassador] Federation joined: "
               + federationExecutionName
               + " as federate type: "
               + federateType);
-    
+
     } catch (Exception e) {
       throw new RTIinternalError(e.getMessage());
     }
@@ -380,9 +380,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
     try {
-        return joinFederationExecution(federateType, federationExecutionName, new URL[] {});
+      return joinFederationExecution(federateType, federationExecutionName, new URL[] {});
     } catch (Exception e) {
-        throw new RTIinternalError(e.getMessage());
+      throw new RTIinternalError(e.getMessage());
     }
   }
 
@@ -397,9 +397,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
     try {
-        return joinFederationExecution(federateType, federationExecutionName, new URL[] {});
+      return joinFederationExecution(federateType, federationExecutionName, new URL[] {});
     } catch (Exception e) {
-        throw new RTIinternalError(e.getMessage());
+      throw new RTIinternalError(e.getMessage());
     }
   }
 
@@ -771,7 +771,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    
+
     if (theClass == null) {
       throw new RTIinternalError("ObjectClassHandle cannot be null");
     }
@@ -779,7 +779,7 @@ public class LiteRtiAmbassador implements RTIambassador {
     try {
       // Delegate to socket client to register object instance
       return clientContext.registerObjectInstance(theClass, theClass.toString());
-      
+
     } catch (RuntimeException e) {
       // Convert RuntimeException to appropriate RTI exception
       String errorMsg = e.getMessage();
@@ -802,7 +802,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    
+
     throw new RTIinternalError("Not implemented method");
     // if (theClass == null) {
     //   throw new RTIinternalError("ObjectClassHandle cannot be null");
@@ -819,10 +819,12 @@ public class LiteRtiAmbassador implements RTIambassador {
     //   // Convert RuntimeException to appropriate RTI exception
     //   String errorMsg = e.getMessage();
     //   if (errorMsg != null && errorMsg.contains("has not published")) {
-    //     throw new ObjectClassNotPublished("Object class has not been published by this federate");
+    //     throw new ObjectClassNotPublished("Object class has not been published by this
+    // federate");
     //   }
     //   if (errorMsg != null && errorMsg.contains("already in use")) {
-    //     throw new ObjectInstanceNameInUse("Object instance name '" + theObjectName + "' is already in use");
+    //     throw new ObjectInstanceNameInUse("Object instance name '" + theObjectName + "' is
+    // already in use");
     //   }
     //   throw new RTIinternalError("Failed to register object instance: " + errorMsg);
     // }
@@ -839,8 +841,8 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-            clientContext.updateAttributeValues(theObject, theAttributes, userSuppliedTag);
-          }
+    clientContext.updateAttributeValues(theObject, theAttributes, userSuppliedTag);
+  }
 
   @Override
   public MessageRetractionReturn updateAttributeValues(
@@ -1662,7 +1664,7 @@ public class LiteRtiAmbassador implements RTIambassador {
   @Override
   public ObjectClassHandle getObjectClassHandle(String theName)
       throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    
+
     try {
       return clientContext.getObjectClassHandle(theName);
     } catch (NameNotFound e) {
@@ -1697,11 +1699,15 @@ public class LiteRtiAmbassador implements RTIambassador {
       if (theHandle == null) {
         throw new RTIinternalError("ObjectInstanceHandle cannot be null");
       }
-      
+
       // Query server for the object instance name
       String name = clientContext.getObjectInstanceName(theHandle);
       if (name != null) {
-        System.out.println("[LiteRtiAmbassador] Retrieved object instance name: " + name + " for handle: " + theHandle);
+        System.out.println(
+            "[LiteRtiAmbassador] Retrieved object instance name: "
+                + name
+                + " for handle: "
+                + theHandle);
         return name;
       } else {
         throw new ObjectInstanceNotKnown("Object instance with handle " + theHandle + " not found");
@@ -2150,5 +2156,4 @@ public class LiteRtiAmbassador implements RTIambassador {
   public LogicalTimeFactory getTimeFactory() throws FederateNotExecutionMember, NotConnected {
     return null;
   }
-
 }

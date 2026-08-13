@@ -6,11 +6,11 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import nl.literti.server.LiteRtiServerSocket;
 
 /**
- * Socket client for connecting to the NETN Bus server. This class sets up communication channels for the communication towards the server.
+ * Socket client for connecting to the LiteRti server. This class sets up communication channels for
+ * the communication towards the server.
  */
 public class LiteRtiClientSocket {
 
@@ -20,7 +20,7 @@ public class LiteRtiClientSocket {
   private DataOutputStream out;
   private DataInputStream in;
   private boolean connected = false;
-  
+
   private LiteRtiClientSender clientSender;
   private LiteRtiClientReceiver clientReceiver;
 
@@ -39,7 +39,7 @@ public class LiteRtiClientSocket {
       // Start the receiver in a separate thread to listen for incoming messages
       ExecutorService executor = Executors.newCachedThreadPool();
       executor.submit(() -> clientReceiver.handle());
-      
+
     } catch (IOException e) {
       System.err.println("[ClientSocket] Failed to connect to LiteRti at " + host + ":" + port);
       System.err.println("[ClientSocket] Is LiteRtiApplication running? Error: " + e.getMessage());
@@ -61,7 +61,7 @@ public class LiteRtiClientSocket {
   }
 
   public void cleanup() {
-    if (socket.isConnected() || !socket.isClosed()){
+    if (socket.isConnected() || !socket.isClosed()) {
       try {
         socket.close();
       } catch (IOException e) {
@@ -69,5 +69,4 @@ public class LiteRtiClientSocket {
       }
     }
   }
-
 }

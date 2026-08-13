@@ -7,5 +7,4 @@ public class ResponseJoinFederation extends MessageObject {
   public ResponseJoinFederation(int msgHandle) {
     super(msgHandle);
   }
-    
 }

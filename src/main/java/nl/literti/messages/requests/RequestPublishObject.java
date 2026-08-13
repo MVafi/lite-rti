@@ -8,8 +8,9 @@ public class RequestPublishObject extends MessageObject {
 
   private ObjectClassHandle ObjectClass;
   private AttributeHandleSet AttributeList;
-    
-  public RequestPublishObject(ObjectClassHandle theClass, AttributeHandleSet attributeList, int requestHandle) {
+
+  public RequestPublishObject(
+      ObjectClassHandle theClass, AttributeHandleSet attributeList, int requestHandle) {
     super(requestHandle);
     this.ObjectClass = theClass;
     this.AttributeList = attributeList;

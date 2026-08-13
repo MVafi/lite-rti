@@ -1,7 +1,6 @@
 package nl.literti.fom;
 
 import java.io.Serializable;
-
 import nl.literti.fom.enums.OrderEnum;
 import nl.literti.fom.enums.SharingEnum;
 import nl.literti.fom.enums.TransportEnum;
@@ -22,7 +21,7 @@ public class FomAttributeClass implements Serializable {
     this.name = name;
     this.datatype = datatype;
     this.handle = handle;
-    this.order     = OrderEnum.TIMESTAMP;
+    this.order = OrderEnum.TIMESTAMP;
     this.transport = TransportEnum.RELIABLE;
     // this.sharing   = Sharing.NEITHER;
     this.container = null;
@@ -56,14 +55,12 @@ public class FomAttributeClass implements Serializable {
     this.handle = handle;
   }
 
-  public OrderEnum getOrder()
-  {
-  	return this.order;
+  public OrderEnum getOrder() {
+    return this.order;
   }
 
-  public void setOrder( OrderEnum order )
-  {
-  	this.order = order;
+  public void setOrder(OrderEnum order) {
+    this.order = order;
   }
 
   // public boolean isRO()
@@ -76,24 +73,20 @@ public class FomAttributeClass implements Serializable {
   // 	return this.order == Order.TIMESTAMP;
   // }
 
-  public TransportEnum getTransport()
-  {
-  	return this.transport;
+  public TransportEnum getTransport() {
+    return this.transport;
   }
 
-  public void setTransport( TransportEnum transport )
-  {
-  	this.transport = transport;
+  public void setTransport(TransportEnum transport) {
+    this.transport = transport;
   }
 
-  public SharingEnum getSharing()
-  {
-  	return sharing;
+  public SharingEnum getSharing() {
+    return sharing;
   }
 
-  public void setSharing( SharingEnum sharing )
-  {
-  	this.sharing = sharing;
+  public void setSharing(SharingEnum sharing) {
+    this.sharing = sharing;
   }
 
   // public Space getSpace()

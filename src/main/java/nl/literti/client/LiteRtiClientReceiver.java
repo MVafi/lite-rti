@@ -3,7 +3,6 @@ package nl.literti.client;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.CompletableFuture;
-
 import nl.literti.AbstractLiteRtiReceiver;
 import nl.literti.messages.MessageObject;
 import nl.literti.messages.requests.UpdateAttributeValues;
@@ -18,7 +17,8 @@ import nl.literti.messages.responses.ResponseSubscribeObject;
 import nl.literti.utils.BinaryHelper;
 
 /**
- * Transportation layer for handling binary messages received by the server (client-side), handling communication that is received from the server side
+ * Transportation layer for handling binary messages received by the server (client-side), handling
+ * communication that is received from the server side
  */
 public class LiteRtiClientReceiver extends AbstractLiteRtiReceiver {
 
@@ -30,7 +30,7 @@ public class LiteRtiClientReceiver extends AbstractLiteRtiReceiver {
   }
 
   // ===== Binary message handling =====
-  
+
   @Override
   protected void handleBinaryMessage(byte[] data) throws IOException {
     Object obj = BinaryHelper.deserializeBinaryMessage(data);
@@ -39,7 +39,8 @@ public class LiteRtiClientReceiver extends AbstractLiteRtiReceiver {
     }
     CompletableFuture<Object> future = clientContext.getPendingResponse(msgObj.getMsgHandle());
 
-    // Route responses, futures created in the clientSender will be completed here when the response is received
+    // Route responses, futures created in the clientSender will be completed here when the response
+    // is received
     try {
       switch (obj) {
         case ResponseFederateConnected response -> {
@@ -51,7 +52,8 @@ public class LiteRtiClientReceiver extends AbstractLiteRtiReceiver {
           future.complete(response.getMsgString());
         }
         case ResponseFederationFom response -> {
-          future.complete(response.getFom()); // Let the future in the clientSender return with the FOM object
+          future.complete(
+              response.getFom()); // Let the future in the clientSender return with the FOM object
         }
         case ResponseJoinFederation response -> {
           clientContext.handleJoinFederationResponse(response.getMsgString());
@@ -66,7 +68,8 @@ public class LiteRtiClientReceiver extends AbstractLiteRtiReceiver {
           future.complete(response.getMsgString());
         }
         case ResponseRegisterObjectInstance response -> {
-          future.complete(response.getObjectInstanceHandle()); // Complete with the actual handle object
+          future.complete(
+              response.getObjectInstanceHandle()); // Complete with the actual handle object
         }
         case ResponseObjectInstanceName response -> {
           future.complete(response.getObjectInstanceName()); // Complete with the name string

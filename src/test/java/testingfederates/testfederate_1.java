@@ -1,15 +1,14 @@
 package testingfederates;
 
-import java.io.File;
-import java.net.URL;
-import java.util.Set;
-import java.util.UUID;
-
 import hla.rti1516e.CallbackModel;
 import hla.rti1516e.OrderType;
 import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.exceptions.RTIexception;
+import java.io.File;
+import java.net.URL;
+import java.util.Set;
+import java.util.UUID;
 import nl.literti.client.LiteRtiAmbassador;
 import nl.tno.netn4.datatypes.EntityTypeStruct;
 import nl.tno.netn4.datatypes.SupplyStatusStruct;
@@ -18,27 +17,19 @@ import nl.tno.netn4.objects.BaseEntity;
 import nl.tno.oorti.DefaultOOobjectFactory;
 import nl.tno.oorti.NullOOFederateAmbassador;
 import nl.tno.oorti.OORTIambassador;
-import nl.tno.oorti.OORTIfactory;
 import nl.tno.oorti.OOparameter;
 import nl.tno.oorti.OOproperties;
 import nl.tno.oorti.impl.OORTIambassadorImpl;
 
-
 public class testfederate_1 extends NullOOFederateAmbassador {
-    
+
   OORTIambassador oortiamb;
 
   public void start() throws Exception {
-    // connect to the RTI in evoked mode
-    // create the OORTI Ambassador
-    this.oortiamb = new OORTIfactory().getRtiAmbassador();
-
-    // Get NETN Bus ambassador
-    OORTIambassador oortiamb = new OORTIambassadorImpl(
-      new LiteRtiAmbassador(),  //RtiFactoryFactory.getRtiFactory().getRtiAmbassador()
-      new DefaultOOobjectFactory(), 
-      new OOproperties()
-    );
+    // Get LiteRti ambassador using LiteRtiAmbassador (lite-rti implementation)
+    OORTIambassador oortiamb =
+        new OORTIambassadorImpl(
+            new LiteRtiAmbassador(), new DefaultOOobjectFactory(), new OOproperties());
 
     // connect to the RTI in evoked mode
     System.out.println("Connecting to the RTI...");
@@ -48,8 +39,9 @@ public class testfederate_1 extends NullOOFederateAmbassador {
     Thread.sleep(1000);
 
     // setup module URL
-    URL fom = new File("config/NETN-Merged-FULL.xml").toURI().toURL();
-    URL mim = new File("config/NETN-MIM.xml").toURI().toURL();
+    URL fom =
+        new File("src/test/java/testingfederates/config/NETN-Merged-FULL.xml").toURI().toURL();
+    URL mim = new File("src/test/java/testingfederates/config/NETN-MIM.xml").toURI().toURL();
 
     // Attempt to create a new federation
     // System.out.println("Try creating a new federation");
@@ -74,7 +66,7 @@ public class testfederate_1 extends NullOOFederateAmbassador {
 
     // // Run tests
     // // this.runTests(oortiamb);
-    this.sendObjectUpdate(oortiamb);
+    // this.sendObjectUpdate(oortiamb);
 
     // // resign and disconnect
     // oortiamb.resignFederationExecution(ResignAction.NO_ACTION);

@@ -7,5 +7,4 @@ public class RequestDisconnectFederate extends MessageObject {
   public RequestDisconnectFederate(int msgHandle) {
     super(msgHandle);
   }
-    
 }

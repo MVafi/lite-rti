@@ -1,45 +1,49 @@
 package nl.literti;
 
+import hla.rti1516e.AttributeHandleSet;
+import hla.rti1516e.ObjectClassHandle;
+import hla.rti1516e.ObjectInstanceHandle;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import hla.rti1516e.AttributeHandleSet;
-import hla.rti1516e.ObjectClassHandle;
-import hla.rti1516e.ObjectInstanceHandle;
 import nl.literti.fom.FederationObjectModel;
 import nl.literti.impl.ObjectInstanceHandleImpl;
 
-// TODO: create handleRegistery that keeps tracks of all the int handles for object classes, attributes, interactions, parameters, etc.
+// TODO: create handleRegistery that keeps tracks of all the int handles for object classes,
+// attributes, interactions, parameters, etc.
 
 public class FederationExecution {
   private final String name;
-  private final Map<String, String> joinedFederates = new ConcurrentHashMap<>(); // federateName -> federateType
+  private final Map<String, String> joinedFederates =
+      new ConcurrentHashMap<>(); // federateName -> federateType
   private final long createdAt = System.currentTimeMillis();
   private FederationObjectModel fom; // The Federation Object Model
 
   // ------------- PUB SUB ----------------
   // Store subscriptions: federateName -> (objectClassHandle -> attributeHandleSet)
-  private final Map<String, Map<ObjectClassHandle, AttributeHandleSet>> federateSubscriptions = new ConcurrentHashMap<>();
-  
+  private final Map<String, Map<ObjectClassHandle, AttributeHandleSet>> federateSubscriptions =
+      new ConcurrentHashMap<>();
+
   // Store publications: federateName -> (objectClassHandle -> attributeHandleSet)
-  private final Map<String, Map<ObjectClassHandle, AttributeHandleSet>> federatePublications = new ConcurrentHashMap<>();
+  private final Map<String, Map<ObjectClassHandle, AttributeHandleSet>> federatePublications =
+      new ConcurrentHashMap<>();
 
   // ------------- Object registration ----------------
   // Counter for generating unique object instance handles
   private final AtomicInteger nextHandleValue = new AtomicInteger(3000);
 
   // Store registered object instances: objectInstanceName -> objectInstanceHandle
-  private final Map<String, ObjectInstanceHandle> registeredObjectInstances = new ConcurrentHashMap<>();
-  
+  private final Map<String, ObjectInstanceHandle> registeredObjectInstances =
+      new ConcurrentHashMap<>();
+
   // Track which federate owns each object instance: objectInstanceHandle -> federateName
   private final Map<ObjectInstanceHandle, String> objectInstanceOwner = new ConcurrentHashMap<>();
-  
-  // Track which object class each instance belongs to: objectInstanceHandle -> objectClassHandle
-  private final Map<ObjectInstanceHandle, ObjectClassHandle> objectInstanceClass = new ConcurrentHashMap<>();
 
+  // Track which object class each instance belongs to: objectInstanceHandle -> objectClassHandle
+  private final Map<ObjectInstanceHandle, ObjectClassHandle> objectInstanceClass =
+      new ConcurrentHashMap<>();
 
   public FederationExecution(String name) {
     this.name = name;
@@ -59,7 +63,10 @@ public class FederationExecution {
   }
 
   public void addFederate(String federateName, String federateType) {
-    joinedFederates.put(federateName, federateType); // TODO: currently only federateType is used, federateName is not support in the whole application
+    joinedFederates.put(
+        federateName,
+        federateType); // TODO: currently only federateType is used, federateName is not support in
+                       // the whole application
   }
 
   public String removeFederate(String federateName) {
@@ -80,27 +87,39 @@ public class FederationExecution {
   //   return handleRegistry;
   // }
 
-  public void subscribeToObjectClass(String federateType, ObjectClassHandle objectClassHandle, AttributeHandleSet attributeIds) {
+  public void subscribeToObjectClass(
+      String federateType, ObjectClassHandle objectClassHandle, AttributeHandleSet attributeIds) {
     // Store a clone of the attributeIds to avoid mutation issues
     // TODO: is this cloning necessary?
     AttributeHandleSet storedAttributes = attributeIds != null ? attributeIds.clone() : null;
-    federateSubscriptions.computeIfAbsent(federateType, k -> new ConcurrentHashMap<>())
-      .put(objectClassHandle, storedAttributes);
+    federateSubscriptions
+        .computeIfAbsent(federateType, k -> new ConcurrentHashMap<>())
+        .put(objectClassHandle, storedAttributes);
 
-    System.err.println("[FederationExecution] Federate " + federateType + " subscribed to object class " + objectClassHandle + " with attributes: " + attributeIds);
+    System.err.println(
+        "[FederationExecution] Federate "
+            + federateType
+            + " subscribed to object class "
+            + objectClassHandle
+            + " with attributes: "
+            + attributeIds);
   }
 
-  public AttributeHandleSet getSubscribedAttributes(String federateName, ObjectClassHandle objectClassHandle) {
-    Map<ObjectClassHandle, AttributeHandleSet> federateSubscription = federateSubscriptions.get(federateName);
+  public AttributeHandleSet getSubscribedAttributes(
+      String federateName, ObjectClassHandle objectClassHandle) {
+    Map<ObjectClassHandle, AttributeHandleSet> federateSubscription =
+        federateSubscriptions.get(federateName);
     if (federateSubscription == null) {
       return null;
     }
     return federateSubscription.get(objectClassHandle);
   }
 
-  public Map<String, AttributeHandleSet> getSubscribedFederates(ObjectClassHandle objectClassHandle) {
+  public Map<String, AttributeHandleSet> getSubscribedFederates(
+      ObjectClassHandle objectClassHandle) {
     Map<String, AttributeHandleSet> result = new HashMap<>();
-    for (Map.Entry<String, Map<ObjectClassHandle, AttributeHandleSet>> entry : federateSubscriptions.entrySet()) {
+    for (Map.Entry<String, Map<ObjectClassHandle, AttributeHandleSet>> entry :
+        federateSubscriptions.entrySet()) {
       String federateName = entry.getKey();
       Map<ObjectClassHandle, AttributeHandleSet> subscriptions = entry.getValue();
       if (subscriptions.containsKey(objectClassHandle)) {
@@ -110,15 +129,23 @@ public class FederationExecution {
     return result;
   }
 
-  public void publishObjectClass(String federateName, ObjectClassHandle objectClassHandle, AttributeHandleSet attributeIds) {
+  public void publishObjectClass(
+      String federateName, ObjectClassHandle objectClassHandle, AttributeHandleSet attributeIds) {
     // Store a clone of the attributeIds to avoid mutation issues
     // TODO: is this cloning necessary?
     AttributeHandleSet storedAttributes = attributeIds != null ? attributeIds.clone() : null;
-    
-    federatePublications.computeIfAbsent(federateName, k -> new ConcurrentHashMap<>())
-      .put(objectClassHandle, storedAttributes);
-    
-    System.err.println("[FederationExecution] Federate " + federateName + " published to object class " + objectClassHandle + " with attributes: " + storedAttributes);
+
+    federatePublications
+        .computeIfAbsent(federateName, k -> new ConcurrentHashMap<>())
+        .put(objectClassHandle, storedAttributes);
+
+    System.err.println(
+        "[FederationExecution] Federate "
+            + federateName
+            + " published to object class "
+            + objectClassHandle
+            + " with attributes: "
+            + storedAttributes);
   }
 
   /**
@@ -129,7 +156,8 @@ public class FederationExecution {
    * @return The object instance handle assigned to this instance
    * @throws IllegalArgumentException if the federate has not published the object class
    */
-  public ObjectInstanceHandle registerObjectInstance(String federateName, ObjectClassHandle objectClassHandle) {
+  public ObjectInstanceHandle registerObjectInstance(
+      String federateName, ObjectClassHandle objectClassHandle) {
 
     // Verify federate has published this object class
     Map<ObjectClassHandle, AttributeHandleSet> fedPubs = federatePublications.get(federateName);
@@ -147,8 +175,14 @@ public class FederationExecution {
     registeredObjectInstances.put(autoName, handle);
     objectInstanceOwner.put(handle, federateName);
     objectInstanceClass.put(handle, objectClassHandle);
-    
-    System.err.println("[FederationExecution] Federate " + federateName + " registered object instance: " + autoName + " with handle: " + handle);
+
+    System.err.println(
+        "[FederationExecution] Federate "
+            + federateName
+            + " registered object instance: "
+            + autoName
+            + " with handle: "
+            + handle);
     return handle;
   }
 
@@ -159,9 +193,11 @@ public class FederationExecution {
   //  * @param objectClassHandle The object class handle
   //  * @param objectInstanceName The specific name for this object instance
   //  * @return The object instance handle assigned to this instance
-  //  * @throws IllegalArgumentException if the federate has not published the object class or if the name is already in use
+  //  * @throws IllegalArgumentException if the federate has not published the object class or if
+  // the name is already in use
   //  */
-  // public int registerObjectInstance(String federateName, String objectClassHandle, String objectInstanceName) {
+  // public int registerObjectInstance(String federateName, String objectClassHandle, String
+  // objectInstanceName) {
   //   // Verify federate has published this object class
   //   Map<String, String> fPubs = federatePublications.get(federateName);
   //   if (fPubs == null || !fPubs.containsKey(objectClassHandle)) {
@@ -181,8 +217,9 @@ public class FederationExecution {
   //   // Register new object instance within map, and its owner federate
   //   registeredObjectInstances.put(objectInstanceName, handle);
   //   objectInstanceOwner.put(handle, federateName);
-    
-  //   System.err.println("[FederationExecution] Federate " + federateName + " registered object instance: " + objectInstanceName + " with handle: " + handle);
+
+  //   System.err.println("[FederationExecution] Federate " + federateName + " registered object
+  // instance: " + objectInstanceName + " with handle: " + handle);
   //   return handle;
   // }
 

@@ -5,7 +5,8 @@ import java.io.IOException;
 import java.net.Socket;
 
 /**
- * Abstract class that handles incoming messages, passing them to the handleBinaryMessage method, which is implemented in the child classes
+ * Abstract class that handles incoming messages, passing them to the handleBinaryMessage method,
+ * which is implemented in the child classes
  */
 public abstract class AbstractLiteRtiReceiver {
 

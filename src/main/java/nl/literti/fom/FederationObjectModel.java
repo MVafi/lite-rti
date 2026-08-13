@@ -9,8 +9,8 @@ import java.util.Set;
 /**
  * Object containing the FOM in deserialized form Repo supports static FOM only, meaning fixed at
  * federation creation and afterwards immutable TODO : Add Extension FOM support, meaning that the
- * FOM can be extended at runtime
- * Can be extended to support older hla version by looking for actions that involve "hlaobjectroot" or "HLAprivilegeToDeleteObject"
+ * FOM can be extended at runtime Can be extended to support older hla version by looking for
+ * actions that involve "hlaobjectroot" or "HLAprivilegeToDeleteObject"
  */
 public class FederationObjectModel implements Serializable {
   private static final long serialVersionUID = 98121116105109L;
@@ -29,7 +29,9 @@ public class FederationObjectModel implements Serializable {
   private FomObjectClass ocroot;
   // private ICMetadata icroot;
 
-  private int privilegeToDelete; // handle of the HLAprivilegeToDeleteObject attribute in the object root class
+  private int
+      privilegeToDelete; // handle of the HLAprivilegeToDeleteObject attribute in the object root
+                         // class
 
   // private Map<Integer,ICMetadata> iclasses;
 
@@ -47,20 +49,18 @@ public class FederationObjectModel implements Serializable {
     // DatatypeHelpers.injectStandardDatatypes( this );
   }
 
-  public void setFileName( String name )
-	{
-		this.filename = name;
-	}
-	
-	public String getFileName()
-	{
-		return this.filename;
-	}
-	
-	// public HLAVersion getHlaVersion()
-	// {
-	// 	return this.version;
-	// }
+  public void setFileName(String name) {
+    this.filename = name;
+  }
+
+  public String getFileName() {
+    return this.filename;
+  }
+
+  // public HLAVersion getHlaVersion()
+  // {
+  // 	return this.version;
+  // }
 
   // ===== Datatype API =====
 
@@ -133,15 +133,13 @@ public class FederationObjectModel implements Serializable {
   }
 
   public FomObjectClass getObjectClass(String name) {
-    name = name.toLowerCase();                // names are meant to be case-insensitive
+    name = name.toLowerCase(); // names are meant to be case-insensitive
 
-    for( FomObjectClass oc : this.oclasses.values() )
-		{
-			if( oc.getQualifiedName().equalsIgnoreCase(name) )
-			{
-				return oc;
-			}
-		}
+    for (FomObjectClass oc : this.oclasses.values()) {
+      if (oc.getQualifiedName().equalsIgnoreCase(name)) {
+        return oc;
+      }
+    }
 
     // Search with name in the local object class map
     for (FomObjectClass oc : this.oclasses.values()) {
@@ -151,8 +149,7 @@ public class FederationObjectModel implements Serializable {
     }
 
     // Check for object root
-    if (name.equalsIgnoreCase("hlaobjectroot"))
-      return this.getObjectRoot();
+    if (name.equalsIgnoreCase("hlaobjectroot")) return this.getObjectRoot();
 
     System.out.println("[FOM] getObjectClass: " + name + " not found");
 
@@ -181,8 +178,8 @@ public class FederationObjectModel implements Serializable {
       throw new IllegalArgumentException("Not implemented 3");
       // int aHandle = Mom.getMomAttributeHandle(version, classHandle, attributeName);
       // return oc.getAttribute(aHandle);
-    } 
-    
+    }
+
     // Check normal attributes
     int aHandle = oc.getAttributeHandle(attributeName);
     return oc.getAttribute(aHandle);
@@ -277,7 +274,7 @@ public class FederationObjectModel implements Serializable {
 
   // was getPrivileteToDeleteMetaClass
   public FomAttributeClass getPrivileteToDeleteAttributeClass() {
-    return ocroot.getAttribute( this.privilegeToDelete );
+    return ocroot.getAttribute(this.privilegeToDelete);
   }
 
   // ===== InteractionClass API =====

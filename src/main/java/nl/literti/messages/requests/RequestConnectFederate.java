@@ -15,5 +15,4 @@ public class RequestConnectFederate extends MessageObject {
   public String getFederateType() {
     return federateType;
   }
-    
 }

@@ -1,4 +1,5 @@
 package nl.literti.messages;
+
 import java.io.Serializable;
 
 public class MessageObject implements Serializable, Cloneable {

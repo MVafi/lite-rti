@@ -3,7 +3,9 @@ package nl.literti.fom;
 public interface FomDatatype {
 
   String getName();
+
   FomDatatypeEnum getDatatypeEnum();
+
   FomDatatype createUnlinkedClone();
 
   // public String getName() {

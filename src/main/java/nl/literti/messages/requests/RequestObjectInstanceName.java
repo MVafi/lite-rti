@@ -15,5 +15,4 @@ public class RequestObjectInstanceName extends MessageObject {
   public ObjectInstanceHandle getObjectInstanceHandle() {
     return this.objectInstanceHandle;
   }
-    
 }

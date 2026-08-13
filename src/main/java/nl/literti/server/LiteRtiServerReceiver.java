@@ -2,7 +2,6 @@ package nl.literti.server;
 
 import java.io.IOException;
 import java.net.Socket;
-
 import nl.literti.AbstractLiteRtiReceiver;
 import nl.literti.messages.MessageObject;
 import nl.literti.messages.requests.RequestConnectFederate;
@@ -17,18 +16,22 @@ import nl.literti.messages.requests.RequestSubscribeObject;
 import nl.literti.utils.BinaryHelper;
 
 /**
- * Transportation layer for handling messages received by the client (server-side), handling communication that is received from the client side. Each federate has its own serverReceiver
+ * Transportation layer for handling messages received by the client (server-side), handling
+ * communication that is received from the client side. Each federate has its own serverReceiver
  */
 public class LiteRtiServerReceiver extends AbstractLiteRtiReceiver {
 
-  private final int connectionHandle;                 // Unique integer handle assigned to this connection
-  private final LiteRtiServerContext serverContext;   // Reference to the context to manage federate events and state
-  // private final int federateHandle;                   // Unique integer handle assigned to this federate
+  private final int connectionHandle; // Unique integer handle assigned to this connection
+  private final LiteRtiServerContext
+      serverContext; // Reference to the context to manage federate events and state
+  // private final int federateHandle;                   // Unique integer handle assigned to this
+  // federate
 
-  private String federateType;                            // Type of the federate, user supplied (e.g., "FederateA")
+  private String federateType; // Type of the federate, user supplied (e.g., "FederateA")
   private String federationName;
 
-  LiteRtiServerReceiver(Socket socket, LiteRtiServerContext serverContext, int connectionHandle) throws IOException {
+  LiteRtiServerReceiver(Socket socket, LiteRtiServerContext serverContext, int connectionHandle)
+      throws IOException {
     super(socket);
     this.serverContext = serverContext;
     this.connectionHandle = connectionHandle;
@@ -55,7 +58,8 @@ public class LiteRtiServerReceiver extends AbstractLiteRtiReceiver {
           serverContext.handleConnectFederateRequest(this.socket, request, this.connectionHandle);
         }
         case RequestDisconnectFederate request -> {
-          serverContext.handleDisconnectFederateRequest(this.socket, request, this.connectionHandle);
+          serverContext.handleDisconnectFederateRequest(
+              this.socket, request, this.connectionHandle);
           cleanupReceiver();
         }
         case RequestCreateFederation request -> {
@@ -70,21 +74,28 @@ public class LiteRtiServerReceiver extends AbstractLiteRtiReceiver {
           serverContext.handleJoinFederationRequest(this.socket, request);
         }
         case RequestPublishObject request -> {
-          //todo: remove federationname here, i dont think federationname should be stored in the receiver
-          serverContext.handlePublishObjectClass(this.socket, request, this.federationName, this.federateType);
+          // todo: remove federationname here, i dont think federationname should be stored in the
+          // receiver
+          serverContext.handlePublishObjectClass(
+              this.socket, request, this.federationName, this.federateType);
         }
         case RequestSubscribeObject request -> {
-          //todo: remove federationname here, i dont think federationname should be stored in the receiver
-          serverContext.handleSubscribeObjectClass(this.socket, request, this.federationName, this.federateType);
+          // todo: remove federationname here, i dont think federationname should be stored in the
+          // receiver
+          serverContext.handleSubscribeObjectClass(
+              this.socket, request, this.federationName, this.federateType);
         }
         case RequestRegisterObjectInstance request -> {
-          serverContext.handleRegisterObjectInstance(this.socket, request, this.federationName, this.federateType);
+          serverContext.handleRegisterObjectInstance(
+              this.socket, request, this.federationName, this.federateType);
         }
         case RequestObjectInstanceName request -> {
-          serverContext.handleObjectInstanceNameRequest(this.socket, request, this.federationName, this.federateType);
+          serverContext.handleObjectInstanceNameRequest(
+              this.socket, request, this.federationName, this.federateType);
         }
         default -> {
-          throw new RuntimeException("[ServerReceiver] Unknown binary message type: " + obj.getClass().getName());
+          throw new RuntimeException(
+              "[ServerReceiver] Unknown binary message type: " + obj.getClass().getName());
         }
       }
     } catch (Exception e) {

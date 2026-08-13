@@ -13,4 +13,9 @@ to be Not Supported Features
 - Data Distribution Management (DDM)
 
 ==== General Architecture ====
-Current implementation involves a client-side and a server-side. A central TCP server manages the communication with the federate (client)
+
+Current implementation involves a centralized TCP server that transfers the messages the the client federates. Current goal is to first implement a working centralized achitecture where TCP is to handle HLA Reliable and UDP Best-Effort messages using Receive Order delivery.
+
+==== How to run ====
+
+Run the LiteRtiApplication.java file

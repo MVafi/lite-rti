@@ -1,0 +1,29 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "testfederate_2",
+            "request": "launch",
+            "mainClass": "testingfederates.testfederate_2",
+            "projectName": "lite-rti"
+        },
+        {
+            "type": "java",
+            "name": "testfederate_1",
+            "request": "launch",
+            "mainClass": "testingfederates.testfederate_1",
+            "projectName": "lite-rti"
+        },
+        {
+            "type": "java",
+            "name": "LiteRtiApplication",
+            "request": "launch",
+            "mainClass": "nl.literti.LiteRtiApplication",
+            "projectName": "lite-rti"
+        }
+    ]
+}

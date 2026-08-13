@@ -7,8 +7,9 @@ public class RequestRegisterObjectInstance extends MessageObject {
 
   private ObjectClassHandle ObjectClass;
   private String ObjectName;
-    
-  public RequestRegisterObjectInstance(ObjectClassHandle theClass, String theObjectName, int requestHandle) {
+
+  public RequestRegisterObjectInstance(
+      ObjectClassHandle theClass, String theObjectName, int requestHandle) {
     super(requestHandle);
     this.ObjectClass = theClass;
     this.ObjectName = theObjectName;
@@ -21,5 +22,4 @@ public class RequestRegisterObjectInstance extends MessageObject {
   public String getObjectName() {
     return this.ObjectName;
   }
-    
 }

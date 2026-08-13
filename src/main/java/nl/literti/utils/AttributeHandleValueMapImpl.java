@@ -1,27 +1,26 @@
 package nl.literti.utils;
 
+import hla.rti1516e.AttributeHandle;
+import hla.rti1516e.AttributeHandleValueMap;
+import hla.rti1516e.encoding.ByteWrapper;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import hla.rti1516e.AttributeHandle;
-import hla.rti1516e.AttributeHandleValueMap;
-import hla.rti1516e.encoding.ByteWrapper;
 
 /**
  * Implementation of AttributeHandleValueMap using ConcurrentHashMap for thread-safe operations.
  * Maps AttributeHandle keys to byte[] values.
  */
 public class AttributeHandleValueMapImpl implements AttributeHandleValueMap {
-  
+
   private static final long serialVersionUID = 1L;
-  
+
   private final Map<AttributeHandle, byte[]> map = new ConcurrentHashMap<>();
 
   /**
-   * Returns a reference to the value to which this map maps the specified key.
-   * Returns null if the map contains no mapping for this key.
+   * Returns a reference to the value to which this map maps the specified key. Returns null if the
+   * map contains no mapping for this key.
    */
   @Override
   public ByteWrapper getValueReference(AttributeHandle key) {

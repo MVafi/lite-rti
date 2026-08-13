@@ -7,9 +7,13 @@ public class RequestJoinFederation extends MessageObject {
 
   private String federateType;
   private String federationName;
-  private FederationObjectModel combinedFOM; //not used atm
+  private FederationObjectModel combinedFOM; // not used atm
 
-  public RequestJoinFederation(String federateType, String federationName, FederationObjectModel combinedFOM, int requestHandle) {
+  public RequestJoinFederation(
+      String federateType,
+      String federationName,
+      FederationObjectModel combinedFOM,
+      int requestHandle) {
     super(requestHandle);
     this.federateType = federateType;
     this.federationName = federationName;

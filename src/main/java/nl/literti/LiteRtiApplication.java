@@ -24,7 +24,9 @@ public class LiteRtiApplication {
       Thread.sleep(1000);
       String dots = ".".repeat(count % 4);
       StringBuilder status = new StringBuilder();
-      status.append("\r| Federations: ").append(this.serverContext.getAllFederationExecutions().size());
+      status
+          .append("\r| Federations: ")
+          .append(this.serverContext.getAllFederationExecutions().size());
       status.append(" | Federates: ").append(this.serverContext.getConnectedFederates().size());
       status.append(" | ");
 
@@ -46,14 +48,14 @@ public class LiteRtiApplication {
     }
 
     socketServer.stop();
-    System.out.println("NETN Bus shutting down.");
+    System.out.println("LiteRti shutting down.");
   }
 
   public void shutdown() {
     running = false;
     if (socketServer != null) {
       socketServer.stop();
-      System.out.println("NETN Bus shutting down.");
+      System.out.println("LiteRti shutting down.");
     }
   }
 

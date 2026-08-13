@@ -7,5 +7,4 @@ public class ResponsePublishObject extends MessageObject {
   public ResponsePublishObject(int msgHandle) {
     super(msgHandle);
   }
-    
 }

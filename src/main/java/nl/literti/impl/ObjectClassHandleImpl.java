@@ -24,7 +24,7 @@ public class ObjectClassHandleImpl implements ObjectClassHandle {
     return handle == other.handle;
   }
 
-    // Standard Java hashCode implementation, fast lookup integer
+  // Standard Java hashCode implementation, fast lookup integer
   // (I think the only relevant method)
   @Override
   public int hashCode() {
