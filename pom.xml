@@ -13,12 +13,6 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.release>25</maven.compiler.release>
-
-		<!-- RTI provider versions -->
-		<!-- <pitch.version>6.1.3</pitch.version>
-		<vtmak.version>4.6.1a</vtmak.version>
-		<portico.version>2.1.3</portico.version>
-		<lrcserver.version>3.1</lrcserver.version> -->
 	</properties>
 
 	<repositories>
@@ -32,60 +26,7 @@
 		</repository>
 	</repositories>
 
-<!-- DONT DEPLOY YET TO GITLAB!!! -->
-	<!-- <distributionManagement>
-		<repository>
-			<id>gitlab-maven</id>
-			<url>
-				https://ci.tno.nl/gitlab/api/v4/projects/${env.CI_PROJECT_ID}/packages/maven</url>
-		</repository>
-		<snapshotRepository>
-			<id>gitlab-maven</id>
-			<url>
-				https://ci.tno.nl/gitlab/api/v4/projects/${env.CI_PROJECT_ID}/packages/maven</url>
-		</snapshotRepository>
-	</distributionManagement> -->
-
 	<dependencies>
-		<!-- Pitch RTI provider -->
-		<!-- <dependency>
-			<groupId>se.pitch</groupId>
-			<artifactId>prti1516e</artifactId>
-			<version>${pitch.version}</version>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>se.pitch</groupId>
-			<artifactId>prticore</artifactId>
-			<version>${pitch.version}</version>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>se.pitch</groupId>
-			<artifactId>booster1516</artifactId>
-			<version>${pitch.version}</version>
-			<scope>runtime</scope>
-		</dependency> -->
-
-		<!-- Pitch FedPro Client RTI provider -->
-		<!-- <dependency>
-			<groupId>se.pitch</groupId>
-			<artifactId>fedpro-session</artifactId>
-			<version>${pitch.version}</version>
-			<scope>runtime</scope>
-		</dependency>		
-		<dependency>
-			<groupId>se.pitch</groupId>
-			<artifactId>fedpro-protobuf</artifactId>
-			<version>${pitch.version}</version>
-			<scope>runtime</scope>
-		</dependency>		
-		<dependency>
-			<groupId>se.pitch</groupId>
-			<artifactId>fedpro-client-evolved</artifactId>
-			<version>${pitch.version}</version>
-			<scope>runtime</scope>
-		</dependency> -->
 
 		<!-- RTI extensions -->
 		<dependency>
@@ -102,21 +43,6 @@
 			<version>6.0.4</version>
 			<type>jar</type>
 		</dependency>
-
-		<!-- <dependency>
-			<groupId>nl.tno</groupId>
-			<artifactId>geocalc</artifactId>
-			<version>1.0.0</version>
-			<type>jar</type>
-		</dependency> -->
-
-		<!-- JUNIT TESTING LIBARIES -->
-		<!-- <dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter</artifactId>
-			<version>6.0.3</version>
-			<scope>test</scope>
-		</dependency> -->
 
 	</dependencies>
 
