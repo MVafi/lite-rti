@@ -8,6 +8,7 @@ import hla.rti1516e.ObjectClassHandle;
 import hla.rti1516e.ObjectInstanceHandle;
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import hla.rti1516e.exceptions.NameNotFound;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -15,12 +16,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+
 import nl.literti.fom.FederationObjectModel;
 import nl.literti.fom.FomMerger;
 import nl.literti.fom.FomObjectClass;
 import nl.literti.fom.parser.FomParser;
 import nl.literti.impl.AttributeHandleImpl;
 import nl.literti.impl.ObjectClassHandleImpl;
+import nl.literti.messages.requests.DiscoveredObjectInstance;
 import nl.literti.messages.requests.UpdateAttributeValues;
 
 /** Context for keeping track of the states and events of the client and its singular federate */
@@ -289,6 +292,27 @@ public class LiteRtiClientContext {
     }
   }
 
+  public void handleDiscoveredObjectInstances(DiscoveredObjectInstance discoveredObjectInstance) {
+    if (this.federateAmbassador == null) {
+      System.err.println(
+          "[LiteRtiClientContext] No federate ambassador set, cannot deliver discovered object instances");
+      return;
+    }
+
+    try {
+      System.out.println(
+          "[LiteRtiClientContext] Delivering discovered object instance to federate ambassador");
+      federateAmbassador.discoverObjectInstance(
+          discoveredObjectInstance.getInstanceHandle(),
+          discoveredObjectInstance.getClassHandle(),
+          discoveredObjectInstance.getTheObjectName(),
+          discoveredObjectInstance.getProducingFederate());
+    } catch (Exception e) {
+      System.err.println(
+          "[LiteRtiClientContext] Error delivering discovered object instance: " + e.getMessage());
+    }
+  }
+
   // ==== Object Instances =====
 
   public ObjectInstanceHandle registerObjectInstance(
@@ -355,7 +379,7 @@ public class LiteRtiClientContext {
             "[LiteRtiClientContext] AttributeHandleValueMap cannot be null or empty");
       }
 
-      clientSender.sendUpdateAttributeValuesRequest(theObject, theAttributes, userSuppliedTag);
+      clientSender.sendAttributeValuesUpdate(theObject, theAttributes, userSuppliedTag);
     } catch (Exception e) {
       throw new RuntimeException(
           "[LiteRtiClientContext] Error updating attribute values: " + e.getMessage(), e);
@@ -370,20 +394,17 @@ public class LiteRtiClientContext {
     }
 
     try {
-
+      System.out.println("[LiteRtiClientContext] Delivering reflected attribute values to federate ambassador");
+      
       // Call the federate ambassador's reflectAttributeValues callback
       federateAmbassador.reflectAttributeValues(
           update.getObjectInstanceHandle(),
-          update.getAttributeValues(),
+          update.getAttributeHandleValueMap(),
           update.getUserSuppliedTag(),
           null, // OrderType
           null, // TransportationTypeHandle
           null // ReflectInfo
           );
-
-      System.out.println(
-          "[LiteRtiClientContext] Delivered reflected attribute values for object instance: "
-              + update.getObjectInstanceHandle());
     } catch (Exception e) {
       System.err.println(
           "[LiteRtiClientContext] Error delivering reflected attribute values: " + e.getMessage());

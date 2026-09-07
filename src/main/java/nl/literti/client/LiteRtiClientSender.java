@@ -1,14 +1,15 @@
 package nl.literti.client;
 
-import hla.rti1516e.AttributeHandleSet;
-import hla.rti1516e.AttributeHandleValueMap;
-import hla.rti1516e.ObjectClassHandle;
-import hla.rti1516e.ObjectInstanceHandle;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import hla.rti1516e.AttributeHandleSet;
+import hla.rti1516e.AttributeHandleValueMap;
+import hla.rti1516e.ObjectClassHandle;
+import hla.rti1516e.ObjectInstanceHandle;
 import nl.literti.AbstractLiteRtiSender;
 import nl.literti.fom.FederationObjectModel;
 import nl.literti.messages.MessageObject;
@@ -117,7 +118,7 @@ public class LiteRtiClientSender extends AbstractLiteRtiSender {
     return serializeSendMsgAndWait(request);
   }
 
-  public void sendUpdateAttributeValuesRequest(
+  public void sendAttributeValuesUpdate(
       ObjectInstanceHandle theHandle, AttributeHandleValueMap theAttributes, byte[] userSuppliedTag)
       throws IOException {
     UpdateAttributeValues request =

@@ -11,3 +11,5 @@ The Ambassador class receives calls from the federate, these calls trigger event
 
 TODO:
 Many request do not really need a response, is it fire and forget?
+
+Passive Subscription currently not supported

@@ -2,6 +2,7 @@ package nl.literti.server;
 
 import java.io.IOException;
 import java.net.Socket;
+
 import nl.literti.AbstractLiteRtiReceiver;
 import nl.literti.messages.MessageObject;
 import nl.literti.messages.requests.RequestConnectFederate;
@@ -13,6 +14,7 @@ import nl.literti.messages.requests.RequestObjectInstanceName;
 import nl.literti.messages.requests.RequestPublishObject;
 import nl.literti.messages.requests.RequestRegisterObjectInstance;
 import nl.literti.messages.requests.RequestSubscribeObject;
+import nl.literti.messages.requests.UpdateAttributeValues;
 import nl.literti.utils.BinaryHelper;
 
 /**
@@ -91,6 +93,10 @@ public class LiteRtiServerReceiver extends AbstractLiteRtiReceiver {
         }
         case RequestObjectInstanceName request -> {
           serverContext.handleObjectInstanceNameRequest(
+              this.socket, request, this.federationName, this.federateType);
+        }
+        case UpdateAttributeValues request -> {
+          serverContext.handleUpdateAttributeValues(
               this.socket, request, this.federationName, this.federateType);
         }
         default -> {

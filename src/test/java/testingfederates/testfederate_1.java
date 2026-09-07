@@ -1,14 +1,15 @@
 package testingfederates;
 
+import java.io.File;
+import java.net.URL;
+import java.util.Set;
+import java.util.UUID;
+
 import hla.rti1516e.CallbackModel;
 import hla.rti1516e.OrderType;
 import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.exceptions.RTIexception;
-import java.io.File;
-import java.net.URL;
-import java.util.Set;
-import java.util.UUID;
 import nl.literti.client.LiteRtiAmbassador;
 import nl.tno.netn4.datatypes.EntityTypeStruct;
 import nl.tno.netn4.datatypes.SupplyStatusStruct;
@@ -64,9 +65,9 @@ public class testfederate_1 extends NullOOFederateAmbassador {
     // // oortiamb.subscribeInteractionClass(SetSuppliesStatus.class);
     // // oortiamb.publishInteractionClass(SetSuppliesStatus.class);
 
-    // // Run tests
-    // // this.runTests(oortiamb);
-    // this.sendObjectUpdate(oortiamb);
+    // Run tests
+    // this.runTests(oortiamb);
+    this.sendObjectUpdate(oortiamb);
 
     // // resign and disconnect
     // oortiamb.resignFederationExecution(ResignAction.NO_ACTION);
@@ -131,13 +132,13 @@ public class testfederate_1 extends NullOOFederateAmbassador {
     oortiamb.registerObjectInstance(entity);
     oortiamb.updateAttributeValues(entity, null);
 
-    // int updateCount = 0;
-    // while (true) {
-    //   Thread.sleep(3000);
-    //   updateCount++;
-    //   entity.setCallsign("Test-entity-from-EE-" + updateCount);
-    //   oortiamb.updateAttributeValues(entity, null);
-    //   System.err.println("Updated callsign to: " + entity.getCallsign());
-    // }
+    int updateCount = 0;
+    while (true) {
+      Thread.sleep(3000);
+      updateCount++;
+      entity.setCallsign("Test-entity-from-EE-" + updateCount);
+      oortiamb.updateAttributeValues(entity, null);
+      System.err.println("Updated callsign to: " + entity.getCallsign());
+    }
   }
 }

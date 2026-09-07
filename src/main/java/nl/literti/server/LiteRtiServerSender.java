@@ -1,10 +1,15 @@
 package nl.literti.server;
 
-import hla.rti1516e.ObjectInstanceHandle;
 import java.io.IOException;
 import java.net.Socket;
+
+import hla.rti1516e.FederateHandle;
+import hla.rti1516e.ObjectClassHandle;
+import hla.rti1516e.ObjectInstanceHandle;
 import nl.literti.AbstractLiteRtiSender;
 import nl.literti.fom.FederationObjectModel;
+import nl.literti.messages.requests.DiscoveredObjectInstance;
+import nl.literti.messages.requests.UpdateAttributeValues;
 import nl.literti.messages.responses.ResponseFederateConnected;
 import nl.literti.messages.responses.ResponseFederationCreated;
 import nl.literti.messages.responses.ResponseFederationFom;
@@ -74,5 +79,18 @@ public class LiteRtiServerSender extends AbstractLiteRtiSender {
         new ResponseObjectInstanceName(msgHandle, objectInstanceName);
     response.setMsgString(result);
     serializeSendMsg(socket, response);
+  }
+
+  public void sendDiscoveredObjectInstances(Socket socket, int msgHandle, ObjectInstanceHandle instance, ObjectClassHandle objectClassHandle, String objectClassName, FederateHandle federateHandle)
+      throws IOException {
+    DiscoveredObjectInstance response = new DiscoveredObjectInstance(msgHandle, instance, objectClassHandle, objectClassName, federateHandle);
+    response.setMsgString("OK|OBJECT_INSTANCES_DISCOVERED");
+    serializeSendMsg(socket, response);
+  }
+
+  public void forwardUpdateAttributeValues(Socket socket, UpdateAttributeValues updateAttributeValues, String result)
+      throws IOException {
+    updateAttributeValues.setMsgString(result);
+    serializeSendMsg(socket, updateAttributeValues);
   }
 }

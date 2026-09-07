@@ -37,7 +37,7 @@ public class UpdateAttributeValues extends MessageObject {
     return this.objectInstanceHandle;
   }
 
-  public AttributeHandleValueMap getAttributeValues() {
+  public AttributeHandleValueMap getAttributeHandleValueMap() {
     return this.theAttributes;
   }
 

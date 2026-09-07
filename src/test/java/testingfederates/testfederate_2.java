@@ -1,13 +1,14 @@
 package testingfederates;
 
+import java.io.File;
+import java.net.URL;
+import java.util.Set;
+
 import hla.rti1516e.CallbackModel;
 import hla.rti1516e.OrderType;
 import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.exceptions.RTIexception;
-import java.io.File;
-import java.net.URL;
-import java.util.Set;
 import nl.literti.client.LiteRtiAmbassador;
 import nl.tno.netn4.objects.BaseEntity;
 import nl.tno.oorti.DefaultOOobjectFactory;
@@ -63,8 +64,8 @@ public class testfederate_2 extends NullOOFederateAmbassador {
     System.out.println("Trying to join...");
     oortiamb.joinFederationExecution("fed_2", "TheWorld", new URL[] {fom, mim});
 
-    // // subscribe to BaseEntity object class
-    // oortiamb.subscribeObjectClass(BaseEntity.class);
+    // subscribe to BaseEntity object class
+    oortiamb.subscribeObjectClass(BaseEntity.class);
 
     System.out.println("Subscribed to BaseEntity updates.");
     System.out.println("Waiting for BaseEntity updates...");

@@ -3,8 +3,10 @@ package nl.literti.client;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.CompletableFuture;
+
 import nl.literti.AbstractLiteRtiReceiver;
 import nl.literti.messages.MessageObject;
+import nl.literti.messages.requests.DiscoveredObjectInstance;
 import nl.literti.messages.requests.UpdateAttributeValues;
 import nl.literti.messages.responses.ResponseFederateConnected;
 import nl.literti.messages.responses.ResponseFederationCreated;
@@ -37,6 +39,8 @@ public class LiteRtiClientReceiver extends AbstractLiteRtiReceiver {
     if (!(obj instanceof MessageObject msgObj)) {
       return;
     }
+
+    // Todo: would be cleaner to move this line into the switch methods below
     CompletableFuture<Object> future = clientContext.getPendingResponse(msgObj.getMsgHandle());
 
     // Route responses, futures created in the clientSender will be completed here when the response
@@ -66,6 +70,10 @@ public class LiteRtiClientReceiver extends AbstractLiteRtiReceiver {
         case ResponseSubscribeObject response -> {
           clientContext.handleSubscribeObjectResponse(response.getMsgString());
           future.complete(response.getMsgString());
+        }
+        case DiscoveredObjectInstance response -> {
+          // No msgHandle is needed
+          clientContext.handleDiscoveredObjectInstances(response);
         }
         case ResponseRegisterObjectInstance response -> {
           future.complete(

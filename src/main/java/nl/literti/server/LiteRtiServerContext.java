@@ -1,13 +1,18 @@
 package nl.literti.server;
 
-import hla.rti1516e.ObjectInstanceHandle;
-import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
-import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import hla.rti1516e.AttributeHandle;
+import hla.rti1516e.AttributeHandleSet;
+import hla.rti1516e.AttributeHandleValueMap;
+import hla.rti1516e.ObjectClassHandle;
+import hla.rti1516e.ObjectInstanceHandle;
+import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
+import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
 import nl.literti.FederationExecution;
 import nl.literti.fom.FederationObjectModel;
 import nl.literti.messages.requests.RequestConnectFederate;
@@ -19,6 +24,8 @@ import nl.literti.messages.requests.RequestObjectInstanceName;
 import nl.literti.messages.requests.RequestPublishObject;
 import nl.literti.messages.requests.RequestRegisterObjectInstance;
 import nl.literti.messages.requests.RequestSubscribeObject;
+import nl.literti.messages.requests.UpdateAttributeValues;
+import nl.literti.utils.AttributeHandleValueMapImpl;
 
 /** Context for keeping track of the states of the server and its federates */
 public class LiteRtiServerContext {
@@ -26,11 +33,8 @@ public class LiteRtiServerContext {
   private final LiteRtiServerSender serverSender;
 
   // Connection map
-  private final Map<Integer, String> connectionHandle2Socket =
-      new ConcurrentHashMap<>(); // This map is used when messages need forwarding to other
-                                 // federates, to find the socket for a given connection handle.
-                                 // These handles are global as they can be re-used for connecting
-                                 // to different federations, unlike federate handles
+  // This map is used when messages need forwarding to other federates, to find the socket for a given connection handle. These handles are global as they can be re-used for connecting to different federations, unlike federate handles
+  private final Map<Integer, String> connectionHandle2Socket = new ConcurrentHashMap<>();  
 
   // Federation map
   private final Map<String, FederationExecution> federationName2FederationExecutions =
@@ -122,7 +126,7 @@ public class LiteRtiServerContext {
   void handleJoinFederationRequest(Socket socket, RequestJoinFederation reqObj) throws IOException {
     String msg;
     try {
-      joinFederationExecution(reqObj.getFederationName(), reqObj.getFederateType());
+      joinFederationExecution(reqObj.getFederationName(), reqObj.getFederateType(), socket);
       msg = "OK|JOINED_FEDERATION";
     } catch (FederationExecutionDoesNotExist e) {
       msg = "ERROR|FEDERATION_DOES_NOT_EXIST";
@@ -132,13 +136,13 @@ public class LiteRtiServerContext {
     serverSender.sendJoinFederationResponse(socket, reqObj.getMsgHandle(), msg);
   }
 
-  void joinFederationExecution(String federationName, String federateType)
+  void joinFederationExecution(String federationName, String federateType, Socket socket)
       throws FederationExecutionDoesNotExist {
     FederationExecution fedEx = this.federationName2FederationExecutions.get(federationName);
     if (fedEx == null) {
       throw new FederationExecutionDoesNotExist("Federation not found: " + federationName);
     }
-    fedEx.addFederate(federateType, federateType);
+    fedEx.addFederate(federateType, federateType, socket);
   }
 
   void removeFederateFromAllFederations(String federateType) {
@@ -199,6 +203,13 @@ public class LiteRtiServerContext {
         federateType, reqObj.getObjectClassHandle(), reqObj.getAttributeHandleSet());
     msg = "OK|OBJECT_CLASS_SUBSCRIBED";
     serverSender.sendSubscribeObjectResponse(socket, reqObj.getMsgHandle(), msg);
+
+    // Send already existing object instances for the federate to discover them
+    Set<ObjectInstanceHandle> instances = fedEx.getObjectInstancesForClass(reqObj.getObjectClassHandle());
+    for (ObjectInstanceHandle instance : instances) {
+      String theObjectName = fedEx.getObjectInstanceName(instance);
+      serverSender.sendDiscoveredObjectInstances(socket, 0, instance, reqObj.getObjectClassHandle(), theObjectName, null); //MsgHandle can be 0 since this is not a response to a request (future in client)
+    }
   }
 
   // ==== Register Object Instance =====
@@ -229,6 +240,24 @@ public class LiteRtiServerContext {
     msg = "OK|OBJECT_INSTANCE_REGISTERED";
     serverSender.sendRegisterObjectInstanceResponse(
         socket, reqObj.getMsgHandle(), objectInstanceHandle, msg);
+
+    // Forward object instance discovery calls to federates that are subscribed to this object class
+    ObjectClassHandle objectClassHandle = fedEx.getObjectInstanceClass(objectInstanceHandle);
+    Map<String, AttributeHandleSet> subscribedFederates = fedEx.getObjectClassSubscribedFederates(objectClassHandle);
+    for (Map.Entry<String, AttributeHandleSet> entry : subscribedFederates.entrySet()) {
+      String subscribedFederateType = entry.getKey();
+
+      // Skip sending to the federate that sent the update
+      if (subscribedFederateType.equals(federateType)) {
+        continue; 
+      }
+
+      Socket targetSocket = fedEx.getFederateSocket(subscribedFederateType);
+      if (targetSocket != null) {
+        String theObjectName = fedEx.getObjectInstanceName(objectInstanceHandle);
+        serverSender.sendDiscoveredObjectInstances(targetSocket, 0, objectInstanceHandle, reqObj.getObjectClassHandle(), theObjectName, null);
+      }
+    }
   }
 
   void handleObjectInstanceNameRequest(
@@ -253,6 +282,75 @@ public class LiteRtiServerContext {
     msg = "OK|OBJECT_INSTANCE_NAME_RETRIEVED";
     serverSender.sendObjectInstanceNameResponse(
         socket, reqObj.getMsgHandle(), objectInstanceName, msg);
+  }
+
+  // ==== Attribute Value Update =====
+
+  void handleUpdateAttributeValues(Socket socket, UpdateAttributeValues reqObj, String federationName, String federateType) throws IOException {
+    // Forward the attribute value update to all federates that have subscribed to this object class and attribute set
+
+    String msg;
+    if (federationName == null) {
+      msg = "ERROR|FEDERATION_NAME_NOT_PROVIDED";
+      serverSender.forwardUpdateAttributeValues(socket, null, msg);
+      return;
+    }
+
+    FederationExecution fedEx = this.federationName2FederationExecutions.get(federationName);
+    if (fedEx == null) {
+      msg = "ERROR|FEDERATION_DOES_NOT_EXIST";
+      serverSender.forwardUpdateAttributeValues(socket, null, msg);
+      return;
+    }
+
+    ObjectInstanceHandle objectInstanceHandle = reqObj.getObjectInstanceHandle();
+    System.out.println("[ServerContext] Handling UpdateAttributeValues for object instance: " + objectInstanceHandle);
+    ObjectClassHandle objectClassHandle = fedEx.getObjectInstanceClass(objectInstanceHandle);
+    Map<String, AttributeHandleSet> subscribedFederates = fedEx.getObjectClassSubscribedFederates(objectClassHandle);
+
+    // For every subscribed federate
+    for (Map.Entry<String, AttributeHandleSet> entry : subscribedFederates.entrySet()) {
+      String subscribedFederateType = entry.getKey();
+
+      // Skip sending to the federate that sent the update
+      if (subscribedFederateType.equals(federateType)) {
+        continue; 
+      }
+
+      System.out.println("Handling attribute update for federate: " + subscribedFederateType);
+      AttributeHandleSet subscribedAttributes = entry.getValue();
+
+      // Filter the attributes to only include those that the federate has subscribed to
+      AttributeHandleValueMap toSendAttributes = new AttributeHandleValueMapImpl();
+      
+      // If no specific subscription list, send all attributes
+      if (subscribedAttributes == null) {
+        toSendAttributes.putAll(reqObj.getAttributeHandleValueMap());
+      } else {
+        for (AttributeHandle updatedAttributeHandle : reqObj.getAttributeHandleValueMap().keySet()) {
+          if (subscribedAttributes.contains(updatedAttributeHandle)) {
+            toSendAttributes.put(updatedAttributeHandle, reqObj.getAttributeHandleValueMap().get(updatedAttributeHandle));
+          }
+        }
+      }
+
+      if (toSendAttributes.isEmpty()) {
+        continue; // Skip sending if there are no attributes to send
+      }
+
+      UpdateAttributeValues filteredUpdate = new UpdateAttributeValues(
+          objectInstanceHandle,
+          toSendAttributes,
+          reqObj.getUserSuppliedTag(),
+          reqObj.getMsgHandle()
+      );
+
+      // Send the filtered update to the subscribed federate
+      Socket targetSocket = fedEx.getFederateSocket(subscribedFederateType);
+      if (targetSocket != null) {
+        serverSender.forwardUpdateAttributeValues(targetSocket, filteredUpdate, "OK|ATTRIBUTE_VALUES_UPDATED");
+      }
+    }
   }
 
   // ===== ONLY FOR DEBUG ATM, might delete this later =====
