@@ -10,6 +10,8 @@ import nl.literti.fom.enums.SharingEnum;
 
 public class FomObjectClass implements Serializable {
 
+  private static final long serialVersionUID = 1L;
+
   private String name; // local name of the object class, e.g. "vehicle"
   private String
       qualifiedName; // fully qualified name, including parent names, e.g.

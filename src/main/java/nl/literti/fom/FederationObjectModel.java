@@ -24,10 +24,10 @@ public class FederationObjectModel implements Serializable {
   // private boolean locked;
   private Map<String, FomDatatype> datatypes;
   private Map<Integer, FomObjectClass> oclasses;
-  // private Map<Integer,ICMetadata> iclasses;
+  private Map<Integer, FomInteractionClass> iclasses;
   // private Map<Integer,Space> spaces;
   private FomObjectClass ocroot;
-  // private ICMetadata icroot;
+  private FomInteractionClass icroot;
 
   private int
       privilegeToDelete; // handle of the HLAprivilegeToDeleteObject attribute in the object root
@@ -38,11 +38,11 @@ public class FederationObjectModel implements Serializable {
   public FederationObjectModel() {
     this.datatypes = new HashMap<String, FomDatatype>();
     this.oclasses = new HashMap<Integer, FomObjectClass>();
-    // this.iclasses = new HashMap<Integer,ICMetadata>();
+    this.iclasses = new HashMap<Integer,FomInteractionClass>();
     // this.spaces   = new HashMap<Integer,Space>();
     // this.locked   = false;
     this.ocroot = null; // Object root class
-    // this.icroot   = null;
+    this.icroot   = null;
     // this.version  = HLAVersion.HLA13;
 
     this.privilegeToDelete = INVALID_HANDLE;
@@ -279,6 +279,97 @@ public class FederationObjectModel implements Serializable {
 
   // ===== InteractionClass API =====
 
+  public FomInteractionClass getInteractionClass( int handle ){
+		return this.iclasses.get( handle );
+	}
+
+  public FomInteractionClass getInteractionClass( String name ){
+		name = name.toLowerCase(); // names are meant to be case-insensitive
+		
+		for( FomInteractionClass ic : this.iclasses.values() ){
+			if( ic.getQualifiedName().equalsIgnoreCase(name) ){
+				return ic;
+			}
+		}
+
+    // Search with name in the local interaction class map
+		for( FomInteractionClass ic : this.iclasses.values() ){
+			if( ic.getLocalName().equalsIgnoreCase(name) ){
+				return ic;
+			}
+		}
+		
+    // Check for interaction root
+		if( name.equalsIgnoreCase("HLAinteractionRoot") ) return this.getInteractionRoot();
+
+		// below will return null if it isn't a MOM class
+    throw new IllegalArgumentException("Not implemented i2");
+		// return this.getInteractionClass( Mom.getMomInteractionHandle(version,name) );
+	}
+
+  public FomInteractionClass getInteractionRoot(){
+		return this.icroot;
+	}
+
+  public void setInteractionRoot( FomInteractionClass root ){
+    
+		// 1516e implementation
+    if( root.getQualifiedName().equals("HLAinteractionRoot") ){
+      this.icroot = root;
+    }
+	}
+
+  public Set<FomInteractionClass> getAllInteractionClasses(){
+		return new HashSet<FomInteractionClass>( this.iclasses.values() );
+	}
+
+  public void addInteractionClass( FomInteractionClass ic ){
+		// // make sure we're not locked
+		// if( ic == null || this.locked )
+		// {
+		// 	return;
+		// }
+		
+		// add it
+		this.iclasses.put( ic.getHandle(), ic );
+		ic.setModel( this );
+	}
+
+  public FomInteractionClass removeInteractionClass( int handle ){
+		return this.iclasses.remove( handle );
+	}
+
+  public int getInteractionClassHandle( String name ){
+		FomInteractionClass metadata = this.getInteractionClass( name );
+		if( metadata == null )
+		{
+			// couldn't find it, return the dud
+			return INVALID_HANDLE;
+		} else{
+			return metadata.getHandle();
+		}
+	}
+
+  public String getInteractionClassName( int handle ){
+		if( this.iclasses.containsKey(handle) )
+		{
+			return this.iclasses.get(handle).getQualifiedName();
+		} else {
+			return null;
+		}
+	}
+
+  public String findParameterName( int parameterHandle ){
+		for( FomInteractionClass interactionClass : this.iclasses.values() )
+		{
+			FomParameterClass parameterClass = interactionClass.getDeclaredParameter( parameterHandle );
+			if( parameterClass != null )
+				return parameterClass.getName();
+		}
+		
+		return "<unknown>";
+	}
+
   // ===== Dynamic FOM API =====
 
   // ===== Creation/Handle FOM API =====
@@ -293,19 +384,17 @@ public class FederationObjectModel implements Serializable {
   public FomAttributeClass newAttribute(String name, FomDatatype datatype) {
     return new FomAttributeClass(name, datatype, generateHandle());
   }
+  
+  public FomInteractionClass newInteraction( String name ){
+  	FomInteractionClass interaction = new FomInteractionClass( name, generateHandle() );
+  	interaction.setModel( this );
 
-  // 	public ICMetadata newInteraction( String name )
-  // {
-  // 	ICMetadata interaction = new ICMetadata( name, generateHandle() );
-  // 	interaction.setModel( this );
+  	return interaction;
+  }
 
-  // 	return interaction;
-  // }
-
-  // 	public PCMetadata newParameter( String name, IDatatype datatype )
-  // {
-  // 	return new PCMetadata( name, datatype, generateHandle() );
-  // }
+  public FomParameterClass newParameter( String name, FomDatatype datatype ){
+  	return new FomParameterClass( name, datatype, generateHandle() );
+  }
 
   // public Space newSpace( String name )
   // {
@@ -323,7 +412,6 @@ public class FederationObjectModel implements Serializable {
 
   public String toString() {
     throw new IllegalArgumentException("Not implemented 4");
-    // return new StringRenderer().renderFOM( this );
   }
 
   public String toXmlDocument() {
