@@ -169,7 +169,7 @@ public class FederationObjectModel implements Serializable {
     if (classHandle < MAX_MOM_HANDLE) {
       // make sure we aren't talking privilegeToDelete
       if (attributeName.equals("HLAprivilegeToDeleteObject")) {
-        return this.ocroot.getAttribute(this.privilegeToDelete);
+        return this.ocroot.getDeclaredAttribute(this.privilegeToDelete);
       }
 
       // it sure is, do a special lookup because of the requirement to map names
@@ -182,7 +182,7 @@ public class FederationObjectModel implements Serializable {
 
     // Check normal attributes
     int aHandle = oc.getAttributeHandle(attributeName);
-    return oc.getAttribute(aHandle);
+    return oc.getDeclaredAttribute(aHandle);
   }
 
   public FomObjectClass getObjectRoot() {
@@ -204,7 +204,7 @@ public class FederationObjectModel implements Serializable {
 
   public void addPrivilegeToDeleteIfNotPresent() {
     String name = "HLAprivilegeToDeleteObject";
-    FomAttributeClass temp = ocroot.getAttribute(name);
+    FomAttributeClass temp = ocroot.getDeclaredAttribute(name);
     if (temp == null) {
       // 1516e implementation (this HLAprivilegeToDelete is NA in 1516 but HLAtoken in 1516e. This
       // method looks to only ever called for 1516e foms, so hardcoded for HLAtoken)
@@ -261,7 +261,7 @@ public class FederationObjectModel implements Serializable {
   public String findAttributeName(int attributeHandle) {
     // Go over all object classes
     for (FomObjectClass objectClass : this.oclasses.values()) {
-      FomAttributeClass attributeClass = objectClass.getAttribute(attributeHandle);
+      FomAttributeClass attributeClass = objectClass.getDeclaredAttribute(attributeHandle);
       if (attributeClass != null) return attributeClass.getName();
     }
 
@@ -274,7 +274,7 @@ public class FederationObjectModel implements Serializable {
 
   // was getPrivileteToDeleteMetaClass
   public FomAttributeClass getPrivileteToDeleteAttributeClass() {
-    return ocroot.getAttribute(this.privilegeToDelete);
+    return ocroot.getDeclaredAttribute(this.privilegeToDelete);
   }
 
   // ===== InteractionClass API =====
