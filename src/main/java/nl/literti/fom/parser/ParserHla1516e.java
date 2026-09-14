@@ -1,22 +1,26 @@
 package nl.literti.fom.parser;
 
-import hla.rti1516e.exceptions.CouldNotOpenFDD;
-import hla.rti1516e.exceptions.ErrorReadingFDD;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 import java.util.Set;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import hla.rti1516e.exceptions.CouldNotOpenFDD;
+import hla.rti1516e.exceptions.ErrorReadingFDD;
 import nl.literti.fom.FederationObjectModel;
 import nl.literti.fom.FomAttributeClass;
 import nl.literti.fom.FomDatatype;
+import nl.literti.fom.FomInteractionClass;
 import nl.literti.fom.FomObjectClass;
+import nl.literti.fom.FomParameterClass;
 import nl.literti.fom.datatypes.UnresolvedDatatype;
 import nl.literti.fom.enums.OrderEnum;
 import nl.literti.fom.enums.SharingEnum;
 import nl.literti.fom.enums.TransportEnum;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 public class ParserHla1516e {
 
@@ -74,18 +78,14 @@ public class ParserHla1516e {
     this.fom.setObjectRoot(objectRoot);
 
     // extract all the interaction classes
-    // TODO : To be implemented
-    // ICMetadata interactionRoot = null;
-    // if( interactionsElement != null )
-    // {
-    // 	interactionRoot = this.extractInteractions( interactionsElement );
-    // }
-    // else
-    // {
-    // 	interactionRoot = this.fom.newInteraction( "HLAinteractionRoot" );
-    // 	this.fom.addInteractionClass( interactionRoot );
-    // }
-    // this.fom.setInteractionRoot( interactionRoot );
+    FomInteractionClass interactionRoot = null;
+    if( interactionsElement != null ) {
+    	interactionRoot = this.extractInteractions( interactionsElement );
+    } else {
+    	interactionRoot = this.fom.newInteraction( "HLAinteractionRoot" );
+    	this.fom.addInteractionClass( interactionRoot );
+    }
+    this.fom.setInteractionRoot( interactionRoot );
 
     // return the completed FOM
     return this.fom;
@@ -228,132 +228,122 @@ public class ParserHla1516e {
   ////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////// Interaction Class Methods ////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////
-  /**
-   * Loop through all the child objects and generate the metadata hierarchy to represent them.
-   *
-   * <p>The general format of the object element is as follows:
-   *
-   * <pre>
-   * <interactions>
-   *    <interactionClass>
-   *       <name>HLAinteractionRoot</name>
-   *       <transportation>HLAreliable|HLAbestEffort</transportation>
-   *       <order>TimeStamp|Receive</order>
-   *       <parameter>
-   *          <name>name</name>
-   *       </parameter>
-   *       ...
-   *       <interactionClass/>...
-   *    </interactionClass>
-   * </interactions>
-   * </pre>
-   */
-  // private ICMetadata extractInteractions( Element element ) throws JErrorReadingFED
-  // {
-  // 	Element interactionRootElement = FedHelpers.getFirstChildElement( element,
-  // 	                                                                  "interactionClass" );
-  // 	if( interactionRootElement == null )
-  // 	{
-  // 		// no interactions to process... OK, must be an extension module
-  // 		return null;
-  // 	}
 
-  // 	// validate that we have an interaction root
-  // 	String name = FedHelpers.getChildValue( interactionRootElement, "name" );
-  // 	if( name.equals("HLAinteractionRoot") == false )
-  // 	{
-  // 		throw new JErrorReadingFED( "First <interactionClass> must be "+
-  // 		                            "HLAinteractionRoot, found: "+name );
-  // 	}
+  private FomInteractionClass extractInteractions( Element element ) throws Exception{
+  	System.out.println("[DEBUG extractInteractions] START");
+  	Element interactionRootElement = FedHelpers.getFirstChildElement( element,"interactionClass" );
+  	System.out.println("[DEBUG extractInteractions] Found interactionRootElement: " + (interactionRootElement != null ? "YES" : "NO"));
+  	
+  	if( interactionRootElement == null ){
+  		// no interactions to process... OK, must be an extension module
+  		System.out.println("[DEBUG extractInteractions] Extension module - returning null");
+  		return null;
+  	}
 
-  // 	// generate some basic information for the Interaction root
-  // 	ICMetadata interactionRoot = fom.newInteraction("HLAinteractionRoot" );
+  	// validate that we have an interaction root
+  	String name = FedHelpers.getChildValue( interactionRootElement, "name" );
+  	System.out.println("[DEBUG extractInteractions] Root name: " + name);
+  	if( name.equals("HLAinteractionRoot") == false ) {
+  		throw new Exception( "First <interactionClass> must be "+
+  		                            "HLAinteractionRoot, found: "+name );
+  	}
 
-  // 	// get the transport and order
-  // 	String interactionOrder = FedHelpers.getChildValueForgiving( interactionRootElement, "order",
-  // name );
-  // 	if( interactionOrder != null )
-  // 		interactionRoot.setOrder( Order.fromFomString(interactionOrder) );
+  	// generate some basic information for the Interaction root
+  	FomInteractionClass interactionRoot = fom.newInteraction("HLAinteractionRoot" );
+  	System.out.println("[DEBUG extractInteractions] Created interactionRoot");
 
-  // 	String interactionTransport = FedHelpers.getChildValueForgiving( interactionRootElement,
-  // 	                                                                 "transportation",
-  // 	                                                                 name );
-  // 	if( interactionTransport != null )
-  // 		interactionRoot.setTransport( Transport.fromFomString(interactionTransport) );
+  	// get the transport and order
+  	String interactionOrder = FedHelpers.getChildValueForgiving( interactionRootElement, "order", name );
+  	if( interactionOrder != null ) {
+  		interactionRoot.setOrder( OrderEnum.fromFomString(interactionOrder) );
+  		System.out.println("[DEBUG extractInteractions] Set order: " + interactionOrder);
+  	}
 
-  // 	// get the sharing policy
-  // 	String interactionSharing = FedHelpers.getChildValueForgiving( interactionRootElement,
-  // "sharing", name );
-  // 	if( interactionSharing != null )
-  // 		interactionRoot.setSharing( Sharing.fromFomString(interactionSharing) );
+  	String interactionTransport = FedHelpers.getChildValueForgiving( interactionRootElement,
+  	                                                                 "transportation",
+  	                                                                 name );
+  	if( interactionTransport != null ) {
+  		interactionRoot.setTransport( TransportEnum.fromFomString(interactionTransport) );
+  		System.out.println("[DEBUG extractInteractions] Set transport: " + interactionTransport);
+  	}
 
-  // 	// get the parameters
-  // 	extractParameters( interactionRoot, interactionRootElement );
-  // 	fom.addInteractionClass( interactionRoot );
+  	// get the sharing policy
+  	String interactionSharing = FedHelpers.getChildValueForgiving( interactionRootElement,
+  "sharing", name );
+  	if( interactionSharing != null ) {
+  		interactionRoot.setSharing( SharingEnum.fromFomString(interactionSharing) );
+  		System.out.println("[DEBUG extractInteractions] Set sharing: " + interactionSharing);
+  	}
 
-  // 	// recurse and find all our children
-  // 	extractInteractions( interactionRoot, interactionRootElement );
-  // 	return interactionRoot;
-  // }
+  	// get the parameters
+  	extractParameters( interactionRoot, interactionRootElement );
+  	System.out.println("[DEBUG extractInteractions] Extracted parameters");
+  	fom.addInteractionClass( interactionRoot );
+  	System.out.println("[DEBUG extractInteractions] Added to FOM");
 
-  // private void extractInteractions( ICMetadata parent, Element parentElement )
-  // 	throws JErrorReadingFED
-  // {
-  // 	List<Element> children = FedHelpers.getAllChildElements( parentElement,
-  // 	                                                         "interactionClass" );
-  // 	for( Element current : children )
-  // 	{
-  // 		// create the metadata type
-  // 		String interactionClassName = FedHelpers.getChildValue( current, "name" );
-  // 		ICMetadata interactionClass = fom.newInteraction( interactionClassName );
+  	// recurse and find all our children
+  	System.out.println("[DEBUG extractInteractions] Recursing for children...");
+  	extractInteractions( interactionRoot, interactionRootElement );
+  	System.out.println("[DEBUG extractInteractions] END - returning successfully");
+  	return interactionRoot;
+  }
 
-  // 		// get the transport and order
-  // 		String interactionOrder = FedHelpers.getChildValueForgiving( current,
-  // 		                                                             "order",
-  // 		                                                             interactionClassName );
-  // 		if( interactionOrder != null )
-  // 			interactionClass.setOrder( Order.fromFomString(interactionOrder) );
+  private void extractInteractions( FomInteractionClass parent, Element parentElement ) throws Exception {
+  	List<Element> children = FedHelpers.getAllChildElements( parentElement,
+  	                                                         "interactionClass" );
+  	for( Element current : children ) {
+  		// create the metadata type
+  		String interactionClassName = FedHelpers.getChildValue( current, "name" );
+  		FomInteractionClass interactionClass = fom.newInteraction( interactionClassName );
 
-  // 		String interactionTransport = FedHelpers.getChildValueForgiving( current,
-  // 		                                                                 "transportation",
-  // 		                                                                 interactionClassName );
-  // 		if( interactionTransport != null )
-  // 			interactionClass.setTransport( Transport.fromFomString(interactionTransport) );
+  		// get the transport and order
+  		String interactionOrder = FedHelpers.getChildValueForgiving( current,
+  		                                                             "order",
+  		                                                             interactionClassName );
+  		if( interactionOrder != null )
+  			interactionClass.setOrder( OrderEnum.fromFomString(interactionOrder) );
 
-  // 		// get all the interaction parameters
-  // 		extractParameters( interactionClass, current );
+  		String interactionTransport = FedHelpers.getChildValueForgiving( current,
+  		                                                                 "transportation",
+  		                                                                 interactionClassName );
+  		if( interactionTransport != null )
+  			interactionClass.setTransport( TransportEnum.fromFomString(interactionTransport) );
 
-  // 		// link us to our parent
-  // 		interactionClass.setParent( parent );
-  // 		fom.addInteractionClass( interactionClass );
+  		// get all the interaction parameters
+  		extractParameters( interactionClass, current );
 
-  // 		// recurse and find all our children
-  // 		extractInteractions( interactionClass, current );
-  // 	}
-  // }
+  		// link us to our parent
+  		interactionClass.setParent( parent );
+  		fom.addInteractionClass( interactionClass );
+
+  		// recurse and find all our children
+      System.out.println("[DEBUG extractInteractions] Extracting children for: " + interactionClassName);
+  		extractInteractions( interactionClass, current );
+  	}
+  }
 
   // /**
   //  * This method will extract all the relevant interaction class parameters from the given
   //  * "interactionClass" element. For each parameter, a {@link PCMetadata} will be created
   //  * and stored inside the provided {@link ICMetadata}.
   //  */
-  // private void extractParameters( ICMetadata clazz, Element element ) throws JErrorReadingFED
-  // {
-  // 	ObjectModel theModel = clazz.getModel();
-  // 	List<Element> parameters = FedHelpers.getAllChildElements( element, "parameter" );
-  // 	for( Element parameterElement : parameters )
-  // 	{
-  // 		String parameterName = FedHelpers.getChildValue( parameterElement, "name" );
+  private void extractParameters( FomInteractionClass clazz, Element element ) throws Exception
+  {
+  	FederationObjectModel theModel = clazz.getModel();
+  	List<Element> parameters = FedHelpers.getAllChildElements( element, "parameter" );
+  	for( Element parameterElement : parameters )
+  	{
+  		String parameterName = FedHelpers.getChildValue( parameterElement, "name" );
 
-  // 		// All parameter datatypes are initially created as placeholders, and resolved once
-  // 		// all FOM modules have been merged and the standard MIM has been inserted
-  // 		String datatypeName = FedHelpers.getChildValue( parameterElement, "dataType" );
-  // 		IDatatype datatype = new UnresolvedDatatype( datatypeName );
+  		// All parameter datatypes are initially created as placeholders, and resolved once
+  		// all FOM modules have been merged and the standard MIM has been inserted
+  		String datatypeName = FedHelpers.getChildValue( parameterElement, "dataType" );
+  		FomDatatype datatype = new UnresolvedDatatype( datatypeName );
 
-  // 		PCMetadata parameter = fom.newParameter( parameterName, datatype );
-  // 		clazz.addParameter( parameter );
-  // 	}
-  // }
+  		FomParameterClass parameter = fom.newParameter( parameterName, datatype );
+  		clazz.addParameter( parameter );
+  	}
+  }
 
   ////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////// Private Helper Methods //////////////////////////////////

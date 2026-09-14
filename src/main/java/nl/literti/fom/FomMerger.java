@@ -185,8 +185,8 @@ public class FomMerger {
     /////////////////////////////////////////
     // the appropriate merging action will depend on whether the class is a scaffodling
     // type in either the base or extension module - let's get the att count to see
-    int baseAttributes = base.getAttributeCount();
-    int extensionAttributes = extension.getAttributeCount();
+    int baseAttributes = base.getDeclaredAttributeCount();
+    int extensionAttributes = extension.getDeclaredAttributeCount();
 
     // Neither base nor Extension have attributes - It's scaffolding in both modules, recurse
     // if( baseAttributes == 0 && extensionAttributes == 0 ) {} -- here for comments
@@ -209,7 +209,7 @@ public class FomMerger {
       FederationObjectModel model = base.getModel();
 
       // insert attributes base extension into the base
-      for (FomAttributeClass attribute : extension.getAttributes()) {
+      for (FomAttributeClass attribute : extension.getDeclaredAttributes()) {
         // Get the datatype of the attribute. This returns a datatype from the extension model
         // so we then need to get the base model equivalent of it (which either exists already
         // in the base model, or was imported when insertDatatype() was called previously in
@@ -270,7 +270,7 @@ public class FomMerger {
     newClass.setParent(parent);
 
     // create new attributes for all those in the extension
-    for (FomAttributeClass attribute : extension.getAttributes()) {
+    for (FomAttributeClass attribute : extension.getDeclaredAttributes()) {
       // Get the datatype of the attribute. This returns a datatype from the extension model
       // so we then need to get the base model equivalent of it (which either exists already
       // in the base model, or was imported when insertDatatype() was called previously in
@@ -445,7 +445,7 @@ public class FomMerger {
       throw new Exception("Object Root could not be found... something is drastically wrong");
 
     // Ensure that privilegeToDelete is present -- see ObjectModel.addPrivilegeToDeleteIfNotPresent
-    if (objectRoot.getAttributeCount() == 0) model.addPrivilegeToDeleteIfNotPresent();
+    if (objectRoot.getDeclaredAttributeCount() == 0) model.addPrivilegeToDeleteIfNotPresent();
 
     // ensure that HLAinteractionRoot is present
     // TBC
@@ -481,7 +481,7 @@ public class FomMerger {
   private void validateOCMetadataEquivalent(FomObjectClass base, FomObjectClass extension)
       throws Exception {
     // make sure they have the same number of attributes before we loop through them
-    if (extension.getAttributeCount() != base.getAttributeCount()) {
+    if (extension.getDeclaredAttributeCount() != base.getDeclaredAttributeCount()) {
       // logger.warn( "Merging FOM Module ("+extension.getModel().getFileName()+"): "+
       //              "Ignoring Object Class ["+extension.getQualifiedName()+
       //              "], declarations not equivalent. Attribute counts differ (base="+
@@ -491,9 +491,9 @@ public class FomMerger {
     }
 
     // loop through all the attributes to make sure they're the same (as far as we care)
-    for (FomAttributeClass extensionAttribute : extension.getAttributes()) {
+    for (FomAttributeClass extensionAttribute : extension.getDeclaredAttributes()) {
       // find the same attribute in the base
-      FomAttributeClass baseAttribute = base.getAttribute(extensionAttribute.getName());
+      FomAttributeClass baseAttribute = base.getDeclaredAttribute(extensionAttribute.getName());
       if (baseAttribute == null) {
         // logger.warn( "Merging FOM Module ("+extension.getModel().getFileName()+"): "+
         //              "Ignoring Object Class ["+extension.getQualifiedName()+

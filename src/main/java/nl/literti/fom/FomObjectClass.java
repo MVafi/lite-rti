@@ -10,6 +10,8 @@ import nl.literti.fom.enums.SharingEnum;
 
 public class FomObjectClass implements Serializable {
 
+  private static final long serialVersionUID = 1L;
+
   private String name; // local name of the object class, e.g. "vehicle"
   private String
       qualifiedName; // fully qualified name, including parent names, e.g.
@@ -37,7 +39,7 @@ public class FomObjectClass implements Serializable {
   // ==== Get Set API =====
 
   // getDeclaredAttributeCount
-  public int getAttributeCount() {
+  public int getDeclaredAttributeCount() {
     return attributes.size();
   }
 
@@ -185,9 +187,19 @@ public class FomObjectClass implements Serializable {
     }
   }
 
-  // getDeclaredAttributes
-  public Set<FomAttributeClass> getAttributes() {
+  public Set<FomAttributeClass> getDeclaredAttributes() {
     return new HashSet<FomAttributeClass>(this.attributes.values());
+  }
+
+  public Set<FomAttributeClass> getAllAttributes() {
+    if (this.parent == null) {
+      return this.getDeclaredAttributes();
+    } else {
+      // Also get inherited attributes from the parent class
+      Set<FomAttributeClass> inherited = this.parent.getAllAttributes();
+      inherited.addAll(this.attributes.values());
+      return inherited;
+    }
   }
 
   public FomAttributeClass getPrivilegeToDelete() {
@@ -206,16 +218,7 @@ public class FomObjectClass implements Serializable {
     return metadata;
   }
 
-  public Set<FomAttributeClass> getAllAttributes() {
-    if (this.parent == null) {
-      return this.getAttributes();
-    } else {
-      // Also get inherited attributes from the parent class
-      Set<FomAttributeClass> inherited = this.parent.getAllAttributes();
-      inherited.addAll(this.attributes.values());
-      return inherited;
-    }
-  }
+  
 
   public Set<Integer> getAllAttributeHandles() {
     if (this.parent == null) {
@@ -229,18 +232,18 @@ public class FomObjectClass implements Serializable {
   }
 
   // was getDeclaredAttribute
-  public FomAttributeClass getAttribute(int handle) {
+  public FomAttributeClass getDeclaredAttribute(int handle) {
     return this.attributes.get(handle);
   }
 
-  public FomAttributeClass getAttribute(String name) {
+  public FomAttributeClass getDeclaredAttribute(String name) {
     for (FomAttributeClass attribute : attributes.values()) {
       if (attribute.getName().equals(name)) return attribute;
     }
     return null;
   }
 
-  public FomAttributeClass getFromAllAttribute(int handle) {
+  public FomAttributeClass getAttribute(int handle) {
     if (this.attributes.containsKey(handle)) {
       return this.attributes.get(handle);
     } else {
