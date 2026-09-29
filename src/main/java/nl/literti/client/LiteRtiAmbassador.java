@@ -173,7 +173,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           AlreadyConnected,
           CallNotAllowedFromWithinCallback,
           RTIinternalError {
-    throw new UnsupportedOperationException("Current method is currently unsupported 1");
+    throw new UnsupportedOperationException("Currently not supported call : connect(FederateAmbassador, CallbackModel, String)");
   }
 
   @Override
@@ -223,20 +223,9 @@ public class LiteRtiAmbassador implements RTIambassador {
         "Could not connect to LiteRti server after " + maxRetries + " attempts.");
   }
 
-  // OORTI method
-  // @Override
-  // public void connect(OOFederateAmbassador federateReference, CallbackModel callbackModel)
-  //     throws ConnectionFailed,
-  //         InvalidLocalSettingsDesignator,
-  //         UnsupportedCallbackModel,
-  //         AlreadyConnected,
-  //         CallNotAllowedFromWithinCallback,
-  //         RTIinternalError {}
-
   @Override
   public void disconnect()
       throws FederateIsExecutionMember, CallNotAllowedFromWithinCallback, RTIinternalError {
-    System.out.println("Disconnect call 1");
     clientContext.disconnect();
   }
 
@@ -256,7 +245,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederationExecutionAlreadyExists,
           NotConnected,
           RTIinternalError {
-    throw new UnsupportedOperationException("Current method is currently unsupported 2");
+    throw new UnsupportedOperationException("Currently not supported call : createFederationExecution(String, URL[], URL, String)");
   }
 
   @Override
@@ -269,7 +258,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederationExecutionAlreadyExists,
           NotConnected,
           RTIinternalError {
-    throw new UnsupportedOperationException("Current method is currently unsupported 3");
+    throw new UnsupportedOperationException("Currently not supported call : createFederationExecution(String, URL[], String)");
   }
 
   @Override
@@ -284,7 +273,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederationExecutionAlreadyExists,
           NotConnected,
           RTIinternalError {
-    throw new UnsupportedOperationException("Current method is currently unsupported 4");
+    throw new UnsupportedOperationException("Currently not supported call : createFederationExecution(String, URL[], URL)");
   }
 
   @Override
@@ -305,17 +294,23 @@ public class LiteRtiAmbassador implements RTIambassador {
           CouldNotOpenFDD,
           FederationExecutionAlreadyExists,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : createFederationExecution(String, URL)");
+          }
 
   @Override
   public void destroyFederationExecution(String federationExecutionName)
       throws FederatesCurrentlyJoined,
           FederationExecutionDoesNotExist,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : destroyFederationExecution(String)");
+          }
 
   @Override
-  public void listFederationExecutions() throws NotConnected, RTIinternalError {}
+  public void listFederationExecutions() throws NotConnected, RTIinternalError {
+    throw new UnsupportedOperationException("Currently not supported call : listFederationExecutions()");
+  }
 
   @Override
   public FederateHandle joinFederationExecution(
@@ -366,6 +361,7 @@ public class LiteRtiAmbassador implements RTIambassador {
     } catch (Exception e) {
       throw new RTIinternalError(e.getMessage());
     }
+    // TODO this should return a FederateHandle
     return null; // Return null for now, as we don't have a proper FederateHandle
   }
 
@@ -413,7 +409,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           CallNotAllowedFromWithinCallback,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : resignFederationExecution(ResignAction)");
+          }
 
   @Override
   public void registerFederationSynchronizationPoint(
@@ -422,7 +420,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : registerFederationSynchronizationPoint(String, byte[])");
+          }
 
   @Override
   public void registerFederationSynchronizationPoint(
@@ -434,7 +434,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : registerFederationSynchronizationPoint(String, byte[], FederateHandleSet)");
+          }
 
   @Override
   public void synchronizationPointAchieved(String synchronizationPointLabel)
@@ -443,7 +445,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : synchronizationPointAchieved(String)");
+          }
 
   @Override
   public void synchronizationPointAchieved(
@@ -453,7 +457,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : synchronizationPointAchieved(String, boolean)");
+          }
 
   @Override
   public void requestFederationSave(String label)
@@ -461,7 +467,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : requestFederationSave(String)");
+          }
 
   @Override
   public void requestFederationSave(String label, LogicalTime theTime)
@@ -472,7 +480,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : requestFederationSave(String, LogicalTime)");
+          }
 
   @Override
   public void federateSaveBegun()
@@ -480,7 +490,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : federateSaveBegun()");
+          }
 
   @Override
   public void federateSaveComplete()
@@ -488,7 +500,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : federateSaveComplete()");
+          }
 
   @Override
   public void federateSaveNotComplete()
@@ -496,15 +510,21 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : federateSaveNotComplete()");
+          }
 
   @Override
   public void abortFederationSave()
-      throws SaveNotInProgress, FederateNotExecutionMember, NotConnected, RTIinternalError {}
+      throws SaveNotInProgress, FederateNotExecutionMember, NotConnected, RTIinternalError {
+        throw new UnsupportedOperationException("Currently not supported call : abortFederationSave()");
+      }
 
   @Override
   public void queryFederationSaveStatus()
-      throws RestoreInProgress, FederateNotExecutionMember, NotConnected, RTIinternalError {}
+      throws RestoreInProgress, FederateNotExecutionMember, NotConnected, RTIinternalError {
+        throw new UnsupportedOperationException("Currently not supported call : queryFederationSaveStatus()");
+      }
 
   @Override
   public void requestFederationRestore(String label)
@@ -512,7 +532,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : requestFederationRestore(String)");
+          }
 
   @Override
   public void federateRestoreComplete()
@@ -520,7 +542,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           SaveInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : federateRestoreComplete()");
+          }
 
   @Override
   public void federateRestoreNotComplete()
@@ -528,15 +552,21 @@ public class LiteRtiAmbassador implements RTIambassador {
           SaveInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : federateRestoreNotComplete()");
+          }
 
   @Override
   public void abortFederationRestore()
-      throws RestoreNotInProgress, FederateNotExecutionMember, NotConnected, RTIinternalError {}
+      throws RestoreNotInProgress, FederateNotExecutionMember, NotConnected, RTIinternalError {
+        throw new UnsupportedOperationException("Currently not supported call : abortFederationRestore()");
+      }
 
   @Override
   public void queryFederationRestoreStatus()
-      throws SaveInProgress, FederateNotExecutionMember, NotConnected, RTIinternalError {}
+      throws SaveInProgress, FederateNotExecutionMember, NotConnected, RTIinternalError {
+        throw new UnsupportedOperationException("Currently not supported call : queryFederationRestoreStatus()");
+      }
 
   /////////////////////////////////////
   // Declaration Management Services //
@@ -574,7 +604,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : unpublishObjectClass(ObjectClassHandle)");
+          }
 
   @Override
   public void unpublishObjectClassAttributes(
@@ -586,7 +618,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : unpublishObjectClassAttributes(ObjectClassHandle, AttributeHandleSet)");
+          }
 
   @Override
   public void publishInteractionClass(InteractionClassHandle theInteraction)
@@ -609,7 +643,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : unpublishInteractionClass(InteractionClassHandle)");
+          }
 
   @Override
   public void subscribeObjectClassAttributes(
@@ -647,7 +683,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    System.out.println("## not supported ## needs future support if the OORTI uses it");
+    throw new UnsupportedOperationException("Currently not supported call : subscribeObjectClassAttributes(ObjectClassHandle, AttributeHandleSet, String)");
   }
 
   @Override
@@ -659,7 +695,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : subscribeObjectClassAttributesPassively(ObjectClassHandle, AttributeHandleSet)");
+          }
 
   @Override
   public void subscribeObjectClassAttributesPassively(
@@ -671,7 +709,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : subscribeObjectClassAttributesPassively(ObjectClassHandle, AttributeHandleSet, String)");
+          }
 
   @Override
   public void unsubscribeObjectClass(ObjectClassHandle theClass)
@@ -680,7 +720,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : unsubscribeObjectClass(ObjectClassHandle)");
+          }
 
   @Override
   public void unsubscribeObjectClassAttributes(
@@ -691,7 +733,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : unsubscribeObjectClassAttributes(ObjectClassHandle, AttributeHandleSet)");
+          }
 
   // Standard RTI Method
   @Override
@@ -719,7 +763,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    throw new RTIinternalError("Not implemented 1");
+    throw new UnsupportedOperationException("Currently not supported call : subscribeInteractionClassPassively(InteractionClassHandle)");
   }
 
   @Override
@@ -729,7 +773,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : unsubscribeInteractionClass(InteractionClassHandle)");
+          }
 
   ////////////////////////////////
   // Object Management Services //
@@ -741,7 +787,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : reserveObjectInstanceName(String)");
+          }
 
   @Override
   public void releaseObjectInstanceName(String theObjectInstanceName)
@@ -750,7 +798,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : releaseObjectInstanceName(String)");
+          }
 
   @Override
   public void reserveMultipleObjectInstanceName(Set<String> theObjectNames)
@@ -760,7 +810,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : reserveMultipleObjectInstanceName(Set)");
+          }
 
   @Override
   public void releaseMultipleObjectInstanceName(Set<String> theObjectNames)
@@ -769,7 +821,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : releaseMultipleObjectInstanceName(Set)");
+          }
 
   @Override
   public ObjectInstanceHandle registerObjectInstance(ObjectClassHandle theClass)
@@ -811,32 +865,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-
-    throw new RTIinternalError("Not implemented method");
-    // if (theClass == null) {
-    //   throw new RTIinternalError("ObjectClassHandle cannot be null");
-    // }
-
-    // if (theObjectName == null || theObjectName.isEmpty()) {
-    //   throw new RTIinternalError("Object instance name cannot be null or empty");
-    // }
-
-    // try {
-    //   // Delegate to socket client to register object instance with a specific name
-    //   return socketClient.registerObjectInstance(theClass, theObjectName);
-    // } catch (RuntimeException e) {
-    //   // Convert RuntimeException to appropriate RTI exception
-    //   String errorMsg = e.getMessage();
-    //   if (errorMsg != null && errorMsg.contains("has not published")) {
-    //     throw new ObjectClassNotPublished("Object class has not been published by this
-    // federate");
-    //   }
-    //   if (errorMsg != null && errorMsg.contains("already in use")) {
-    //     throw new ObjectInstanceNameInUse("Object instance name '" + theObjectName + "' is
-    // already in use");
-    //   }
-    //   throw new RTIinternalError("Failed to register object instance: " + errorMsg);
-    // }
+    throw new UnsupportedOperationException("Currently not supported call : registerObjectInstance(ObjectClassHandle, String)");
   }
 
   @Override
@@ -868,7 +897,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    throw new RTIinternalError("updateAttributeValues with LogicalTime not implemented");
+    throw new UnsupportedOperationException("Currently not supported call : updateAttributeValues(ObjectInstanceHandle, AttributeHandleValueMap, byte[], LogicalTime)");
   }
 
   @Override
@@ -902,7 +931,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : sendInteraction(InteractionClassHandle, ParameterHandleValueMap, byte[], LogicalTime)");
   }
 
   @Override
@@ -913,7 +942,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : deleteObjectInstance(ObjectInstanceHandle, byte[])");
+          }
 
   @Override
   public MessageRetractionReturn deleteObjectInstance(
@@ -926,7 +957,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : deleteObjectInstance(ObjectInstanceHandle, byte[], LogicalTime)");
   }
 
   @Override
@@ -938,7 +969,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : localDeleteObjectInstance(ObjectInstanceHandle)");
+          }
 
   @Override
   public void requestAttributeValueUpdate(
@@ -949,7 +982,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : requestAttributeValueUpdate(ObjectInstanceHandle, AttributeHandleSet, byte[])");
+          }
 
   @Override
   public void requestAttributeValueUpdate(
@@ -960,7 +995,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : requestAttributeValueUpdate(ObjectClassHandle, AttributeHandleSet, byte[])");
+          }
 
   @Override
   public void requestAttributeTransportationTypeChange(
@@ -976,7 +1013,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : requestAttributeTransportationTypeChange(ObjectInstanceHandle, AttributeHandleSet, TransportationTypeHandle)");
+          }
 
   @Override
   public void queryAttributeTransportationType(
@@ -987,7 +1026,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : queryAttributeTransportationType(ObjectInstanceHandle, AttributeHandle)");
+          }
 
   @Override
   public void requestInteractionTransportationTypeChange(
@@ -1000,7 +1041,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : requestInteractionTransportationTypeChange(InteractionClassHandle, TransportationTypeHandle)");
+          }
 
   @Override
   public void queryInteractionTransportationType(
@@ -1010,7 +1053,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : queryInteractionTransportationType(FederateHandle, InteractionClassHandle)");
+          }
 
   ///////////////////////////////////
   // Ownership Management Services //
@@ -1025,7 +1070,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : unconditionalAttributeOwnershipDivestiture(ObjectInstanceHandle, AttributeHandleSet)");
+          }
 
   @Override
   public void negotiatedAttributeOwnershipDivestiture(
@@ -1038,7 +1085,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : negotiatedAttributeOwnershipDivestiture(ObjectInstanceHandle, AttributeHandleSet, byte[])");
+          }
 
   @Override
   public void confirmDivestiture(
@@ -1052,7 +1101,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : confirmDivestiture(ObjectInstanceHandle, AttributeHandleSet, byte[])");
+          }
 
   @Override
   public void attributeOwnershipAcquisition(
@@ -1066,7 +1117,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : attributeOwnershipAcquisition(ObjectInstanceHandle, AttributeHandleSet, byte[])");
+          }
 
   @Override
   public void attributeOwnershipAcquisitionIfAvailable(
@@ -1081,7 +1134,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : attributeOwnershipAcquisitionIfAvailable(ObjectInstanceHandle, AttributeHandleSet)");
+          }
 
   @Override
   public void attributeOwnershipReleaseDenied(
@@ -1093,7 +1148,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : attributeOwnershipReleaseDenied(ObjectInstanceHandle, AttributeHandleSet)");
+          }
 
   @Override
   public AttributeHandleSet attributeOwnershipDivestitureIfWanted(
@@ -1106,7 +1163,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : attributeOwnershipDivestitureIfWanted(ObjectInstanceHandle, AttributeHandleSet)");
   }
 
   @Override
@@ -1120,7 +1177,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : cancelNegotiatedAttributeOwnershipDivestiture(ObjectInstanceHandle, AttributeHandleSet)");
+          }
 
   @Override
   public void cancelAttributeOwnershipAcquisition(
@@ -1133,7 +1192,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : cancelAttributeOwnershipAcquisition(ObjectInstanceHandle, AttributeHandleSet)");
+          }
 
   @Override
   public void queryAttributeOwnership(ObjectInstanceHandle theObject, AttributeHandle theAttribute)
@@ -1143,7 +1204,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : queryAttributeOwnership(ObjectInstanceHandle, AttributeHandle)");
+          }
 
   @Override
   public boolean isAttributeOwnedByFederate(
@@ -1155,7 +1218,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return false;
+    throw new UnsupportedOperationException("Currently not supported call : isAttributeOwnedByFederate(ObjectInstanceHandle, AttributeHandle)");
   }
 
   //////////////////////////////
@@ -1171,7 +1234,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : enableTimeRegulation(LogicalTimeInterval)");
+          }
 
   @Override
   public void disableTimeRegulation()
@@ -1180,7 +1245,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : disableTimeRegulation()");
+          }
 
   @Override
   public void enableTimeConstrained()
@@ -1191,7 +1258,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : enableTimeConstrained()");
+          }
 
   @Override
   public void disableTimeConstrained()
@@ -1200,7 +1269,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : disableTimeConstrained()");
+          }
 
   @Override
   public void timeAdvanceRequest(LogicalTime theTime)
@@ -1213,7 +1284,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : timeAdvanceRequest(LogicalTime)");
+          }
 
   @Override
   public void timeAdvanceRequestAvailable(LogicalTime theTime)
@@ -1226,7 +1299,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : timeAdvanceRequestAvailable(LogicalTime)");
+          }
 
   @Override
   public void nextMessageRequest(LogicalTime theTime)
@@ -1239,7 +1314,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : nextMessageRequest(LogicalTime)");
+          }
 
   @Override
   public void nextMessageRequestAvailable(LogicalTime theTime)
@@ -1252,7 +1329,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : nextMessageRequestAvailable(LogicalTime)");
+          }
 
   @Override
   public void flushQueueRequest(LogicalTime theTime)
@@ -1265,7 +1344,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : flushQueueRequest(LogicalTime)");
+          }
 
   @Override
   public void enableAsynchronousDelivery()
@@ -1274,7 +1355,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : enableAsynchronousDelivery()");
+          }
 
   @Override
   public void disableAsynchronousDelivery()
@@ -1283,7 +1366,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : disableAsynchronousDelivery()");
+          }
 
   @Override
   public TimeQueryReturn queryGALT()
@@ -1292,7 +1377,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : queryGALT()");
   }
 
   @Override
@@ -1302,7 +1387,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : queryLogicalTime()");
   }
 
   @Override
@@ -1312,7 +1397,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : queryLITS()");
   }
 
   @Override
@@ -1324,7 +1409,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : modifyLookahead(LogicalTimeInterval)");
+          }
 
   @Override
   public LogicalTimeInterval queryLookahead()
@@ -1334,7 +1421,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : queryLookahead()");
   }
 
   @Override
@@ -1346,7 +1433,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : retract(MessageRetractionHandle)");
+          }
 
   @Override
   public void changeAttributeOrderType(
@@ -1358,7 +1447,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : changeAttributeOrderType(ObjectInstanceHandle, AttributeHandleSet, OrderType)");
+          }
 
   @Override
   public void changeInteractionOrderType(InteractionClassHandle theClass, OrderType theType)
@@ -1368,7 +1459,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : changeInteractionOrderType(InteractionClassHandle, OrderType)");
+          }
 
   //////////////////////////////////
   // Data Distribution Management //
@@ -1381,7 +1474,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : createRegion(DimensionHandleSet)");
   }
 
   @Override
@@ -1392,7 +1485,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : commitRegionModifications(RegionHandleSet)");
+          }
 
   @Override
   public void deleteRegion(RegionHandle theRegion)
@@ -1403,7 +1498,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : deleteRegion(RegionHandle)");
+          }
 
   @Override
   public ObjectInstanceHandle registerObjectInstanceWithRegions(
@@ -1420,7 +1517,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : registerObjectInstanceWithRegions(ObjectClassHandle, AttributeSetRegionSetPairList)");
   }
 
   @Override
@@ -1442,7 +1539,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : registerObjectInstanceWithRegions(ObjectClassHandle, AttributeSetRegionSetPairList, String)");
   }
 
   @Override
@@ -1457,7 +1554,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : associateRegionsForUpdates(ObjectInstanceHandle, AttributeSetRegionSetPairList)");
+          }
 
   @Override
   public void unassociateRegionsForUpdates(
@@ -1470,7 +1569,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : unassociateRegionsForUpdates(ObjectInstanceHandle, AttributeSetRegionSetPairList)");
+          }
 
   @Override
   public void subscribeObjectClassAttributesWithRegions(
@@ -1484,7 +1585,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : subscribeObjectClassAttributesWithRegions(ObjectClassHandle, AttributeSetRegionSetPairList)");
+          }
 
   @Override
   public void subscribeObjectClassAttributesWithRegions(
@@ -1501,7 +1604,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : subscribeObjectClassAttributesWithRegions(ObjectClassHandle, AttributeSetRegionSetPairList, String)");
+          }
 
   @Override
   public void subscribeObjectClassAttributesPassivelyWithRegions(
@@ -1515,7 +1620,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : subscribeObjectClassAttributesPassivelyWithRegions(ObjectClassHandle, AttributeSetRegionSetPairList)");
+          }
 
   @Override
   public void subscribeObjectClassAttributesPassivelyWithRegions(
@@ -1532,7 +1639,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : subscribeObjectClassAttributesPassivelyWithRegions(ObjectClassHandle, AttributeSetRegionSetPairList, String)");
+          }
 
   @Override
   public void unsubscribeObjectClassAttributesWithRegions(
@@ -1545,7 +1654,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : unsubscribeObjectClassAttributesWithRegions(ObjectClassHandle, AttributeSetRegionSetPairList)");
+          }
 
   @Override
   public void subscribeInteractionClassWithRegions(
@@ -1559,7 +1670,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : subscribeInteractionClassWithRegions(InteractionClassHandle, RegionHandleSet)");
+          }
 
   @Override
   public void subscribeInteractionClassPassivelyWithRegions(
@@ -1573,7 +1686,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : subscribeInteractionClassPassivelyWithRegions(InteractionClassHandle, RegionHandleSet)");
+          }
 
   @Override
   public void unsubscribeInteractionClassWithRegions(
@@ -1585,7 +1700,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : unsubscribeInteractionClassWithRegions(InteractionClassHandle, RegionHandleSet)");
+          }
 
   @Override
   public void sendInteractionWithRegions(
@@ -1603,7 +1720,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : sendInteractionWithRegions(InteractionClassHandle, ParameterHandleValueMap, RegionHandleSet, byte[])");
+          }
 
   @Override
   public MessageRetractionReturn sendInteractionWithRegions(
@@ -1624,7 +1743,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : sendInteractionWithRegions(InteractionClassHandle, ParameterHandleValueMap, RegionHandleSet, byte[], LogicalTime)");
   }
 
   @Override
@@ -1641,7 +1760,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : requestAttributeValueUpdateWithRegions(ObjectClassHandle, AttributeSetRegionSetPairList, byte[])");
+          }
 
   //////////////////////////
   // RTI Support Services //
@@ -1649,17 +1770,19 @@ public class LiteRtiAmbassador implements RTIambassador {
   @Override
   public ResignAction getAutomaticResignDirective()
       throws FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getAutomaticResignDirective()");
   }
 
   @Override
   public void setAutomaticResignDirective(ResignAction resignAction)
-      throws InvalidResignAction, FederateNotExecutionMember, NotConnected, RTIinternalError {}
+      throws InvalidResignAction, FederateNotExecutionMember, NotConnected, RTIinternalError {
+        throw new UnsupportedOperationException("Currently not supported call : setAutomaticResignDirective(ResignAction)");
+      }
 
   @Override
   public FederateHandle getFederateHandle(String theName)
       throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getFederateHandle(String)");
   }
 
   @Override
@@ -1669,7 +1792,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getFederateName(FederateHandle)");
   }
 
   @Override
@@ -1688,19 +1811,19 @@ public class LiteRtiAmbassador implements RTIambassador {
   @Override
   public String getObjectClassName(ObjectClassHandle theHandle)
       throws InvalidObjectClassHandle, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getObjectClassName(ObjectClassHandle)");
   }
 
   @Override
   public ObjectClassHandle getKnownObjectClassHandle(ObjectInstanceHandle theObject)
       throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getKnownObjectClassHandle(ObjectInstanceHandle)");
   }
 
   @Override
   public ObjectInstanceHandle getObjectInstanceHandle(String theName)
       throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getObjectInstanceHandle(String)");
   }
 
   @Override
@@ -1754,7 +1877,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getAttributeName(ObjectClassHandle, AttributeHandle)");
   }
 
   @Override
@@ -1763,7 +1886,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return 0.0;
+    throw new UnsupportedOperationException("Currently not supported call : getUpdateRateValue(String)");
   }
 
   @Override
@@ -1774,7 +1897,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return 0.0;
+    throw new UnsupportedOperationException("Currently not supported call : getUpdateRateValueForAttribute(ObjectInstanceHandle, AttributeHandle)");
   }
 
   @Override
@@ -1795,17 +1918,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    if (true) {
-      throw new UnsupportedOperationException("Current method is currently unsupported 6");
-    }
-
-    if (theHandle instanceof nl.literti.impl.InteractionClassHandleImpl) {
-      int handle = ((nl.literti.impl.InteractionClassHandleImpl) theHandle).getHandle();
-      // For now, we can't reverse-lookup the name from handle without server support
-      // This would require adding GET_INTERACTION_CLASS_NAME message type
-      return null;
-    }
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getInteractionClassName(InteractionClassHandle)");
   }
 
   @Override
@@ -1832,40 +1945,31 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    if (true) {
-      throw new UnsupportedOperationException("Current method is currently unsupported 7");
-    }
-    if (theHandle instanceof nl.literti.impl.ParameterHandleImpl) {
-      int handle = ((nl.literti.impl.ParameterHandleImpl) theHandle).getHandle();
-      // For now, we can't reverse-lookup the name from handle without server support
-      // This would require adding GET_PARAMETER_NAME message type
-      return null;
-    }
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getParameterName(InteractionClassHandle, ParameterHandle)");
   }
 
   @Override
   public OrderType getOrderType(String theName)
       throws InvalidOrderName, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getOrderType(String)");
   }
 
   @Override
   public String getOrderName(OrderType theType)
       throws InvalidOrderType, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getOrderName(OrderType)");
   }
 
   @Override
   public TransportationTypeHandle getTransportationTypeHandle(String theName)
       throws InvalidTransportationName, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getTransportationTypeHandle(String)");
   }
 
   @Override
   public String getTransportationTypeName(TransportationTypeHandle theHandle)
       throws InvalidTransportationType, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getTransportationTypeName(TransportationTypeHandle)");
   }
 
   @Override
@@ -1877,7 +1981,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getAvailableDimensionsForClassAttribute(ObjectClassHandle, AttributeHandle)");
   }
 
   @Override
@@ -1887,25 +1991,25 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getAvailableDimensionsForInteractionClass(InteractionClassHandle)");
   }
 
   @Override
   public DimensionHandle getDimensionHandle(String theName)
       throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getDimensionHandle(String)");
   }
 
   @Override
   public String getDimensionName(DimensionHandle theHandle)
       throws InvalidDimensionHandle, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getDimensionName(DimensionHandle)");
   }
 
   @Override
   public long getDimensionUpperBound(DimensionHandle theHandle)
       throws InvalidDimensionHandle, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return 0;
+    throw new UnsupportedOperationException("Currently not supported call : getDimensionUpperBound(DimensionHandle)");
   }
 
   @Override
@@ -1916,7 +2020,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getDimensionHandleSet(RegionHandle)");
   }
 
   @Override
@@ -1928,7 +2032,7 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getRangeBounds(RegionHandle, DimensionHandle)");
   }
 
   @Override
@@ -1941,18 +2045,20 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : setRangeBounds(RegionHandle, DimensionHandle, RangeBounds)");
+          }
 
   @Override
   public long normalizeFederateHandle(FederateHandle federateHandle)
       throws InvalidFederateHandle, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return 0;
+    throw new UnsupportedOperationException("Currently not supported call : normalizeFederateHandle(FederateHandle)");
   }
 
   @Override
   public long normalizeServiceGroup(ServiceGroup group)
       throws InvalidServiceGroup, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    return 0;
+    throw new UnsupportedOperationException("Currently not supported call : normalizeServiceGroup(ServiceGroup)");
   }
 
   @Override
@@ -1962,7 +2068,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : enableObjectClassRelevanceAdvisorySwitch()");
+          }
 
   @Override
   public void disableObjectClassRelevanceAdvisorySwitch()
@@ -1971,7 +2079,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : disableObjectClassRelevanceAdvisorySwitch()");
+          }
 
   @Override
   public void enableAttributeRelevanceAdvisorySwitch()
@@ -1980,7 +2090,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : enableAttributeRelevanceAdvisorySwitch()");
+          }
 
   @Override
   public void disableAttributeRelevanceAdvisorySwitch()
@@ -1989,7 +2101,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : disableAttributeRelevanceAdvisorySwitch()");
+          }
 
   @Override
   public void enableAttributeScopeAdvisorySwitch()
@@ -1998,7 +2112,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : enableAttributeScopeAdvisorySwitch()");
+          }
 
   @Override
   public void disableAttributeScopeAdvisorySwitch()
@@ -2007,7 +2123,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : disableAttributeScopeAdvisorySwitch()");
+          }
 
   @Override
   public void enableInteractionRelevanceAdvisorySwitch()
@@ -2016,7 +2134,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : enableInteractionRelevanceAdvisorySwitch()");
+          }
 
   @Override
   public void disableInteractionRelevanceAdvisorySwitch()
@@ -2025,31 +2145,37 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            throw new UnsupportedOperationException("Currently not supported call : disableInteractionRelevanceAdvisorySwitch()");
+          }
 
   @Override
   public boolean evokeCallback(double approximateMinimumTimeInSeconds)
       throws CallNotAllowedFromWithinCallback, RTIinternalError {
-    return false;
+    throw new UnsupportedOperationException("Currently not supported call : evokeCallback(double)");
   }
 
   @Override
   public boolean evokeMultipleCallbacks(
       double approximateMinimumTimeInSeconds, double approximateMaximumTimeInSeconds)
       throws CallNotAllowedFromWithinCallback, RTIinternalError {
-    return false;
+    throw new UnsupportedOperationException("Currently not supported call : evokeMultipleCallbacks(double, double)");
   }
 
   @Override
-  public void enableCallbacks() throws SaveInProgress, RestoreInProgress, RTIinternalError {}
+  public void enableCallbacks() throws SaveInProgress, RestoreInProgress, RTIinternalError {
+    throw new UnsupportedOperationException("Currently not supported call : enableCallbacks()");
+  }
 
   @Override
-  public void disableCallbacks() throws SaveInProgress, RestoreInProgress, RTIinternalError {}
+  public void disableCallbacks() throws SaveInProgress, RestoreInProgress, RTIinternalError {
+    throw new UnsupportedOperationException("Currently not supported call : disableCallbacks()");
+  }
 
   @Override
   public AttributeHandleFactory getAttributeHandleFactory()
       throws FederateNotExecutionMember, NotConnected {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getAttributeHandleFactory()");
   }
 
   @Override
@@ -2067,61 +2193,55 @@ public class LiteRtiAmbassador implements RTIambassador {
   @Override
   public AttributeSetRegionSetPairListFactory getAttributeSetRegionSetPairListFactory()
       throws FederateNotExecutionMember, NotConnected {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getAttributeSetRegionSetPairListFactory()");
   }
 
   @Override
   public DimensionHandleFactory getDimensionHandleFactory()
       throws FederateNotExecutionMember, NotConnected {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getDimensionHandleFactory()");
   }
 
   @Override
   public DimensionHandleSetFactory getDimensionHandleSetFactory()
       throws FederateNotExecutionMember, NotConnected {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getDimensionHandleSetFactory()");
   }
 
   @Override
   public FederateHandleFactory getFederateHandleFactory()
       throws FederateNotExecutionMember, NotConnected {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getFederateHandleFactory()");
   }
 
   @Override
   public FederateHandleSetFactory getFederateHandleSetFactory()
       throws FederateNotExecutionMember, NotConnected {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getFederateHandleSetFactory()");
   }
 
   @Override
   public InteractionClassHandleFactory getInteractionClassHandleFactory()
       throws FederateNotExecutionMember, NotConnected {
-
-    System.out.println("HIERrrrrrrrrrrrrr 2");
-
-    if (true) {
-      throw new UnsupportedOperationException("Current method is currently unsupported 8");
-    }
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getInteractionClassHandleFactory()");
   }
 
   @Override
   public ObjectClassHandleFactory getObjectClassHandleFactory()
       throws FederateNotExecutionMember, NotConnected {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getObjectClassHandleFactory()");
   }
 
   @Override
   public ObjectInstanceHandleFactory getObjectInstanceHandleFactory()
       throws FederateNotExecutionMember, NotConnected {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getObjectInstanceHandleFactory()");
   }
 
   @Override
   public ParameterHandleFactory getParameterHandleFactory()
       throws FederateNotExecutionMember, NotConnected {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getParameterHandleFactory()");
   }
 
   @Override
@@ -2133,22 +2253,22 @@ public class LiteRtiAmbassador implements RTIambassador {
   @Override
   public RegionHandleSetFactory getRegionHandleSetFactory()
       throws FederateNotExecutionMember, NotConnected {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getRegionHandleSetFactory()");
   }
 
   @Override
   public TransportationTypeHandleFactory getTransportationTypeHandleFactory()
       throws FederateNotExecutionMember, NotConnected {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getTransportationTypeHandleFactory()");
   }
 
   @Override
   public String getHLAversion() {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getHLAversion()");
   }
 
   @Override
   public LogicalTimeFactory getTimeFactory() throws FederateNotExecutionMember, NotConnected {
-    return null;
+    throw new UnsupportedOperationException("Currently not supported call : getTimeFactory()");
   }
 }
