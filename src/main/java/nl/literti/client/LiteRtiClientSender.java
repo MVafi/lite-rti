@@ -8,8 +8,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import hla.rti1516e.AttributeHandleSet;
 import hla.rti1516e.AttributeHandleValueMap;
+import hla.rti1516e.InteractionClassHandle;
 import hla.rti1516e.ObjectClassHandle;
 import hla.rti1516e.ObjectInstanceHandle;
+import hla.rti1516e.ParameterHandleValueMap;
 import nl.literti.AbstractLiteRtiSender;
 import nl.literti.fom.FederationObjectModel;
 import nl.literti.messages.MessageObject;
@@ -19,10 +21,13 @@ import nl.literti.messages.requests.RequestDisconnectFederate;
 import nl.literti.messages.requests.RequestFederationFom;
 import nl.literti.messages.requests.RequestJoinFederation;
 import nl.literti.messages.requests.RequestObjectInstanceName;
+import nl.literti.messages.requests.RequestPublishInteraction;
 import nl.literti.messages.requests.RequestPublishObject;
 import nl.literti.messages.requests.RequestRegisterObjectInstance;
+import nl.literti.messages.requests.RequestSubscribeInteraction;
 import nl.literti.messages.requests.RequestSubscribeObject;
 import nl.literti.messages.requests.UpdateAttributeValues;
+import nl.literti.messages.requests.UpdateSendInteraction;
 
 public class LiteRtiClientSender extends AbstractLiteRtiSender {
 
@@ -98,10 +103,23 @@ public class LiteRtiClientSender extends AbstractLiteRtiSender {
     serializeSendMsgAndWait(request);
   }
 
+  public void sendPublishInteractionRequest(InteractionClassHandle theInteraction) 
+      throws IOException {
+    RequestPublishInteraction request =
+      new RequestPublishInteraction(theInteraction, requestId.incrementAndGet());
+    serializeSendMsgAndWait(request);
+  }
+
   public void sendSubscribeObjectRequest(
       ObjectClassHandle theClass, AttributeHandleSet attributeList) throws IOException {
     RequestSubscribeObject request =
         new RequestSubscribeObject(theClass, attributeList, requestId.incrementAndGet());
+    serializeSendMsgAndWait(request);
+  }
+
+  public void sendSubscribeInteractionRequest(InteractionClassHandle theClass) throws IOException {
+    RequestSubscribeInteraction request =
+        new RequestSubscribeInteraction(theClass, requestId.incrementAndGet());
     serializeSendMsgAndWait(request);
   }
 
@@ -124,6 +142,15 @@ public class LiteRtiClientSender extends AbstractLiteRtiSender {
     UpdateAttributeValues request =
         new UpdateAttributeValues(
             theHandle, theAttributes, userSuppliedTag, requestId.incrementAndGet());
+    serializeSendMsg(this.socket, request);
+  }
+
+  public void sendInteraction(
+      InteractionClassHandle theHandle, ParameterHandleValueMap theParameters, byte[] userSuppliedTag)
+      throws IOException {
+    UpdateSendInteraction request =
+        new UpdateSendInteraction(
+            theHandle, theParameters, userSuppliedTag, requestId.incrementAndGet());
     serializeSendMsg(this.socket, request);
   }
 }

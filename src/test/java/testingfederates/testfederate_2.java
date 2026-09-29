@@ -10,11 +10,13 @@ import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.exceptions.RTIexception;
 import nl.literti.client.LiteRtiAmbassador;
+import nl.tno.netn4.interactions.SetSuppliesStatus;
 import nl.tno.netn4.objects.BaseEntity;
 import nl.tno.oorti.DefaultOOobjectFactory;
 import nl.tno.oorti.NullOOFederateAmbassador;
 import nl.tno.oorti.OORTIambassador;
 import nl.tno.oorti.OOattribute;
+import nl.tno.oorti.OOparameter;
 import nl.tno.oorti.OOproperties;
 import nl.tno.oorti.impl.OORTIambassadorImpl;
 
@@ -66,6 +68,7 @@ public class testfederate_2 extends NullOOFederateAmbassador {
 
     // subscribe to BaseEntity object class
     oortiamb.subscribeObjectClass(BaseEntity.class);
+    oortiamb.subscribeInteractionClass(SetSuppliesStatus.class);
 
     System.out.println("Subscribed to BaseEntity updates.");
     System.out.println("Waiting for BaseEntity updates...");
@@ -75,6 +78,7 @@ public class testfederate_2 extends NullOOFederateAmbassador {
     System.out.println("Disconnected from the RTI.");
   }
 
+  // !! THIS IS OORTI INTERFACE !!
   @Override
   public void reflectAttributeValues(
       Object theObject,
@@ -95,6 +99,26 @@ public class testfederate_2 extends NullOOFederateAmbassador {
               + ")");
     }
   }
+
+  @Override
+  public void receiveInteraction(
+      Object theInteraction,
+      Set<OOparameter> theParameters,
+      byte[] userSuppliedTag,
+      OrderType sentOrdering,
+      TransportationTypeHandle theTransport,
+      SupplementalReceiveInfo receiveInfo)
+      throws FederateInternalError {
+        System.out.println("Received interaction: " + theInteraction);
+        if (theInteraction instanceof SetSuppliesStatus) {
+          SetSuppliesStatus status = (SetSuppliesStatus) theInteraction;
+          System.out.println(
+              "Received SetSuppliesStatus update: "
+                  + status.getEntity()
+                  + "(EntityID: "
+                  + ")");
+        }
+      }
 
   public static void main(String[] args) throws RTIexception, Exception {
     new testfederate_2().start();

@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import hla.rti1516e.AttributeHandle;
 import hla.rti1516e.AttributeHandleSet;
 import hla.rti1516e.AttributeHandleValueMap;
+import hla.rti1516e.InteractionClassHandle;
 import hla.rti1516e.ObjectClassHandle;
 import hla.rti1516e.ObjectInstanceHandle;
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
@@ -21,10 +22,13 @@ import nl.literti.messages.requests.RequestDisconnectFederate;
 import nl.literti.messages.requests.RequestFederationFom;
 import nl.literti.messages.requests.RequestJoinFederation;
 import nl.literti.messages.requests.RequestObjectInstanceName;
+import nl.literti.messages.requests.RequestPublishInteraction;
 import nl.literti.messages.requests.RequestPublishObject;
 import nl.literti.messages.requests.RequestRegisterObjectInstance;
+import nl.literti.messages.requests.RequestSubscribeInteraction;
 import nl.literti.messages.requests.RequestSubscribeObject;
 import nl.literti.messages.requests.UpdateAttributeValues;
+import nl.literti.messages.requests.UpdateSendInteraction;
 import nl.literti.utils.AttributeHandleValueMapImpl;
 
 /** Context for keeping track of the states of the server and its federates */
@@ -179,6 +183,31 @@ public class LiteRtiServerContext {
     serverSender.sendPublishObjectResponse(socket, reqObj.getMsgHandle(), msg);
   }
 
+   // ==== Publish Interaction Class =====
+
+  void handlePublishInteractionClass(
+      Socket socket, RequestPublishInteraction reqObj, String federationName, String federateType)
+      throws IOException {
+    String msg;
+
+    if (federationName == null) {
+      msg = "ERROR|FEDERATION_NAME_NOT_PROVIDED";
+      serverSender.sendPublishInteractionResponse(socket, reqObj.getMsgHandle(), msg);
+      return;
+    }
+
+    FederationExecution fedEx = this.federationName2FederationExecutions.get(federationName);
+    if (fedEx == null) {
+      msg = "ERROR|FEDERATION_DOES_NOT_EXIST";
+      serverSender.sendPublishInteractionResponse(socket, reqObj.getMsgHandle(), msg);
+      return;
+    }
+
+    fedEx.publishInteractionClass(federateType, reqObj.getInteractionClassHandle());
+    msg = "OK|INTERACTION_CLASS_PUBLISHED";
+    serverSender.sendPublishInteractionResponse(socket, reqObj.getMsgHandle(), msg);
+  }
+
   // ==== Subscribe Object Class =====
 
   void handleSubscribeObjectClass(
@@ -210,6 +239,31 @@ public class LiteRtiServerContext {
       String theObjectName = fedEx.getObjectInstanceName(instance);
       serverSender.sendDiscoveredObjectInstances(socket, 0, instance, reqObj.getObjectClassHandle(), theObjectName, null); //MsgHandle can be 0 since this is not a response to a request (future in client)
     }
+  }
+
+  // ==== Subscribe Interaction Class =====
+
+  void handleSubscribeInteractionClass(
+      Socket socket, RequestSubscribeInteraction reqObj, String federationName, String federateType)
+      throws IOException {
+    String msg;
+
+    if (federationName == null) {
+      msg = "ERROR|FEDERATION_NAME_NOT_PROVIDED";
+      serverSender.sendSubscribeInteractionResponse(socket, reqObj.getMsgHandle(), msg);
+      return;
+    }
+
+    FederationExecution fedEx = this.federationName2FederationExecutions.get(federationName);
+    if (fedEx == null) {
+      msg = "ERROR|FEDERATION_DOES_NOT_EXIST";
+      serverSender.sendSubscribeInteractionResponse(socket, reqObj.getMsgHandle(), msg);
+      return;
+    }
+
+    fedEx.subscribeToInteractionClass(federateType, reqObj.getInteractionClassHandle());
+    msg = "OK|INTERACTION_CLASS_SUBSCRIBED";
+    serverSender.sendSubscribeInteractionResponse(socket, reqObj.getMsgHandle(), msg);
   }
 
   // ==== Register Object Instance =====
@@ -291,6 +345,7 @@ public class LiteRtiServerContext {
 
     String msg;
     if (federationName == null) {
+      // Return an error message to the federate that send the request
       msg = "ERROR|FEDERATION_NAME_NOT_PROVIDED";
       serverSender.forwardUpdateAttributeValues(socket, null, msg);
       return;
@@ -349,6 +404,63 @@ public class LiteRtiServerContext {
       Socket targetSocket = fedEx.getFederateSocket(subscribedFederateType);
       if (targetSocket != null) {
         serverSender.forwardUpdateAttributeValues(targetSocket, filteredUpdate, "OK|ATTRIBUTE_VALUES_UPDATED");
+      }
+    }
+  }
+
+  // ==== Send Interaction Update =====
+
+  void handleUpdateSendInteraction(Socket socket, UpdateSendInteraction reqObj, String federationName, String federateType) throws IOException {
+    // Forward the interaction update to all federates that have subscribed to this interaction class
+
+    String msg;
+    if (federationName == null) {
+      msg = "ERROR|FEDERATION_NAME_NOT_PROVIDED";
+      // Return an error message to the federate that send the request
+      serverSender.forwardUpdateAttributeValues(socket, null, msg);
+      return;
+    }
+
+    FederationExecution fedEx = this.federationName2FederationExecutions.get(federationName);
+    if (fedEx == null) {
+      msg = "ERROR|FEDERATION_DOES_NOT_EXIST";
+      serverSender.forwardUpdateAttributeValues(socket, null, msg);
+      return;
+    }
+
+    // Check whether federate published this interaction
+    // TODO: not sure whether this should be here
+    InteractionClassHandle interactionClassHandle = reqObj.getInteractionClassHandle();
+    if (!fedEx.isInteractionPubBy(federateType,interactionClassHandle)){
+      msg = "ERROR|FEDERATE_DID_NOT_PUBLISH_INTERACTION";
+      serverSender.forwardUpdateAttributeValues(socket, null, msg);
+      return;
+    }
+    
+    System.out.println("[ServerContext] Handling UpdateSendInteraction for interaction class: " + interactionClassHandle);
+    Set<String> subscribedFederates = fedEx.getInteractionClassSubscribedFederates(interactionClassHandle);
+
+    // For every subscribed federate
+    for (String subscribedFederateType : subscribedFederates) {
+
+      // Skip sending to the federate that sent the update
+      if (subscribedFederateType.equals(federateType)) {
+        continue; 
+      }
+
+      System.out.println("Handling attribute update for federate: " + subscribedFederateType);
+
+      UpdateSendInteraction interactionUpdate = new UpdateSendInteraction(
+          interactionClassHandle,
+          reqObj.getParameterHandleValueMap(),
+          reqObj.getUserSuppliedTag(),
+          reqObj.getMsgHandle()
+      );
+
+      // Send the update to the subscribed federate
+      Socket targetSocket = fedEx.getFederateSocket(subscribedFederateType);
+      if (targetSocket != null) {
+        serverSender.forwardUpdateSendInteraction(targetSocket, interactionUpdate, "OK|SEND_INTERACTION_UPDATE");
       }
     }
   }

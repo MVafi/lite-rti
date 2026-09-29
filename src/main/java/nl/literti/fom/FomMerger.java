@@ -94,10 +94,9 @@ public class FomMerger {
     if (extension.getObjectRoot() != null)
       mergeObjectClass(base.getObjectRoot(), extension.getObjectRoot());
 
-    // TODO: Merge interactions
     // merge interactions, starting at the root
-    // if( extension.getInteractionRoot() != null )
-    // 	mergeInteractionClass( base.getInteractionRoot(), extension.getInteractionRoot() );
+    if (extension.getInteractionRoot() != null)
+      mergeInteractionClass(base.getInteractionRoot(), extension.getInteractionRoot());
 
     //
     // ignore the remaining - no way to get this info back out from RTIamb anyway
@@ -304,80 +303,78 @@ public class FomMerger {
    * @throws JInconsistentFDD If the extension type is not scaffolding AND not equal to the base
    *     class.
    */
-  // private void mergeInteractionClass( ICMetadata base, ICMetadata extension )
-  // 	throws JInconsistentFDD
-  // {
-  // 	/////////////////////////////////////////
-  // 	// Check to see if we can merge/extend //
-  // 	/////////////////////////////////////////
-  // 	// the appropriate merging action will depend on whether the class is a scaffodling
-  // 	// type in either the base or extension module - let's get the parameter count to see
-  // 	int baseParameters = base.getDeclaredParameters().size();
-  // 	int extensionParameters = extension.getDeclaredParameters().size();
+  private void mergeInteractionClass( FomInteractionClass base, FomInteractionClass extension )	throws Exception {
+		/////////////////////////////////////////
+		// Check to see if we can merge/extend //
+		/////////////////////////////////////////
+		// the appropriate merging action will depend on whether the class is a scaffodling
+		// type in either the base or extension module - let's get the parameter count to see
+		int baseParameters = base.getDeclaredParameters().size();
+		int extensionParameters = extension.getDeclaredParameters().size();
+		
+		// Neither base nor Extension have parameters - It's scaffolding in both modules, recurse
+		//if( baseParameters == 0 && extensionParameters == 0 ) {} -- here for comments
 
-  // 	// Neither base nor Extension have parameters - It's scaffolding in both modules, recurse
-  // 	//if( baseParameters == 0 && extensionParameters == 0 ) {} -- here for comments
+		// Extension has no parameters - It's scaffolding for something further down, recurse
+		//if( baseParameters > 0 && extensionParameters == 0 ) {} -- here for comments
 
-  // 	// Extension has no parameters - It's scaffolding for something further down, recurse
-  // 	//if( baseParameters > 0 && extensionParameters == 0 ) {} -- here for comments
+		// Both Base and Extension declare parameters.
+		// Check to see if both classes are equivalent, issuing a warning if they are not.
+		// This is mainly just for information purposes. They can't be merged if they're not
+		// equivalent, and if they are equivalent there is nothing to merge.
+		if( baseParameters > 0 && extensionParameters > 0 )
+			validateICMetadataEquivalent( base, extension );
 
-  // 	// Both Base and Extension declare parameters.
-  // 	// Check to see if both classes are equivalent, issuing a warning if they are not.
-  // 	// This is mainly just for information purposes. They can't be merged if they're not
-  // 	// equivalent, and if they are equivalent there is nothing to merge.
-  // 	if( baseParameters > 0 && extensionParameters > 0 )
-  // 		validateICMetadataEquivalent( base, extension );
+		// Base has no parameters, but Extension does
+		// The existing base structure is scaffolding we want to graft attributes on to. We
+		// will get these attributes from the extension module
+		// (how does this work when multiple extend?)
+		if( baseParameters == 0 && extensionParameters > 0 )
+		{
+			FederationObjectModel model = base.getModel();
+			
+			// insert attributes base extension into the base
+			for( FomParameterClass parameter : extension.getDeclaredParameters() )
+			{
+				// Get the datatype of the parameter. This returns a datatype from the extension 
+				// model so we then need to get the base model equivalent of it (which either exists 
+				// already in the base model, or was imported when insertDatatype() was called 
+				// previously in the merge process
+				FomDatatype type = parameter.getDatatype();
+				FomDatatype baseParameterType = model.getDatatype( type.getName() );
+				if( baseParameterType == null )
+					throw new IllegalStateException( "extension parameter datatype not in base model" );
+				
+				FomParameterClass newParameter = new FomParameterClass( parameter.getName(),
+				                                          baseParameterType,
+				                                          model.generateHandle() );
+				
+				base.addParameter( newParameter );
+			}
+		}
 
-  // 	// Base has no parameters, but Extension does
-  // 	// The existing base structure is scaffolding we want to graft attributes on to. We
-  // 	// will get these attributes from the extension module
-  // 	// (how does this work when multiple extend?)
-  // 	if( baseParameters == 0 && extensionParameters > 0 )
-  // 	{
-  // 		ObjectModel model = base.getModel();
-
-  // 		// insert attributes base extension into the base
-  // 		for( PCMetadata parameter : extension.getDeclaredParameters() )
-  // 		{
-  // 			// Get the datatype of the parameter. This returns a datatype from the extension
-  // 			// model so we then need to get the base model equivalent of it (which either exists
-  // 			// already in the base model, or was imported when insertDatatype() was called
-  // 			// previously in the merge process
-  // 			IDatatype type = parameter.getDatatype();
-  // 			IDatatype baseParameterType = model.getDatatype( type.getName() );
-  // 			if( baseParameterType == null )
-  // 				throw new IllegalStateException( "extension parameter datatype not in base model" );
-
-  // 			PCMetadata newParameter = new PCMetadata( parameter.getName(),
-  // 			                                          baseParameterType,
-  // 			                                          model.generateHandle() );
-
-  // 			base.addParameter( newParameter );
-  // 		}
-  // 	}
-
-  // 	//////////////////////////////////
-  // 	// recurse down to the children //
-  // 	//////////////////////////////////
-  // 	// check to see if there are any types in the extension that can be inserted into the base
-  // 	// take copy of the set to avoid concurrent modification exceptions if we extend the model
-  // 	Set<ICMetadata> extensionChildren = new HashSet<ICMetadata>( extension.getChildTypes() );
-  // 	for( ICMetadata extensionChild : extensionChildren )
-  // 	{
-  // 		// if the child does not exist in the base model, insert it, otherwise we need to
-  // 		// recurse down into the hierarchy to ensure that extensions don't come further down
-  // 		ICMetadata baseChild = base.getChildType( extensionChild.getLocalName() );
-  // 		if( baseChild == null )
-  // 		{
-  // 			insertInteractionClass( base, extensionChild );
-  // 		}
-  // 		else
-  // 		{
-  // 			// it exists in the base and extension, recurse for checks at the next level down.
-  // 			mergeInteractionClass( baseChild, extensionChild );
-  // 		}
-  // 	}
-  // }
+		//////////////////////////////////
+		// recurse down to the children //
+		//////////////////////////////////
+		// check to see if there are any types in the extension that can be inserted into the base
+		// take copy of the set to avoid concurrent modification exceptions if we extend the model
+		Set<FomInteractionClass> extensionChildren = new HashSet<FomInteractionClass>( extension.getChildTypes() );
+		for( FomInteractionClass extensionChild : extensionChildren )
+		{
+			// if the child does not exist in the base model, insert it, otherwise we need to
+			// recurse down into the hierarchy to ensure that extensions don't come further down
+			FomInteractionClass baseChild = base.getChildType( extensionChild.getLocalName() );
+			if( baseChild == null )
+			{
+				insertInteractionClass( base, extensionChild );
+			}
+			else
+			{
+				// it exists in the base and extension, recurse for checks at the next level down.
+				mergeInteractionClass( baseChild, extensionChild );
+			}
+		}
+	}
 
   /**
    * Copies the child object class into the provided model, linking it up with the given parent.
@@ -391,42 +388,42 @@ public class FomMerger {
    * @param parent The parent the child will be linked to
    * @param child The child that should be inserted into the model
    */
-  // private void insertInteractionClass( ICMetadata parent, ICMetadata extension )
-  // {
-  // 	logger.trace( "   -> Inserting class ["+extension.getQualifiedName()+"]" );
+  private void insertInteractionClass( FomInteractionClass parent, FomInteractionClass extension )
+	{
+		// logger.trace( "   -> Inserting class ["+extension.getQualifiedName()+"]" );
 
-  // 	// create a new class to insert into the base model basing it off the extension
-  // 	ObjectModel model = parent.getModel();
-  // 	ICMetadata newClass = new ICMetadata( extension.getLocalName(), model.generateHandle() );
-  // 	newClass.setOrder( extension.getOrder() );
-  // 	newClass.setTransport( extension.getTransport() );
-  // 	newClass.setSpace( extension.getSpace() );
-  // 	newClass.setParent( parent );
+		// create a new class to insert into the base model basing it off the extension
+		FederationObjectModel model = parent.getModel();
+		FomInteractionClass newClass = new FomInteractionClass( extension.getLocalName(), model.generateHandle() );
+		newClass.setOrder( extension.getOrder() );
+		newClass.setTransport( extension.getTransport() );
+		// newClass.setSpace( extension.getSpace() );
+		newClass.setParent( parent );
 
-  // 	// create new parameters for all those in the extension
-  // 	for( PCMetadata parameter : extension.getDeclaredParameters() )
-  // 	{
-  // 		// Get the datatype of the parameter. This returns a datatype from the extension
-  // 		// model so we then need to get the base model equivalent of it (which either exists
-  // 		// already in the base model, or was imported when insertDatatype() was called
-  // 		// previously in the merge process
-  // 		IDatatype type = parameter.getDatatype();
-  // 		IDatatype baseParameterType = model.getDatatype( type.getName() );
-  // 		if( baseParameterType == null )
-  // 			throw new IllegalStateException( "extension parameter datatype not in base model" );
+		// create new parameters for all those in the extension
+		for( FomParameterClass parameter : extension.getDeclaredParameters() )
+		{
+			// Get the datatype of the parameter. This returns a datatype from the extension 
+			// model so we then need to get the base model equivalent of it (which either exists 
+			// already in the base model, or was imported when insertDatatype() was called 
+			// previously in the merge process
+			FomDatatype type = parameter.getDatatype();
+			FomDatatype baseParameterType = model.getDatatype( type.getName() );
+			if( baseParameterType == null )
+				throw new IllegalStateException( "extension parameter datatype not in base model" );
+			
+			FomParameterClass newParameter = new FomParameterClass( parameter.getName(),
+			                                          baseParameterType,
+			                                          model.generateHandle() );
+			newClass.addParameter( newParameter );
+		}
+		
+		model.addInteractionClass( newClass );
 
-  // 		PCMetadata newParameter = new PCMetadata( parameter.getName(),
-  // 		                                          baseParameterType,
-  // 		                                          model.generateHandle() );
-  // 		newClass.addParameter( newParameter );
-  // 	}
-
-  // 	model.addInteractionClass( newClass );
-
-  // 	// repeat this process for each of the grandchildren
-  // 	for( ICMetadata extensionGrandchild : extension.getChildTypes() )
-  // 		insertInteractionClass( newClass, extensionGrandchild );
-  // }
+		// repeat this process for each of the grandchildren
+		for( FomInteractionClass extensionGrandchild : extension.getChildTypes() )
+			insertInteractionClass( newClass, extensionGrandchild );
+	}
 
   /////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////// Utility Methods //////////////////////////////////
@@ -534,59 +531,59 @@ public class FomMerger {
   //  * This is mainly just for information purposes. They can't be merged if they're not
   //  * equivalent, and if they are equivalent there is nothing to merge.
   //  */
-  // private void validateICMetadataEquivalent( ICMetadata base, ICMetadata extension )
-  // 	throws Exception
-  // {
-  // 	// do they have the same parameter count?
-  // 	if( extension.getDeclaredParameters().size() != base.getDeclaredParameters().size() )
-  // 	{
-  // 		logger.warn( "Merging FOM Module ("+extension.getModel().getFileName()+"): "+
-  // 		             "Ignoring Interaction Class ["+extension.getQualifiedName()+
-  // 		             "], declarations not equivalent. Parameter counts differ (base="+
-  // 		             base.getDeclaredParameterCount()+", extension="+
-  // 		             extension.getDeclaredParameterCount()+")" );
-  // 		return;
-  // 	}
+  private void validateICMetadataEquivalent( FomInteractionClass base, FomInteractionClass extension )
+  	throws Exception
+  {
+  	// do they have the same parameter count?
+  	if( extension.getDeclaredParameters().size() != base.getDeclaredParameters().size() )
+  	{
+  		// logger.warn( "Merging FOM Module ("+extension.getModel().getFileName()+"): "+
+  		//              "Ignoring Interaction Class ["+extension.getQualifiedName()+
+  		//              "], declarations not equivalent. Parameter counts differ (base="+
+  		//              base.getDeclaredParameterCount()+", extension="+
+  		//              extension.getDeclaredParameterCount()+")" );
+  		return;
+  	}
 
-  // 	// are all of the parameters the same?
-  // 	for( PCMetadata extensionParameter : extension.getDeclaredParameters() )
-  // 	{
-  // 		// does the base class have the parameter?
-  // 		PCMetadata baseParameter = base.getDeclaredParameter( extensionParameter.getName() );
-  // 		if( baseParameter == null )
-  // 		{
-  // 			logger.warn( "Merging FOM Module ("+extension.getModel().getFileName()+"): "+
-  // 			             "Ignoring Interaction Class ["+extension.getQualifiedName()+
-  // 			             "], declarations not equivalent. Parameter ["+
-  // 			             extensionParameter.getName()+
-  // 			             "] in extension does not exist in base module" );
-  // 			return;
-  // 		}
-  // 	}
+  	// are all of the parameters the same?
+  	for( FomParameterClass extensionParameter : extension.getDeclaredParameters() )
+  	{
+  		// does the base class have the parameter?
+  		FomParameterClass baseParameter = base.getDeclaredParameter( extensionParameter.getName() );
+  		if( baseParameter == null )
+  		{
+  			// logger.warn( "Merging FOM Module ("+extension.getModel().getFileName()+"): "+
+  			//              "Ignoring Interaction Class ["+extension.getQualifiedName()+
+  			//              "], declarations not equivalent. Parameter ["+
+  			//              extensionParameter.getName()+
+  			//              "] in extension does not exist in base module" );
+  			return;
+  		}
+  	}
 
-  // 	// do they have the same order?
-  // 	if( extension.getOrder() != base.getOrder() )
-  // 	{
-  // 		logger.warn( "Merging FOM Module ("+extension.getModel().getFileName()+"): "+
-  // 		             "Ignoring Interaction Class ["+extension.getQualifiedName()+
-  // 		             "], declarations not equivalent. Extension class has different Order (base="+
-  // 		             base.getOrder()+", extension="+
-  // 		             extension.getOrder()+")" );
-  // 		return;
-  // 	}
+  	// do they have the same order?
+  	if( extension.getOrder() != base.getOrder() )
+  	{
+  		// logger.warn( "Merging FOM Module ("+extension.getModel().getFileName()+"): "+
+  		//              "Ignoring Interaction Class ["+extension.getQualifiedName()+
+  		//              "], declarations not equivalent. Extension class has different Order (base="+
+  		//              base.getOrder()+", extension="+
+  		//              extension.getOrder()+")" );
+  		return;
+  	}
 
-  // 	// do they have the same transport?
-  // 	if( extension.getTransport() != base.getTransport() )
-  // 	{
+  	// do they have the same transport?
+  	if( extension.getTransport() != base.getTransport() )
+  	{
   // 		logger.warn( "Merging FOM Module ("+extension.getModel().getFileName()+"): "+
   // 		             "Ignoring Interaction Class ["+extension.getQualifiedName()+
   // 		             "], declarations not equivalent. Extension class has different Transport
   // (base="+
   // 		             base.getTransport()+", extension="+
   // 		             extension.getTransport()+")" );
-  // 		return;
-  // 	}
-  // }
+  		return;
+  	}
+  }
 
   /**
    * This method makes a copy of the provided model in a very heavy-weight way. Basically it

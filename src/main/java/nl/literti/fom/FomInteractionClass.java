@@ -214,6 +214,16 @@ public class FomInteractionClass implements Serializable {
 		return this.parameters.get( handle );
 	}
 
+	public FomParameterClass getDeclaredParameter( String name )
+	{
+		for( FomParameterClass parameter : parameters.values() )
+		{
+			if( parameter.getName().equals(name) )
+				return parameter;
+		}
+		return null;
+	}
+
   public FomParameterClass getDeclaredParameterCount( String name ){
 		for( FomParameterClass parameter : parameters.values() ){
 			if( parameter.getName().equals(name) )

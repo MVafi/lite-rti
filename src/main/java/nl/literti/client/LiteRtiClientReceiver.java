@@ -8,13 +8,16 @@ import nl.literti.AbstractLiteRtiReceiver;
 import nl.literti.messages.MessageObject;
 import nl.literti.messages.requests.DiscoveredObjectInstance;
 import nl.literti.messages.requests.UpdateAttributeValues;
+import nl.literti.messages.requests.UpdateSendInteraction;
 import nl.literti.messages.responses.ResponseFederateConnected;
 import nl.literti.messages.responses.ResponseFederationCreated;
 import nl.literti.messages.responses.ResponseFederationFom;
 import nl.literti.messages.responses.ResponseJoinFederation;
 import nl.literti.messages.responses.ResponseObjectInstanceName;
+import nl.literti.messages.responses.ResponsePublishInteraction;
 import nl.literti.messages.responses.ResponsePublishObject;
 import nl.literti.messages.responses.ResponseRegisterObjectInstance;
+import nl.literti.messages.responses.ResponseSubscribeInteraction;
 import nl.literti.messages.responses.ResponseSubscribeObject;
 import nl.literti.utils.BinaryHelper;
 
@@ -67,8 +70,16 @@ public class LiteRtiClientReceiver extends AbstractLiteRtiReceiver {
           clientContext.handlePublishObjectResponse(response.getMsgString());
           future.complete(response.getMsgString());
         }
+        case ResponsePublishInteraction response -> {
+          clientContext.handlePublishInteractionResponse(response.getMsgString());
+          future.complete(response.getMsgString());
+        }
         case ResponseSubscribeObject response -> {
           clientContext.handleSubscribeObjectResponse(response.getMsgString());
+          future.complete(response.getMsgString());
+        }
+        case ResponseSubscribeInteraction response -> {
+          clientContext.handleSubscribeInteractionResponse(response.getMsgString());
           future.complete(response.getMsgString());
         }
         case DiscoveredObjectInstance response -> {
@@ -85,6 +96,10 @@ public class LiteRtiClientReceiver extends AbstractLiteRtiReceiver {
         case UpdateAttributeValues update -> {
           System.out.println("[ClientReceiver] Received UpdateAttributeValues");
           clientContext.handleUpdateAttributeValues(update);
+        }
+        case UpdateSendInteraction update -> {
+          System.out.println("[ClientReceiver] Received UpdateSendInteraction");
+          clientContext.handleUpdateSendInteraction(update);
         }
         default -> {
           throw new RuntimeException("Unknown message type: " + obj.getClass().getName());

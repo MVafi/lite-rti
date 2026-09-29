@@ -28,3 +28,7 @@ Current status is that federates can:
 ==== How to run ====
 
 Run the LiteRtiApplication.java file
+
+==== TODO ====
+Optimize publish checks, currently they happen server side
+Also currently publish does not improve networking

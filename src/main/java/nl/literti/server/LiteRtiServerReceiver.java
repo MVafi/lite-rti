@@ -11,10 +11,13 @@ import nl.literti.messages.requests.RequestDisconnectFederate;
 import nl.literti.messages.requests.RequestFederationFom;
 import nl.literti.messages.requests.RequestJoinFederation;
 import nl.literti.messages.requests.RequestObjectInstanceName;
+import nl.literti.messages.requests.RequestPublishInteraction;
 import nl.literti.messages.requests.RequestPublishObject;
 import nl.literti.messages.requests.RequestRegisterObjectInstance;
+import nl.literti.messages.requests.RequestSubscribeInteraction;
 import nl.literti.messages.requests.RequestSubscribeObject;
 import nl.literti.messages.requests.UpdateAttributeValues;
+import nl.literti.messages.requests.UpdateSendInteraction;
 import nl.literti.utils.BinaryHelper;
 
 /**
@@ -81,10 +84,22 @@ public class LiteRtiServerReceiver extends AbstractLiteRtiReceiver {
           serverContext.handlePublishObjectClass(
               this.socket, request, this.federationName, this.federateType);
         }
+        case RequestPublishInteraction request -> {
+          // todo: remove federationname here, i dont think federationname should be stored in the
+          // receiver
+          serverContext.handlePublishInteractionClass(
+              this.socket, request, this.federationName, this.federateType);
+        }
         case RequestSubscribeObject request -> {
           // todo: remove federationname here, i dont think federationname should be stored in the
           // receiver
           serverContext.handleSubscribeObjectClass(
+              this.socket, request, this.federationName, this.federateType);
+        }
+        case RequestSubscribeInteraction request -> {
+          // todo: remove federationname here, i dont think federationname should be stored in the
+          // receiver
+          serverContext.handleSubscribeInteractionClass(
               this.socket, request, this.federationName, this.federateType);
         }
         case RequestRegisterObjectInstance request -> {
@@ -97,6 +112,10 @@ public class LiteRtiServerReceiver extends AbstractLiteRtiReceiver {
         }
         case UpdateAttributeValues request -> {
           serverContext.handleUpdateAttributeValues(
+              this.socket, request, this.federationName, this.federateType);
+        }
+        case UpdateSendInteraction request -> {
+          serverContext.handleUpdateSendInteraction(
               this.socket, request, this.federationName, this.federateType);
         }
         default -> {

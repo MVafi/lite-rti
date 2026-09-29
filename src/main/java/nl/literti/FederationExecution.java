@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import hla.rti1516e.AttributeHandleSet;
+import hla.rti1516e.InteractionClassHandle;
 import hla.rti1516e.ObjectClassHandle;
 import hla.rti1516e.ObjectInstanceHandle;
 import nl.literti.fom.FederationObjectModel;
@@ -33,6 +34,9 @@ public class FederationExecution {
   // Store subscriptions: federateName -> (objectClassHandle -> attributeHandleSet)
   private final Map<String, Map<ObjectClassHandle, AttributeHandleSet>> federateSubscriptions =
       new ConcurrentHashMap<>();
+  
+  private final Map<String, Set<InteractionClassHandle>> federateInteractionSubscriptions =
+    new ConcurrentHashMap<>();
 
   // Reverse subscription map: objectClassHandle -> (federateName -> attributeHandleSet)
   private final Map<ObjectClassHandle, Map<String, AttributeHandleSet>> objectClassSubscribers =
@@ -42,9 +46,21 @@ public class FederationExecution {
   private final Map<String, Map<ObjectClassHandle, AttributeHandleSet>> federatePublications =
       new ConcurrentHashMap<>();
 
+  // Store publications: federateName -> Set<interactionClassHandle>
+  private final Map<String, Set<InteractionClassHandle>> federatePubInteractions =
+      new ConcurrentHashMap<>();      
+
   // Reverse publication map: objectClassHandle -> (federateName -> attributeHandleSet)
   private final Map<ObjectClassHandle, Map<String, AttributeHandleSet>> objectClassPublishers =
       new ConcurrentHashMap<>();
+
+  // Reverse publication map: interactionClassHandle -> Set<federateName>
+  private final Map<InteractionClassHandle, Set<String>> interactionClassPublishers =
+      new ConcurrentHashMap<>();
+  
+  // Reverse subscription map: interactionClassHandle -> Set<federateName>
+  private final Map<InteractionClassHandle, Set<String>> interactionClassSubscribers =
+    new ConcurrentHashMap<>();
 
   // ------------- Object registration ----------------
   // Counter for generating unique object instance handles
@@ -104,6 +120,7 @@ public class FederationExecution {
           }
         }
       }
+      // Do the same for interactions
     }
 
     // Also remove publications to prevent them from persisting
@@ -158,6 +175,25 @@ public class FederationExecution {
             + attributeIds);
   }
 
+  public void subscribeToInteractionClass(String federateType, InteractionClassHandle interactionClassHandle) {
+    // TODO these maps could be better maybe
+    // Update federate-centric map
+    federateInteractionSubscriptions
+        .computeIfAbsent(federateType, k -> ConcurrentHashMap.newKeySet())
+        .add(interactionClassHandle);
+
+    // Update interaction-centric map
+    interactionClassSubscribers
+        .computeIfAbsent(interactionClassHandle, k -> ConcurrentHashMap.newKeySet())
+        .add(federateType);
+
+    System.err.println(
+      "[FederationExecution] Federate "
+      + federateType
+      + " subscribed to intercation class "
+      + interactionClassHandle);
+  }
+
   // public AttributeHandleSet getSubscribedAttributes(
   //     String federateName, ObjectClassHandle objectClassHandle) {
   //   Map<ObjectClassHandle, AttributeHandleSet> federateSubscription =
@@ -204,6 +240,30 @@ public class FederationExecution {
             + objectClassHandle
             + " with attributes: "
             + storedAttributes);
+  }
+
+  public void publishInteractionClass(
+      String federateName, InteractionClassHandle interactionClassHandle) {
+    // Update federate-centric map
+    this.federatePubInteractions
+        .computeIfAbsent(federateName, k -> ConcurrentHashMap.newKeySet())
+        .add(interactionClassHandle);
+
+    // Update interaction-centric map
+    this.interactionClassPublishers
+        .computeIfAbsent(interactionClassHandle, k -> ConcurrentHashMap.newKeySet())
+        .add(federateName);
+
+    System.err.println(
+        "[FederationExecution] Federate "
+            + federateName
+            + " published interaction class "
+            + interactionClassHandle);
+  }
+
+  public boolean isInteractionPubBy(String federateName, InteractionClassHandle interactionClassHandle){
+    Set<InteractionClassHandle> pubInteractions = federatePubInteractions.get(federateName);
+    return pubInteractions != null && pubInteractions.contains(interactionClassHandle);
   }
 
   public ObjectInstanceHandle registerObjectInstance(
@@ -265,5 +325,9 @@ public class FederationExecution {
 
   public Map<String, AttributeHandleSet> getObjectClassSubscribedFederates(ObjectClassHandle objectClassHandle) {
     return objectClassSubscribers.getOrDefault(objectClassHandle, Map.of());
+  }
+
+  public Set<String> getInteractionClassSubscribedFederates(InteractionClassHandle interactionClassHandle) {
+    return interactionClassSubscribers.getOrDefault(interactionClassHandle, Set.of());
   }
 }

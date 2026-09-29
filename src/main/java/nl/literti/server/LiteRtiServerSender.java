@@ -10,13 +10,16 @@ import nl.literti.AbstractLiteRtiSender;
 import nl.literti.fom.FederationObjectModel;
 import nl.literti.messages.requests.DiscoveredObjectInstance;
 import nl.literti.messages.requests.UpdateAttributeValues;
+import nl.literti.messages.requests.UpdateSendInteraction;
 import nl.literti.messages.responses.ResponseFederateConnected;
 import nl.literti.messages.responses.ResponseFederationCreated;
 import nl.literti.messages.responses.ResponseFederationFom;
 import nl.literti.messages.responses.ResponseJoinFederation;
 import nl.literti.messages.responses.ResponseObjectInstanceName;
+import nl.literti.messages.responses.ResponsePublishInteraction;
 import nl.literti.messages.responses.ResponsePublishObject;
 import nl.literti.messages.responses.ResponseRegisterObjectInstance;
+import nl.literti.messages.responses.ResponseSubscribeInteraction;
 import nl.literti.messages.responses.ResponseSubscribeObject;
 
 public class LiteRtiServerSender extends AbstractLiteRtiSender {
@@ -57,9 +60,23 @@ public class LiteRtiServerSender extends AbstractLiteRtiSender {
     serializeSendMsg(socket, response);
   }
 
+  public void sendPublishInteractionResponse(Socket socket, int msgHandle, String result)
+      throws IOException {
+    ResponsePublishInteraction response = new ResponsePublishInteraction(msgHandle);
+    response.setMsgString(result);
+    serializeSendMsg(socket, response);
+  }
+
   public void sendSubscribeObjectResponse(Socket socket, int msgHandle, String result)
       throws IOException {
     ResponseSubscribeObject response = new ResponseSubscribeObject(msgHandle);
+    response.setMsgString(result);
+    serializeSendMsg(socket, response);
+  }
+
+  public void sendSubscribeInteractionResponse(Socket socket, int msgHandle, String result)
+      throws IOException {
+    ResponseSubscribeInteraction response = new ResponseSubscribeInteraction(msgHandle);
     response.setMsgString(result);
     serializeSendMsg(socket, response);
   }
@@ -92,5 +109,11 @@ public class LiteRtiServerSender extends AbstractLiteRtiSender {
       throws IOException {
     updateAttributeValues.setMsgString(result);
     serializeSendMsg(socket, updateAttributeValues);
+  }
+
+  public void forwardUpdateSendInteraction(Socket socket, UpdateSendInteraction updateSendInteraction, String result)
+      throws IOException {
+    updateSendInteraction.setMsgString(result);
+    serializeSendMsg(socket, updateSendInteraction);
   }
 }

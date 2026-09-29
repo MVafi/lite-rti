@@ -6,6 +6,8 @@ import hla.rti1516e.AttributeHandleValueMap;
 import hla.rti1516e.FederateAmbassador;
 import hla.rti1516e.ObjectClassHandle;
 import hla.rti1516e.ObjectInstanceHandle;
+import hla.rti1516e.ParameterHandle;
+import hla.rti1516e.ParameterHandleValueMap;
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import hla.rti1516e.exceptions.NameNotFound;
 
@@ -17,14 +19,19 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
+import hla.rti1516e.InteractionClassHandle;
 import nl.literti.fom.FederationObjectModel;
+import nl.literti.fom.FomInteractionClass;
 import nl.literti.fom.FomMerger;
 import nl.literti.fom.FomObjectClass;
 import nl.literti.fom.parser.FomParser;
 import nl.literti.impl.AttributeHandleImpl;
+import nl.literti.impl.InteractionClassHandleImpl;
 import nl.literti.impl.ObjectClassHandleImpl;
+import nl.literti.impl.ParameterHandleImpl;
 import nl.literti.messages.requests.DiscoveredObjectInstance;
 import nl.literti.messages.requests.UpdateAttributeValues;
+import nl.literti.messages.requests.UpdateSendInteraction;
 
 /** Context for keeping track of the states and events of the client and its singular federate */
 public class LiteRtiClientContext {
@@ -258,6 +265,35 @@ public class LiteRtiClientContext {
     }
   }
 
+  // ==== Publish Interaction =====
+
+  public void publishInteractionClassAttributes(InteractionClassHandle theInteraction){
+    clientSocket.checkConnection();
+    try {
+      if (theInteraction == null) {
+        throw new RuntimeException("[LiteRtiClientContext] ObjectClassHandle cannot be null");
+      }
+      // Send publication request to server
+      clientSender.sendPublishInteractionRequest(theInteraction); // Blocking
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "[LiteRtiClientContext] Error publishing object class attributes: " + e.getMessage(), e);
+    }
+  }
+
+  public void handlePublishInteractionResponse(String responseMsg) {
+    // TODO: check this error handling
+    if (responseMsg.startsWith("OK|INTERACTION_CLASS_PUBLISHED")) {
+      System.out.println("[LiteRtiClientContext] Successfully published interaction class");
+    } else if (responseMsg.startsWith("ERROR|PUBLISH_INTERACTION_CLASS")) {
+      throw new RuntimeException(
+          "[LiteRtiClientContext] Failed to publish interaction class attributes: " + responseMsg);
+    } else {
+      throw new RuntimeException(
+          "[LiteRtiClientContext] Unexpected response for publish interaction class: " + responseMsg);
+    }
+  }
+
   // ==== Object Subscription =====
 
   public void subscribeObjectClassAttributes(
@@ -291,6 +327,40 @@ public class LiteRtiClientContext {
           "[LiteRtiClientContext] Unexpected response from server: " + responseMsg);
     }
   }
+
+  // ==== Interaction Subscription =====
+
+  public void subscribeInteractionClass(InteractionClassHandle theClass){
+    clientSocket.checkConnection();
+    try {
+      if (theClass == null) {
+        throw new RuntimeException("[LiteRtiClientContext] ObjectClassHandle cannot be null");
+      }
+      clientSender.sendSubscribeInteractionRequest(theClass); // Blocking
+    } catch (IOException e) {
+      throw new RuntimeException(
+        "[LiteRtiClientContext] Error subscribing to object class attributes: " + e.getMessage(),
+        e);
+    }
+  }
+
+  public void handleSubscribeInteractionResponse(String responseMsg) {
+    if (responseMsg == null) {
+      throw new RuntimeException(
+          "[LiteRtiClientContext] No response received from server when subscribing to interaction class");
+    } else if (responseMsg.startsWith("OK|")) {
+      System.out.println("[LiteRtiClientContext] Successfully subscribed to interaction class");
+    } else if (responseMsg.startsWith("ERROR|")) {
+      String errorMsg = responseMsg.substring(6);
+      throw new RuntimeException(
+          "[LiteRtiClientContext] Server error subscribing to interaction class: " + errorMsg);
+    } else {
+      throw new RuntimeException(
+          "[LiteRtiClientContext] Unexpected response from server: " + responseMsg);
+    }
+  }
+
+  // ==== Discover Objects =====
 
   public void handleDiscoveredObjectInstances(DiscoveredObjectInstance discoveredObjectInstance) {
     if (this.federateAmbassador == null) {
@@ -411,15 +481,55 @@ public class LiteRtiClientContext {
     }
   }
 
-  // !!!!!! not sure about these following methods whether they are necessary !!!!!
+  // ==== Interaction updates =====
 
-  public void setLocalFOM(FederationObjectModel fom) {
-    this.fom = fom;
+  public void sendInteraction(
+    InteractionClassHandle theInteraction,
+    ParameterHandleValueMap theParameters,
+    byte[] userSuppliedTag){
+    clientSocket.checkConnection();
+
+    try {
+      if (theInteraction == null) {
+        throw new RuntimeException("[LiteRtiClientContext] InteractionClassHandle cannot be null");
+      }
+      if (theParameters == null || theParameters.isEmpty()) {
+        throw new RuntimeException(
+            "[LiteRtiClientContext] ParameterHandleValueMap cannot be null or empty");
+      }
+
+      clientSender.sendInteraction(theInteraction, theParameters, userSuppliedTag);
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "[LiteRtiClientContext] Error updating attribute values: " + e.getMessage(), e);
+    }
   }
 
-  public FederationObjectModel getLocalFOM() {
-    return this.fom;
+  public void handleUpdateSendInteraction(UpdateSendInteraction update) {
+    if (this.federateAmbassador == null) {
+      System.err.println(
+          "[LiteRtiClientContext] No federate ambassador set, cannot deliver received interaction");
+      return;
+    }
+
+    try {
+      System.out.println("[LiteRtiClientContext] Delivering received interaction to federate ambassador");
+      
+      // Call the federate ambassador's receiveInteraction callback
+      federateAmbassador.receiveInteraction(
+          update.getInteractionClassHandle(),
+          update.getParameterHandleValueMap(),
+          update.getUserSuppliedTag(),
+          null, // OrderType
+          null, // TransportationTypeHandle
+          null // ReceiveInfo
+          );
+    } catch (Exception e) {
+      System.err.println(
+          "[LiteRtiClientContext] Error delivering received interaction: " + e.getMessage());    }
   }
+
+  // ==== Get Handles from Server =====
 
   public ObjectClassHandle getObjectClassHandle(String objectClassName) throws NameNotFound {
     if (fom == null) {
@@ -437,8 +547,24 @@ public class LiteRtiClientContext {
     return och;
   }
 
-  public AttributeHandle getAttributeHandle(ObjectClassHandle whichClass, String attributeName)
-      throws NameNotFound {
+  public InteractionClassHandle getInteractionClassHandle(String interactionClassName) throws NameNotFound {
+    if (fom == null) {
+      throw new RuntimeException("FOM not loaded - federate may not be joined to federation");
+    }
+
+    int handle = fom.getInteractionClassHandle(interactionClassName);
+
+    if (handle == FederationObjectModel.INVALID_HANDLE) {
+      throw new NameNotFound("Interaction class '" + interactionClassName + "' not found in FOM");
+    }
+
+    InteractionClassHandle ich = new InteractionClassHandleImpl(handle);
+    System.out.println(
+        "[LiteRtiClientContext] getInteractionClassHandle: " + interactionClassName + " -> " + handle);
+    return ich;
+  }
+
+  public AttributeHandle getAttributeHandle(ObjectClassHandle whichClass, String attributeName) throws NameNotFound {
     if (fom == null) {
       throw new RuntimeException(
           "FOM not loaded - unable to obtain attribute handle for " + attributeName);
@@ -473,6 +599,58 @@ public class LiteRtiClientContext {
         "[LiteRtiClientContext] getAttributeHandle: " + attributeName + " -> " + attributeHandle);
     return new AttributeHandleImpl(attributeHandle);
   }
+
+  public ParameterHandle getParameterHandle(InteractionClassHandle whichClass, String parameterName) throws NameNotFound {
+    if (fom == null) {
+      throw new RuntimeException(
+          "FOM not loaded - unable to obtain parameter handle for " + parameterName);
+    }
+
+    // Extract the int handle from InteractionClassHandle
+    int classHandle = ((InteractionClassHandleImpl) whichClass).getHandle();
+
+    // Get the interaction class from FOM
+    FomInteractionClass interactionClass = fom.getInteractionClass(classHandle);
+    if (interactionClass == null) {
+      throw new NameNotFound("Interaction class not found with handle: " + classHandle);
+    }
+
+    System.out.println(
+        "[LiteRtiClientContext] getParameterHandle: looking up parameter '"
+            + parameterName
+            + "' in interaction class '"
+            + interactionClass.getQualifiedName()
+            + "' (handle: "
+            + classHandle
+            + ")");
+
+    // Look up the parameter by name
+    int parameterHandle = interactionClass.getParameterHandle(parameterName);
+    if (parameterHandle == FederationObjectModel.INVALID_HANDLE) {
+      throw new NameNotFound("Parameter '" + parameterName + "' not found in interaction class");
+    }
+
+    // Return wrapped handle
+    System.out.println(
+        "[LiteRtiClientContext] getParameterHandle: " + parameterName + " -> " + parameterHandle);
+    return new ParameterHandleImpl(parameterHandle);
+  }
+
+
+
+  // !!!!!! not sure about these following methods whether they are necessary !!!!!
+
+  public void setLocalFOM(FederationObjectModel fom) {
+    this.fom = fom;
+  }
+
+  public FederationObjectModel getLocalFOM() {
+    return this.fom;
+  }
+
+
+
+  
 
   public void setFederateAmbassador(FederateAmbassador ambassador) {
     this.federateAmbassador = ambassador;

@@ -1,5 +1,8 @@
 package nl.literti.client;
 
+import java.net.URL;
+import java.util.Set;
+
 import hla.rti1516e.AttributeHandle;
 import hla.rti1516e.AttributeHandleFactory;
 import hla.rti1516e.AttributeHandleSet;
@@ -142,10 +145,9 @@ import hla.rti1516e.exceptions.TimeConstrainedIsNotEnabled;
 import hla.rti1516e.exceptions.TimeRegulationAlreadyEnabled;
 import hla.rti1516e.exceptions.TimeRegulationIsNotEnabled;
 import hla.rti1516e.exceptions.UnsupportedCallbackModel;
-import java.net.URL;
-import java.util.Set;
 import nl.literti.utils.AttributeHandleSetFactoryImpl;
 import nl.literti.utils.AttributeHandleValueMapFactoryImpl;
+import nl.literti.utils.ParameterHandleValueMapFactoryImpl;
 
 public class LiteRtiAmbassador implements RTIambassador {
   // Todo: remove oorti logic that is inherited
@@ -593,7 +595,12 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+    if (theInteraction == null) {
+      throw new RTIinternalError("InteractionClassHandle cannot be null");
+    }
+    clientContext.publishInteractionClassAttributes(theInteraction);
+    }
 
   @Override
   public void unpublishInteractionClass(InteractionClassHandle theInteraction)
@@ -618,7 +625,7 @@ public class LiteRtiAmbassador implements RTIambassador {
     if (theClass == null) {
       throw new RTIinternalError("ObjectClassHandle cannot be null");
     }
-    // Validate no null attribute handles if set is provided
+    // Validate no null attribute handles if set is provided, otherwise attributeList should be null
     if (attributeList != null && !attributeList.isEmpty()) {
       for (AttributeHandle attr : attributeList) {
         if (attr == null) {
@@ -696,8 +703,10 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    System.out.println("standard RTI call? 1");
-    // Non oorti logic
+    if (theClass == null) {
+      throw new RTIinternalError("ObjectClassHandle cannot be null");
+    }
+    clientContext.subscribeInteractionClass(theClass);
   }
 
   // Standard RTI Method
@@ -874,7 +883,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           RestoreInProgress,
           FederateNotExecutionMember,
           NotConnected,
-          RTIinternalError {}
+          RTIinternalError {
+            clientContext.sendInteraction(theInteraction, theParameters, userSuppliedTag);
+          }
 
   @Override
   public MessageRetractionReturn sendInteraction(
@@ -1767,31 +1778,15 @@ public class LiteRtiAmbassador implements RTIambassador {
   }
 
   @Override
-  public InteractionClassHandle getInteractionClassHandle(String theName)
-      throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError {
+  public InteractionClassHandle getInteractionClassHandle(String theName) throws NameNotFound, FederateNotExecutionMember, NotConnected, RTIinternalError {
 
-    // map string of class to its numeric value
-
-    // 1 check joined
-    // 2 FOM lookup: Queries the Federated Object Model (FOM) to find the interaction class by name
-    // 3 Return handle: Returns the handle wrapped in a version-specific type (or as int for HLA
-    // 1.3)
-
-    System.out.println("HIERrrrrrrrrrrrrr 1");
-
-    // int handle = socketClient.getInteractionClassHandle(theName);
-    int handle = -1;
-
-    // Check for error
-    if (handle == -1) {
-      throw new NameNotFound("Interaction class not found: " + theName);
+    try {
+      return clientContext.getInteractionClassHandle(theName);
+    } catch (NameNotFound e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RTIinternalError("Error looking up interaction class handle: " + e.getMessage(), e);
     }
-    if (true) {
-      throw new UnsupportedOperationException("Current method is currently unsupported 5");
-    }
-
-    // Wrap the integer handle in an InteractionClassHandleImpl and return it
-    return new nl.literti.impl.InteractionClassHandleImpl(handle);
   }
 
   @Override
@@ -1820,13 +1815,13 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    System.out.println("HIERrrrrrrrrrrrrr1 get param handle");
-    // int handle = socketClient.getParameterHandle(theName);
-    int handle = -1;
-    if (handle == -1) {
-      throw new NameNotFound("Parameter not found: " + theName);
+    try {
+      return clientContext.getParameterHandle(whichClass, theName);
+    } catch (NameNotFound e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RTIinternalError("Error looking up parameter handle: " + e.getMessage(), e);
     }
-    return new nl.literti.impl.ParameterHandleImpl(handle);
   }
 
   @Override
@@ -2132,7 +2127,7 @@ public class LiteRtiAmbassador implements RTIambassador {
   @Override
   public ParameterHandleValueMapFactory getParameterHandleValueMapFactory()
       throws FederateNotExecutionMember, NotConnected {
-    return null;
+    return new ParameterHandleValueMapFactoryImpl();
   }
 
   @Override

@@ -2,13 +2,9 @@ package testingfederates;
 
 import java.io.File;
 import java.net.URL;
-import java.util.Set;
 import java.util.UUID;
 
 import hla.rti1516e.CallbackModel;
-import hla.rti1516e.OrderType;
-import hla.rti1516e.TransportationTypeHandle;
-import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.exceptions.RTIexception;
 import nl.literti.client.LiteRtiAmbassador;
 import nl.tno.netn4.datatypes.EntityTypeStruct;
@@ -18,7 +14,6 @@ import nl.tno.netn4.objects.BaseEntity;
 import nl.tno.oorti.DefaultOOobjectFactory;
 import nl.tno.oorti.NullOOFederateAmbassador;
 import nl.tno.oorti.OORTIambassador;
-import nl.tno.oorti.OOparameter;
 import nl.tno.oorti.OOproperties;
 import nl.tno.oorti.impl.OORTIambassadorImpl;
 
@@ -60,14 +55,15 @@ public class testfederate_1 extends NullOOFederateAmbassador {
 
     // publish and subscribe to the class of interest
     System.out.println("Trying to subscribe");
+
     oortiamb.publishObjectClass(BaseEntity.class);
     oortiamb.subscribeObjectClass(BaseEntity.class);
-    // // oortiamb.subscribeInteractionClass(SetSuppliesStatus.class);
-    // // oortiamb.publishInteractionClass(SetSuppliesStatus.class);
+    oortiamb.publishInteractionClass(SetSuppliesStatus.class);
+    // oortiamb.subscribeInteractionClass(SetSuppliesStatus.class);
 
     // Run tests
-    // this.runTests(oortiamb);
-    this.sendObjectUpdate(oortiamb);
+    this.sendInteractions(oortiamb);
+    // this.sendObjectUpdate(oortiamb);
 
     // // resign and disconnect
     // oortiamb.resignFederationExecution(ResignAction.NO_ACTION);
@@ -79,23 +75,11 @@ public class testfederate_1 extends NullOOFederateAmbassador {
     System.out.println("Disconnected from the RTI.");
   }
 
-  @Override
-  public void receiveInteraction(
-      Object theInteraction,
-      Set<OOparameter> theParameters,
-      byte[] userSuppliedTag,
-      OrderType sentOrdering,
-      TransportationTypeHandle theTransport,
-      SupplementalReceiveInfo receiveInfo)
-      throws FederateInternalError {
-    System.out.println("Received Interaction");
-  }
-
   public static void main(String[] args) throws RTIexception, Exception {
     new testfederate_1().start();
   }
 
-  public void runTests(OORTIambassador oortiamb) throws Exception {
+  public void sendInteractions(OORTIambassador oortiamb) throws Exception {
     System.err.println("RUNNING");
 
     // Send SetSuppliesStatus Interactoin
@@ -118,9 +102,12 @@ public class testfederate_1 extends NullOOFederateAmbassador {
     System.err.println("Sending SetSuppliesStatus interaction");
     oortiamb.sendInteraction(action, null);
 
-    // Keep receiving messages
+    // Keep sending interactions
     while (true) {
-      oortiamb.evokeCallback(1);
+      Thread.sleep(3000);
+      oortiamb.sendInteraction(action, null);
+      System.err.println("Sent SetSuppliesStatus interaction");
+      sendObjectUpdate(oortiamb);
     }
   }
 
@@ -133,12 +120,12 @@ public class testfederate_1 extends NullOOFederateAmbassador {
     oortiamb.updateAttributeValues(entity, null);
 
     int updateCount = 0;
-    while (true) {
-      Thread.sleep(3000);
-      updateCount++;
-      entity.setCallsign("Test-entity-from-EE-" + updateCount);
-      oortiamb.updateAttributeValues(entity, null);
-      System.err.println("Updated callsign to: " + entity.getCallsign());
-    }
+    // while (true) {
+    //   Thread.sleep(3000);
+    //   updateCount++;
+    //   entity.setCallsign("Test-entity-from-EE-" + updateCount);
+    //   oortiamb.updateAttributeValues(entity, null);
+    //   System.err.println("Updated callsign to: " + entity.getCallsign());
+    // }
   }
 }
