@@ -1,6 +1,7 @@
 package nl.literti.client;
 
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Set;
 
 import hla.rti1516e.AttributeHandle;
@@ -273,7 +274,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederationExecutionAlreadyExists,
           NotConnected,
           RTIinternalError {
-    throw new UnsupportedOperationException("Currently not supported call : createFederationExecution(String, URL[], URL)");
+    URL[] combinedModules = Arrays.copyOf(fomModules, fomModules.length + 1);
+    combinedModules[fomModules.length] = mimModule;
+    this.createFederationExecution(federationExecutionName, combinedModules);
   }
 
   @Override
@@ -2164,12 +2167,14 @@ public class LiteRtiAmbassador implements RTIambassador {
 
   @Override
   public void enableCallbacks() throws SaveInProgress, RestoreInProgress, RTIinternalError {
-    throw new UnsupportedOperationException("Currently not supported call : enableCallbacks()");
+    // Allow the client to do callbacks on the FederateAmbassador
+    clientContext.enableCallbacks();
   }
 
   @Override
   public void disableCallbacks() throws SaveInProgress, RestoreInProgress, RTIinternalError {
-    throw new UnsupportedOperationException("Currently not supported call : disableCallbacks()");
+    // Do not allow the client to do callbacks on the FederateAmbassador, instead store the callbacks in a queue for later
+    clientContext.disableCallbacks();
   }
 
   @Override

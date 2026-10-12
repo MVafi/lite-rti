@@ -16,8 +16,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import hla.rti1516e.InteractionClassHandle;
 import nl.literti.fom.FederationObjectModel;
@@ -29,6 +31,7 @@ import nl.literti.impl.AttributeHandleImpl;
 import nl.literti.impl.InteractionClassHandleImpl;
 import nl.literti.impl.ObjectClassHandleImpl;
 import nl.literti.impl.ParameterHandleImpl;
+import nl.literti.messages.MessageObject;
 import nl.literti.messages.requests.DiscoveredObjectInstance;
 import nl.literti.messages.requests.UpdateAttributeValues;
 import nl.literti.messages.requests.UpdateSendInteraction;
@@ -45,6 +48,9 @@ public class LiteRtiClientContext {
       fom; // Fom stored at client side (deserialized ObjectModel object in memory)
   private FederateAmbassador
       federateAmbassador; // RTI reference for delivering callbacks to the federate
+
+  private boolean canCallback = true; // Allow the client side to do callbacks to the FederateAmbassador
+  private final Queue<MessageObject> queuedCallbacks = new ConcurrentLinkedQueue<>(); // FIFO queue for callbacks when disabled
 
   // Map of responses that are still expected by the client
   private final Map<Integer, CompletableFuture<Object>> pendingResponses =
@@ -369,18 +375,25 @@ public class LiteRtiClientContext {
       return;
     }
 
-    try {
-      System.out.println(
-          "[LiteRtiClientContext] Delivering discovered object instance to federate ambassador");
-      federateAmbassador.discoverObjectInstance(
-          discoveredObjectInstance.getInstanceHandle(),
-          discoveredObjectInstance.getClassHandle(),
-          discoveredObjectInstance.getTheObjectName(),
-          discoveredObjectInstance.getProducingFederate());
-    } catch (Exception e) {
+    if (this.canCallback){
+      try {
+        System.out.println(
+            "[LiteRtiClientContext] Delivering discovered object instance to federate ambassador");
+        federateAmbassador.discoverObjectInstance(
+            discoveredObjectInstance.getInstanceHandle(),
+            discoveredObjectInstance.getClassHandle(),
+            discoveredObjectInstance.getTheObjectName(),
+            discoveredObjectInstance.getProducingFederate());
+      } catch (Exception e) {
+        System.err.println(
+            "[LiteRtiClientContext] Error delivering discovered object instance: " + e.getMessage());
+      }
+    } else {
+      queuedCallbacks.offer(discoveredObjectInstance);
       System.err.println(
-          "[LiteRtiClientContext] Error delivering discovered object instance: " + e.getMessage());
+        "[LiteRtiClientContext] Unable to callback now, storing callback for later");
     }
+
   }
 
   // ==== Object Instances =====
@@ -463,21 +476,27 @@ public class LiteRtiClientContext {
       return;
     }
 
-    try {
-      System.out.println("[LiteRtiClientContext] Delivering reflected attribute values to federate ambassador");
-      
-      // Call the federate ambassador's reflectAttributeValues callback
-      federateAmbassador.reflectAttributeValues(
-          update.getObjectInstanceHandle(),
-          update.getAttributeHandleValueMap(),
-          update.getUserSuppliedTag(),
-          null, // OrderType
-          null, // TransportationTypeHandle
-          null // ReflectInfo
-          );
-    } catch (Exception e) {
-      System.err.println(
-          "[LiteRtiClientContext] Error delivering reflected attribute values: " + e.getMessage());
+    if (this.canCallback){
+      try {
+        System.out.println("[LiteRtiClientContext] Delivering reflected attribute values to federate ambassador");
+        
+        // Call the federate ambassador's reflectAttributeValues callback
+        federateAmbassador.reflectAttributeValues(
+            update.getObjectInstanceHandle(),
+            update.getAttributeHandleValueMap(),
+            update.getUserSuppliedTag(),
+            null, // OrderType
+            null, // TransportationTypeHandle
+            null // ReflectInfo
+            );
+      } catch (Exception e) {
+        System.err.println(
+            "[LiteRtiClientContext] Error delivering reflected attribute values: " + e.getMessage());
+      }
+    } else {
+      queuedCallbacks.offer(update);
+        System.err.println(
+          "[LiteRtiClientContext] Unable to callback now, storing callback for later");
     }
   }
 
@@ -512,21 +531,27 @@ public class LiteRtiClientContext {
       return;
     }
 
-    try {
-      System.out.println("[LiteRtiClientContext] Delivering received interaction to federate ambassador");
-      
-      // Call the federate ambassador's receiveInteraction callback
-      federateAmbassador.receiveInteraction(
-          update.getInteractionClassHandle(),
-          update.getParameterHandleValueMap(),
-          update.getUserSuppliedTag(),
-          null, // OrderType
-          null, // TransportationTypeHandle
-          null // ReceiveInfo
-          );
-    } catch (Exception e) {
+    if (this.canCallback){
+      try {
+        System.out.println("[LiteRtiClientContext] Delivering received interaction to federate ambassador");
+        
+        // Call the federate ambassador's receiveInteraction callback
+        federateAmbassador.receiveInteraction(
+            update.getInteractionClassHandle(),
+            update.getParameterHandleValueMap(),
+            update.getUserSuppliedTag(),
+            null, // OrderType
+            null, // TransportationTypeHandle
+            null // ReceiveInfo
+            );
+      } catch (Exception e) {
+        System.err.println(
+            "[LiteRtiClientContext] Error delivering received interaction: " + e.getMessage());    }
+    } else {
+      queuedCallbacks.offer(update);
       System.err.println(
-          "[LiteRtiClientContext] Error delivering received interaction: " + e.getMessage());    }
+        "[LiteRtiClientContext] Unable to callback now, storing callback for later");
+    }
   }
 
   // ==== Get Handles from Server =====
@@ -635,6 +660,59 @@ public class LiteRtiClientContext {
         "[LiteRtiClientContext] getParameterHandle: " + parameterName + " -> " + parameterHandle);
     return new ParameterHandleImpl(parameterHandle);
   }
+
+  // ==== Handle Callback modes =====
+  public void disableCallbacks() {
+    this.canCallback = false;
+  }
+
+  public void enableCallbacks(){
+    this.canCallback = true;
+    this.handleCallbackQueue();
+  }
+
+  private void handleCallbackQueue(){
+    MessageObject callback;
+    while ((callback = queuedCallbacks.poll()) != null) {
+      switch (callback) {
+        case DiscoveredObjectInstance update -> {
+          this.handleDiscoveredObjectInstances(update);
+        }
+        case UpdateAttributeValues update -> {
+          this.handleUpdateAttributeValues(update);
+        }
+        case UpdateSendInteraction update -> {
+          this.handleUpdateSendInteraction(update);
+        }
+        default -> {
+          throw new RuntimeException("Unknown type for queued callback handling: " + callback.getClass().getName());
+        }
+      }
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
