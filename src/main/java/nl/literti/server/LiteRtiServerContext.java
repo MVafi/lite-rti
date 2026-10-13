@@ -438,6 +438,8 @@ public class LiteRtiServerContext {
     }
     
     System.out.println("[ServerContext] Handling UpdateSendInteraction for interaction class: " + interactionClassHandle);
+    fedEx.debugIncrementInteractionsSent(federateType);
+    
     Set<String> subscribedFederates = fedEx.getInteractionClassSubscribedFederates(interactionClassHandle);
 
     // For every subscribed federate
@@ -460,6 +462,7 @@ public class LiteRtiServerContext {
       // Send the update to the subscribed federate
       Socket targetSocket = fedEx.getFederateSocket(subscribedFederateType);
       if (targetSocket != null) {
+        fedEx.debugIncrementInteractionsReceived(subscribedFederateType);
         serverSender.forwardUpdateSendInteraction(targetSocket, interactionUpdate, "OK|SEND_INTERACTION_UPDATE");
       }
     }

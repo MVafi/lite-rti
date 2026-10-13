@@ -77,6 +77,13 @@ public class FederationExecution {
   private final Map<ObjectInstanceHandle, ObjectClassHandle> objectInstanceClass =
       new ConcurrentHashMap<>();
 
+  // ------------- Interaction counters ----------------
+  // Track interactions sent per federate: federateName -> count
+  private final Map<String, AtomicInteger> debugInteractionsSent = new ConcurrentHashMap<>();
+
+  // Track interactions received per federate: federateName -> count
+  private final Map<String, AtomicInteger> debugInteractionsReceived = new ConcurrentHashMap<>();
+
   public FederationExecution(String name) {
     this.name = name;
     this.fom = null;
@@ -329,5 +336,36 @@ public class FederationExecution {
 
   public Set<String> getInteractionClassSubscribedFederates(InteractionClassHandle interactionClassHandle) {
     return interactionClassSubscribers.getOrDefault(interactionClassHandle, Set.of());
+  }
+
+  // Debug method, should not be used in production
+  public Set<String> debugGetObjectInstancesForFederate(String federateName) {
+    Set<String> instances = new java.util.HashSet<>();
+    for (Map.Entry<ObjectInstanceHandle, String> entry : objectInstanceOwner.entrySet()) {
+      if (entry.getValue().equals(federateName)) {
+        ObjectInstanceHandle handle = entry.getKey();
+        String instanceName = getObjectInstanceName(handle);
+        if (instanceName != null) {
+          instances.add(instanceName);
+        }
+      }
+    }
+    return instances;
+  }
+
+  public void debugIncrementInteractionsSent(String federateName) {
+    debugInteractionsSent.computeIfAbsent(federateName, k -> new AtomicInteger(0)).incrementAndGet();
+  }
+
+  public void debugIncrementInteractionsReceived(String federateName) {
+    debugInteractionsReceived.computeIfAbsent(federateName, k -> new AtomicInteger(0)).incrementAndGet();
+  }
+
+  public long debugGetInteractionsSentCount(String federateName) {
+    return debugInteractionsSent.getOrDefault(federateName, new AtomicInteger(0)).get();
+  }
+
+  public long debugGetInteractionsReceivedCount(String federateName) {
+    return debugInteractionsReceived.getOrDefault(federateName, new AtomicInteger(0)).get();
   }
 }
