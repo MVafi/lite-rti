@@ -1,16 +1,5 @@
 package nl.literti.client;
 
-import hla.rti1516e.AttributeHandle;
-import hla.rti1516e.AttributeHandleSet;
-import hla.rti1516e.AttributeHandleValueMap;
-import hla.rti1516e.FederateAmbassador;
-import hla.rti1516e.ObjectClassHandle;
-import hla.rti1516e.ObjectInstanceHandle;
-import hla.rti1516e.ParameterHandle;
-import hla.rti1516e.ParameterHandleValueMap;
-import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
-import hla.rti1516e.exceptions.NameNotFound;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -21,7 +10,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import hla.rti1516e.AttributeHandle;
+import hla.rti1516e.AttributeHandleSet;
+import hla.rti1516e.AttributeHandleValueMap;
+import hla.rti1516e.FederateAmbassador;
 import hla.rti1516e.InteractionClassHandle;
+import hla.rti1516e.ObjectClassHandle;
+import hla.rti1516e.ObjectInstanceHandle;
+import hla.rti1516e.ParameterHandle;
+import hla.rti1516e.ParameterHandleValueMap;
+import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
+import hla.rti1516e.exceptions.NameNotFound;
 import nl.literti.fom.FederationObjectModel;
 import nl.literti.fom.FomInteractionClass;
 import nl.literti.fom.FomMerger;
@@ -65,7 +64,7 @@ public class LiteRtiClientContext {
 
   // ==== Connect Federate =====
 
-  public boolean connectFederate(String federateType) {
+  public boolean connectFederate(String federateType) throws Throwable {
     try {
       System.out.println("[LiteRtiClientContext] Connecting federate: " + federateType);
       clientSender.sendConnectFederateRequest(federateType);
@@ -94,7 +93,7 @@ public class LiteRtiClientContext {
 
   // ==== Disconnect Federate =====
 
-  public void disconnect() {
+  public void disconnect() throws Throwable {
     clientSocket.checkConnection();
     try {
       clientSender.sendDisconnectFederateRequest(); // Blocking
@@ -106,8 +105,7 @@ public class LiteRtiClientContext {
 
   // ==== Create Federation =====
 
-  public void createFederationExecution(String federationExecutionName, URL[] fomModules)
-      throws FederationExecutionAlreadyExists, Exception {
+  public void createFederationExecution(String federationExecutionName, URL[] fomModules) throws Throwable {
     clientSocket.checkConnection();
 
     if (federationExecutionName == null) {
@@ -146,18 +144,12 @@ public class LiteRtiClientContext {
     System.out.println("[LiteRtiClientContext] Merged FOM modules into combined FOM");
 
     // Send serialized message and wait for response
-    try {
-      System.out.println("[LiteRtiClientContext] Sending federation creation request to server...");
-      clientSender.sendCreateFederationRequest(federationExecutionName, combinedFOM);
-      System.out.println("[LiteRtiClientContext] Federation creation request sent successfully");
-    } catch (Exception e) {
-      throw new RuntimeException(
-          "[LiteRtiClientContext] Error creating federation: " + e.getMessage(), e);
-    }
+    System.out.println("[LiteRtiClientContext] Sending federation creation request to server...");
+    clientSender.sendCreateFederationRequest(federationExecutionName, combinedFOM);
+    System.out.println("[LiteRtiClientContext] Federation creation request sent successfully");
   }
 
-  public void handleCreateFederationResponse(String responseMsg)
-      throws FederationExecutionAlreadyExists {
+  public void handleCreateFederationResponse(String responseMsg) throws FederationExecutionAlreadyExists {
     System.out.println(
         "[LiteRtiClientContext] Received federation creation response: " + responseMsg);
 
@@ -173,8 +165,7 @@ public class LiteRtiClientContext {
 
   // ==== Join Federation =====
 
-  public void joinFederationExecution(
-      String federateType, String federationExecutionName, URL[] fomModules) {
+  public void joinFederationExecution(String federateType, String federationExecutionName, URL[] fomModules) throws Throwable {
     clientSocket.checkConnection();
 
     try {
@@ -229,8 +220,7 @@ public class LiteRtiClientContext {
     }
   }
 
-  public void handleJoinFederationResponse(String responseMsg)
-      throws FederationExecutionAlreadyExists {
+  public void handleJoinFederationResponse(String responseMsg) throws FederationExecutionAlreadyExists {
     if (responseMsg.startsWith("OK|JOINED_FEDERATION")) {
       System.out.println("[LiteRtiClientContext] Joined federation successfully");
     } else {
@@ -241,21 +231,12 @@ public class LiteRtiClientContext {
 
   // ==== Publish Objects =====
 
-  public void publishObjectClassAttributes(
-      ObjectClassHandle theClass, AttributeHandleSet attributeList) {
+  public void publishObjectClassAttributes(ObjectClassHandle theClass, AttributeHandleSet attributeList) throws Throwable {
     clientSocket.checkConnection();
+    if (theClass == null) throw new RuntimeException("[LiteRtiClientContext] ObjectClassHandle cannot be null");
 
-    try {
-      if (theClass == null) {
-        throw new RuntimeException("[LiteRtiClientContext] ObjectClassHandle cannot be null");
-      }
-
-      // Send publication request to server
-      clientSender.sendPublishObjectRequest(theClass, attributeList); // Blocking
-    } catch (Exception e) {
-      throw new RuntimeException(
-          "[LiteRtiClientContext] Error publishing object class attributes: " + e.getMessage(), e);
-    }
+    // Send publication request to server
+    clientSender.sendPublishObjectRequest(theClass, attributeList); // Blocking
   }
 
   public void handlePublishObjectResponse(String responseMsg) {
@@ -273,18 +254,12 @@ public class LiteRtiClientContext {
 
   // ==== Publish Interaction =====
 
-  public void publishInteractionClassAttributes(InteractionClassHandle theInteraction){
+  public void publishInteractionClassAttributes(InteractionClassHandle theInteraction) throws Throwable {
     clientSocket.checkConnection();
-    try {
-      if (theInteraction == null) {
-        throw new RuntimeException("[LiteRtiClientContext] ObjectClassHandle cannot be null");
-      }
-      // Send publication request to server
-      clientSender.sendPublishInteractionRequest(theInteraction); // Blocking
-    } catch (Exception e) {
-      throw new RuntimeException(
-          "[LiteRtiClientContext] Error publishing object class attributes: " + e.getMessage(), e);
-    }
+    if (theInteraction == null) throw new RuntimeException("[LiteRtiClientContext] ObjectClassHandle cannot be null");
+    
+    // Send publication request to server
+    clientSender.sendPublishInteractionRequest(theInteraction); // Blocking
   }
 
   public void handlePublishInteractionResponse(String responseMsg) {
@@ -302,20 +277,10 @@ public class LiteRtiClientContext {
 
   // ==== Object Subscription =====
 
-  public void subscribeObjectClassAttributes(
-      ObjectClassHandle theClass, AttributeHandleSet attributeList) {
+  public void subscribeObjectClassAttributes(ObjectClassHandle theClass, AttributeHandleSet attributeList) throws Throwable {
     clientSocket.checkConnection();
-    try {
-      if (theClass == null) {
-        throw new RuntimeException("[LiteRtiClientContext] ObjectClassHandle cannot be null");
-      }
-
-      clientSender.sendSubscribeObjectRequest(theClass, attributeList); // Blocking
-    } catch (IOException e) {
-      throw new RuntimeException(
-          "[LiteRtiClientContext] Error subscribing to object class attributes: " + e.getMessage(),
-          e);
-    }
+    if (theClass == null) throw new RuntimeException("[LiteRtiClientContext] ObjectClassHandle cannot be null");
+    clientSender.sendSubscribeObjectRequest(theClass, attributeList); // Blocking
   }
 
   public void handleSubscribeObjectResponse(String responseMsg) {
@@ -336,18 +301,10 @@ public class LiteRtiClientContext {
 
   // ==== Interaction Subscription =====
 
-  public void subscribeInteractionClass(InteractionClassHandle theClass){
+  public void subscribeInteractionClass(InteractionClassHandle theClass) throws Throwable {
     clientSocket.checkConnection();
-    try {
-      if (theClass == null) {
-        throw new RuntimeException("[LiteRtiClientContext] ObjectClassHandle cannot be null");
-      }
-      clientSender.sendSubscribeInteractionRequest(theClass); // Blocking
-    } catch (IOException e) {
-      throw new RuntimeException(
-        "[LiteRtiClientContext] Error subscribing to object class attributes: " + e.getMessage(),
-        e);
-    }
+    if (theClass == null) throw new RuntimeException("[LiteRtiClientContext] ObjectClassHandle cannot be null");
+    clientSender.sendSubscribeInteractionRequest(theClass); // Blocking
   }
 
   public void handleSubscribeInteractionResponse(String responseMsg) {
@@ -398,50 +355,30 @@ public class LiteRtiClientContext {
 
   // ==== Object Instances =====
 
-  public ObjectInstanceHandle registerObjectInstance(
-      ObjectClassHandle theClass, String theObjectName) {
+  public ObjectInstanceHandle registerObjectInstance(ObjectClassHandle theClass, String theObjectName) throws Throwable {
     clientSocket.checkConnection();
+    if (theClass == null) throw new RuntimeException("[LiteRtiClientContext] ObjectClassHandle cannot be null");
+    if (theObjectName == null || theObjectName.isEmpty()) throw new RuntimeException("[LiteRtiClientContext] Object name cannot be null or empty");
 
-    try {
-      if (theClass == null) {
-        throw new RuntimeException("[LiteRtiClientContext] ObjectClassHandle cannot be null");
-      }
-      if (theObjectName == null || theObjectName.isEmpty()) {
-        throw new RuntimeException("[LiteRtiClientContext] Object name cannot be null or empty");
-      }
+    Object result = clientSender.sendRegisterObjectInstanceRequest(theClass, theObjectName); // Blocking
 
-      Object result =
-          clientSender.sendRegisterObjectInstanceRequest(theClass, theObjectName); // Blocking
-
-      if (result instanceof ObjectInstanceHandle) {
-        return (ObjectInstanceHandle) result;
-      } else {
-        throw new RuntimeException(
-            "[LiteRtiClientContext] Unexpected response type when registering object instance: "
-                + result);
-      }
-    } catch (Exception e) {
-      throw new RuntimeException(
-          "[LiteRtiClientContext] Error registering object instance: " + e.getMessage(), e);
+    if (result instanceof ObjectInstanceHandle) {
+      return (ObjectInstanceHandle) result;
+    } else {
+      throw new RuntimeException("[LiteRtiClientContext] Unexpected response type when registering object instance: " + result);
     }
   }
 
-  public String getObjectInstanceName(ObjectInstanceHandle theHandle) {
+  // TODO: This does not follow the handle pattern, there should be a handleObjectInstanceNameResponse() method, or something of that kind to follow the pattern of this document
+  // Currently the errors are therefore not handled properly
+  public String getObjectInstanceName(ObjectInstanceHandle theHandle) throws Throwable {
     clientSocket.checkConnection();
 
-    try {
-      Object result = clientSender.sendObjectInstanceNameRequest(theHandle); // Blocking
-      if (result instanceof String) {
-        return (String) result;
-      } else {
-        throw new RuntimeException(
-            "[LiteRtiClientContext] Unexpected response type when requesting object instance name: "
-                + result);
-      }
-
-    } catch (Exception e) {
-      throw new RuntimeException(
-          "[LiteRtiClientContext] Error publishing object class attributes: " + e.getMessage(), e);
+    Object result = clientSender.sendObjectInstanceNameRequest(theHandle); // Blocking
+    if (result instanceof String) {
+      return (String) result;
+    } else {
+      throw new RuntimeException("[LiteRtiClientContext] Unexpected response type when requesting object instance name: " + result);
     }
   }
 
@@ -450,23 +387,11 @@ public class LiteRtiClientContext {
   public void updateAttributeValues(
       ObjectInstanceHandle theObject,
       AttributeHandleValueMap theAttributes,
-      byte[] userSuppliedTag) {
+      byte[] userSuppliedTag) throws Throwable {
     clientSocket.checkConnection();
-
-    try {
-      if (theObject == null) {
-        throw new RuntimeException("[LiteRtiClientContext] ObjectInstanceHandle cannot be null");
-      }
-      if (theAttributes == null || theAttributes.isEmpty()) {
-        throw new RuntimeException(
-            "[LiteRtiClientContext] AttributeHandleValueMap cannot be null or empty");
-      }
-
-      clientSender.sendAttributeValuesUpdate(theObject, theAttributes, userSuppliedTag);
-    } catch (Exception e) {
-      throw new RuntimeException(
-          "[LiteRtiClientContext] Error updating attribute values: " + e.getMessage(), e);
-    }
+    if (theObject == null) throw new RuntimeException("[LiteRtiClientContext] ObjectInstanceHandle cannot be null");
+    if (theAttributes == null || theAttributes.isEmpty()) throw new RuntimeException("[LiteRtiClientContext] AttributeHandleValueMap cannot be null or empty");
+    clientSender.sendAttributeValuesUpdate(theObject, theAttributes, userSuppliedTag);
   }
 
   public void handleUpdateAttributeValues(UpdateAttributeValues update) {
@@ -505,23 +430,11 @@ public class LiteRtiClientContext {
   public void sendInteraction(
     InteractionClassHandle theInteraction,
     ParameterHandleValueMap theParameters,
-    byte[] userSuppliedTag){
+    byte[] userSuppliedTag) throws Throwable {
     clientSocket.checkConnection();
-
-    try {
-      if (theInteraction == null) {
-        throw new RuntimeException("[LiteRtiClientContext] InteractionClassHandle cannot be null");
-      }
-      if (theParameters == null || theParameters.isEmpty()) {
-        throw new RuntimeException(
-            "[LiteRtiClientContext] ParameterHandleValueMap cannot be null or empty");
-      }
-
-      clientSender.sendInteraction(theInteraction, theParameters, userSuppliedTag);
-    } catch (Exception e) {
-      throw new RuntimeException(
-          "[LiteRtiClientContext] Error updating attribute values: " + e.getMessage(), e);
-    }
+    if (theInteraction == null) throw new RuntimeException("[LiteRtiClientContext] InteractionClassHandle cannot be null");
+    if (theParameters == null || theParameters.isEmpty()) throw new RuntimeException("[LiteRtiClientContext] ParameterHandleValueMap cannot be null or empty");
+    clientSender.sendInteraction(theInteraction, theParameters, userSuppliedTag);
   }
 
   public void handleUpdateSendInteraction(UpdateSendInteraction update) {

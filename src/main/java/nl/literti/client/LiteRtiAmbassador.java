@@ -195,8 +195,17 @@ public class LiteRtiAmbassador implements RTIambassador {
     int maxRetries = 5;
     int retryDelay = 2000; // milliseconds
 
+    boolean isConnected = false;
+
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
-      if (clientContext.connectFederate(federateName)) {
+
+      try {
+        isConnected = clientContext.connectFederate(federateName);
+      } catch (Throwable e) {
+        throw new RTIinternalError(e.getMessage());
+      }
+
+      if (isConnected) {
 
         // Store the federate ambassador reference in the client context for callbacks
         System.out.println("[Ambassador] Setting FederateAmbassador for: " + federateName);
@@ -225,9 +234,12 @@ public class LiteRtiAmbassador implements RTIambassador {
   }
 
   @Override
-  public void disconnect()
-      throws FederateIsExecutionMember, CallNotAllowedFromWithinCallback, RTIinternalError {
-    clientContext.disconnect();
+  public void disconnect() throws FederateIsExecutionMember, CallNotAllowedFromWithinCallback, RTIinternalError {
+    try{
+      clientContext.disconnect();
+    } catch (Throwable e) {
+      throw new RTIinternalError(e.getMessage());
+    }
   }
 
   @Override
@@ -259,7 +271,9 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederationExecutionAlreadyExists,
           NotConnected,
           RTIinternalError {
-    throw new UnsupportedOperationException("Currently not supported call : createFederationExecution(String, URL[], String)");
+    // TODO: Implement logic to handle logicalTimeImplementationName if needed
+    System.out.println("[LiteRtiAmbassador] createFederationExecution called with logicalTimeImplementationName: " + logicalTimeImplementationName);
+    this.createFederationExecution(federationExecutionName, fomModules);
   }
 
   @Override
@@ -280,12 +294,13 @@ public class LiteRtiAmbassador implements RTIambassador {
   }
 
   @Override
-  public void createFederationExecution(String federationExecutionName, URL[] fomModules)
-      throws FederationExecutionAlreadyExists, NotConnected, RTIinternalError {
+  public void createFederationExecution(String federationExecutionName, URL[] fomModules) throws FederationExecutionAlreadyExists, NotConnected, RTIinternalError {
     try {
       clientContext.createFederationExecution(federationExecutionName, fomModules);
       System.out.println("[LiteRtiAmbassador] Federation created: " + federationExecutionName);
-    } catch (Exception e) {
+    } catch (FederationExecutionAlreadyExists e) {
+      throw e;
+    } catch (Throwable e) {
       throw new RTIinternalError(e.getMessage());
     }
   }
@@ -352,16 +367,11 @@ public class LiteRtiAmbassador implements RTIambassador {
           RTIinternalError {
 
     // For now, just join (no FDD/MIM parsing)
+    // Currently does not provide an error if a federationExecutionName is provided, but the federation does not exist
     try {
-      clientContext.joinFederationExecution(
-          federateType, federationExecutionName, additionalFomModules);
-      System.out.println(
-          "[LiteRtiAmbassador] Federation joined: "
-              + federationExecutionName
-              + " as federate type: "
-              + federateType);
-
-    } catch (Exception e) {
+      clientContext.joinFederationExecution(federateType, federationExecutionName, additionalFomModules);
+      System.out.println("[LiteRtiAmbassador] Federation joined: " + federationExecutionName + " as federate type: "+ federateType);
+    } catch (Throwable e) {
       throw new RTIinternalError(e.getMessage());
     }
     // TODO this should return a FederateHandle
@@ -584,19 +594,18 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    if (theClass == null) {
-      throw new RTIinternalError("ObjectClassHandle cannot be null");
-    }
-    // Validate no null attribute handles if set is provided
+    if (theClass == null) throw new RTIinternalError("ObjectClassHandle cannot be null");
     if (attributeList != null && !attributeList.isEmpty()) {
+      // Validate no null attribute handles if set is provided
       for (AttributeHandle attr : attributeList) {
-        if (attr == null) {
-          throw new RTIinternalError("AttributeHandle cannot be null in AttributeHandleSet");
-        }
+        if (attr == null) throw new RTIinternalError("AttributeHandle cannot be null in AttributeHandleSet");
       }
     }
-    System.out.println("OLD HLA PUBLISH CALL");
-    clientContext.publishObjectClassAttributes(theClass, attributeList);
+    try {
+      clientContext.publishObjectClassAttributes(theClass, attributeList);
+    } catch (Throwable e) {
+      throw new RTIinternalError(e.getMessage());
+    }
   }
 
   @Override
@@ -633,11 +642,13 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    if (theInteraction == null) {
-      throw new RTIinternalError("InteractionClassHandle cannot be null");
+    if (theInteraction == null) throw new RTIinternalError("InteractionClassHandle cannot be null");
+    try{
+      clientContext.publishInteractionClassAttributes(theInteraction);
+    } catch (Throwable e) {
+      throw new RTIinternalError(e.getMessage());
     }
-    clientContext.publishInteractionClassAttributes(theInteraction);
-    }
+  }
 
   @Override
   public void unpublishInteractionClass(InteractionClassHandle theInteraction)
@@ -660,19 +671,20 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-
-    if (theClass == null) {
-      throw new RTIinternalError("ObjectClassHandle cannot be null");
-    }
-    // Validate no null attribute handles if set is provided, otherwise attributeList should be null
+    if (theClass == null) throw new RTIinternalError("ObjectClassHandle cannot be null");
     if (attributeList != null && !attributeList.isEmpty()) {
+      // Validate no null attribute handles if set is provided, otherwise attributeList should be null
       for (AttributeHandle attr : attributeList) {
         if (attr == null) {
           throw new RTIinternalError("AttributeHandle cannot be null in AttributeHandleSet");
         }
       }
     }
-    clientContext.subscribeObjectClassAttributes(theClass, attributeList);
+    try {
+      clientContext.subscribeObjectClassAttributes(theClass, attributeList);
+    } catch (Throwable e) {
+      throw new RTIinternalError(e.getMessage());
+    }
   }
 
   @Override
@@ -750,10 +762,12 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    if (theClass == null) {
-      throw new RTIinternalError("ObjectClassHandle cannot be null");
+    if (theClass == null) throw new RTIinternalError("ObjectClassHandle cannot be null");
+    try{
+      clientContext.subscribeInteractionClass(theClass);
+    } catch (Throwable e) {
+      throw new RTIinternalError(e.getMessage());
     }
-    clientContext.subscribeInteractionClass(theClass);
   }
 
   // Standard RTI Method
@@ -837,22 +851,11 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-
-    if (theClass == null) {
-      throw new RTIinternalError("ObjectClassHandle cannot be null");
-    }
-
+    if (theClass == null) throw new RTIinternalError("ObjectClassHandle cannot be null");
     try {
-      // Delegate to socket client to register object instance
       return clientContext.registerObjectInstance(theClass, theClass.toString());
-
-    } catch (RuntimeException e) {
-      // Convert RuntimeException to appropriate RTI exception
-      String errorMsg = e.getMessage();
-      if (errorMsg != null && errorMsg.contains("has not published")) {
-        throw new ObjectClassNotPublished("Object class has not been published by this federate");
-      }
-      throw new RTIinternalError("Failed to register object instance: " + errorMsg);
+    } catch (Throwable e) {
+      throw new RTIinternalError(e.getMessage());
     }
   }
 
@@ -882,7 +885,11 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-    clientContext.updateAttributeValues(theObject, theAttributes, userSuppliedTag);
+    try {
+      clientContext.updateAttributeValues(theObject, theAttributes, userSuppliedTag);
+    } catch (Throwable e) {
+      throw new RTIinternalError(e.getMessage());
+    }
   }
 
   @Override
@@ -916,7 +923,11 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-            clientContext.sendInteraction(theInteraction, theParameters, userSuppliedTag);
+            try{
+              clientContext.sendInteraction(theInteraction, theParameters, userSuppliedTag);
+            } catch (Throwable e) {
+              throw new RTIinternalError(e.getMessage());
+            }
           }
 
   @Override
@@ -1830,30 +1841,19 @@ public class LiteRtiAmbassador implements RTIambassador {
   }
 
   @Override
-  public String getObjectInstanceName(ObjectInstanceHandle theHandle)
-      throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError {
-    try {
-      if (theHandle == null) {
-        throw new RTIinternalError("ObjectInstanceHandle cannot be null");
-      }
+  public String getObjectInstanceName(ObjectInstanceHandle theHandle) throws ObjectInstanceNotKnown, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    if (theHandle == null) throw new RTIinternalError("ObjectInstanceHandle cannot be null");
 
-      // Query server for the object instance name
-      String name = clientContext.getObjectInstanceName(theHandle);
-      if (name != null) {
-        System.out.println(
-            "[LiteRtiAmbassador] Retrieved object instance name: "
-                + name
-                + " for handle: "
-                + theHandle);
-        return name;
-      } else {
-        throw new ObjectInstanceNotKnown("Object instance with handle " + theHandle + " not found");
-      }
-    } catch (ObjectInstanceNotKnown e) {
-      throw e;
-    } catch (Exception e) {
-      throw new RTIinternalError("Error getting object instance name: " + e.getMessage(), e);
+    // Query server for the object instance name
+    String name = null;
+    try {
+      name = clientContext.getObjectInstanceName(theHandle);
+    } catch (Throwable e) {
+      throw new RTIinternalError(e.getMessage());
     }
+
+    if (name == null) throw new ObjectInstanceNotKnown("Object instance with handle " + theHandle + " not found");
+    return name;
   }
 
   @Override
