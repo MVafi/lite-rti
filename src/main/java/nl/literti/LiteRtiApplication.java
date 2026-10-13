@@ -96,7 +96,7 @@ public class LiteRtiApplication {
           Map<String, Object> fedInfo = new LinkedHashMap<>();
           for (String federateName : fed.getJoinedFederateTypes()) {
             Map<String, Object> federateData = new LinkedHashMap<>();
-            federateData.put("objectInstances", fed.debugGetObjectInstancesForFederate(federateName));
+            federateData.put("objectInstances", fed.debugGetObjectInstancesWithClassForFederate(federateName));
             federateData.put("interactionsSent", fed.debugGetInteractionsSentCount(federateName));
             federateData.put("interactionsReceived", fed.debugGetInteractionsReceivedCount(federateName));
             fedInfo.put(federateName, federateData);

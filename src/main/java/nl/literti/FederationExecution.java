@@ -353,6 +353,28 @@ public class FederationExecution {
     return instances;
   }
 
+  // Debug method, returns object instances with their class names
+  public java.util.List<Map<String, String>> debugGetObjectInstancesWithClassForFederate(String federateName) {
+    java.util.List<Map<String, String>> instances = new java.util.ArrayList<>();
+    for (Map.Entry<ObjectInstanceHandle, String> entry : objectInstanceOwner.entrySet()) {
+      if (entry.getValue().equals(federateName)) {
+        ObjectInstanceHandle handle = entry.getKey();
+        String instanceName = getObjectInstanceName(handle);
+        ObjectClassHandle classHandle = objectInstanceClass.get(handle);
+        
+        if (instanceName != null && classHandle != null) {
+          String className = fom != null ? fom.getObjectClassName(classHandle.hashCode()) : null;
+          
+          Map<String, String> instanceInfo = new java.util.LinkedHashMap<>();
+          instanceInfo.put("instance", instanceName);
+          instanceInfo.put("class", className != null ? className : "Unknown");
+          instances.add(instanceInfo);
+        }
+      }
+    }
+    return instances;
+  }
+
   public void debugIncrementInteractionsSent(String federateName) {
     debugInteractionsSent.computeIfAbsent(federateName, k -> new AtomicInteger(0)).incrementAndGet();
   }
