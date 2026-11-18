@@ -172,14 +172,6 @@ public class FederationExecution {
     objectClassSubscribers
         .computeIfAbsent(objectClassHandle, k -> new ConcurrentHashMap<>())
         .put(federateType, storedAttributes);
-
-    System.err.println(
-        "[FederationExecution] Federate "
-            + federateType
-            + " subscribed to object class "
-            + objectClassHandle
-            + " with attributes: "
-            + attributeIds);
   }
 
   public void subscribeToInteractionClass(String federateType, InteractionClassHandle interactionClassHandle) {
@@ -193,12 +185,6 @@ public class FederationExecution {
     interactionClassSubscribers
         .computeIfAbsent(interactionClassHandle, k -> ConcurrentHashMap.newKeySet())
         .add(federateType);
-
-    System.err.println(
-      "[FederationExecution] Federate "
-      + federateType
-      + " subscribed to intercation class "
-      + interactionClassHandle);
   }
 
   // public AttributeHandleSet getSubscribedAttributes(
@@ -239,14 +225,6 @@ public class FederationExecution {
     this.objectClassPublishers
         .computeIfAbsent(objectClassHandle, k -> new ConcurrentHashMap<>())
         .put(federateName, storedAttributes);
-
-    System.err.println(
-        "[FederationExecution] Federate "
-            + federateName
-            + " published to object class "
-            + objectClassHandle
-            + " with attributes: "
-            + storedAttributes);
   }
 
   public void publishInteractionClass(
@@ -260,12 +238,6 @@ public class FederationExecution {
     this.interactionClassPublishers
         .computeIfAbsent(interactionClassHandle, k -> ConcurrentHashMap.newKeySet())
         .add(federateName);
-
-    System.err.println(
-        "[FederationExecution] Federate "
-            + federateName
-            + " published interaction class "
-            + interactionClassHandle);
   }
 
   public boolean isInteractionPubBy(String federateName, InteractionClassHandle interactionClassHandle){

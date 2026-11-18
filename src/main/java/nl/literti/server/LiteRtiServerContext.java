@@ -367,7 +367,6 @@ public class LiteRtiServerContext {
     }
 
     ObjectInstanceHandle objectInstanceHandle = reqObj.getObjectInstanceHandle();
-    System.out.println("[ServerContext] Handling UpdateAttributeValues for object instance: " + objectInstanceHandle);
     ObjectClassHandle objectClassHandle = fedEx.getObjectInstanceClass(objectInstanceHandle);
     Map<String, AttributeHandleSet> subscribedFederates = fedEx.getObjectClassSubscribedFederates(objectClassHandle);
 
@@ -380,7 +379,6 @@ public class LiteRtiServerContext {
         continue; 
       }
 
-      System.out.println("Handling attribute update for federate: " + subscribedFederateType);
       AttributeHandleSet subscribedAttributes = entry.getValue();
 
       // Filter the attributes to only include those that the federate has subscribed to
@@ -510,8 +508,7 @@ public class LiteRtiServerContext {
       serverSender.forwardUpdateAttributeValues(socket, null, msg);
       return;
     }
-    
-    System.out.println("[ServerContext] Handling UpdateSendInteraction for interaction class: " + interactionClassHandle);
+
     fedEx.debugIncrementInteractionsSent(federateType);
     
     Set<String> subscribedFederates = fedEx.getInteractionClassSubscribedFederates(interactionClassHandle);
@@ -523,8 +520,6 @@ public class LiteRtiServerContext {
       if (subscribedFederateType.equals(federateType)) {
         continue; 
       }
-
-      System.out.println("Handling attribute update for federate: " + subscribedFederateType);
 
       UpdateSendInteraction interactionUpdate = new UpdateSendInteraction(
           interactionClassHandle,

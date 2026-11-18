@@ -209,10 +209,11 @@ public class ParserHla1516e {
           FedHelpers.getChildValueForgiving(attributeElement, "order", attributeName);
       if (attributeOrder != null) attribute.setOrder(OrderEnum.fromFomString(attributeOrder));
 
-      String attributeTransport =
-          FedHelpers.getChildValueForgiving(attributeElement, "transportation", attributeName);
-      if (attributeTransport != null)
-        attribute.setTransport(TransportEnum.fromFomString(attributeTransport));
+      // String attributeTransport =
+      //     FedHelpers.getChildValueForgiving(attributeElement, "transportation", attributeName);
+      // if (attributeTransport != null)
+      // LiteRTI uses TCP only, meaning that all are send HLAreliable
+      attribute.setTransport(TransportEnum.RELIABLE);
 
       // get the sharing policy
       String attributeSharing =
@@ -259,13 +260,13 @@ public class ParserHla1516e {
   		System.out.println("[DEBUG extractInteractions] Set order: " + interactionOrder);
   	}
 
-  	String interactionTransport = FedHelpers.getChildValueForgiving( interactionRootElement,
-  	                                                                 "transportation",
-  	                                                                 name );
-  	if( interactionTransport != null ) {
-  		interactionRoot.setTransport( TransportEnum.fromFomString(interactionTransport) );
-  		System.out.println("[DEBUG extractInteractions] Set transport: " + interactionTransport);
-  	}
+  	// String interactionTransport = FedHelpers.getChildValueForgiving( interactionRootElement,
+  	//                                                                  "transportation",
+  	//                                                                  name );
+  	// if( interactionTransport != null ) {
+    
+    // LiteRTI uses TCP only, meaning that all are send HLAreliable
+    interactionRoot.setTransport(TransportEnum.RELIABLE);
 
   	// get the sharing policy
   	String interactionSharing = FedHelpers.getChildValueForgiving( interactionRootElement,
@@ -303,11 +304,12 @@ public class ParserHla1516e {
   		if( interactionOrder != null )
   			interactionClass.setOrder( OrderEnum.fromFomString(interactionOrder) );
 
-  		String interactionTransport = FedHelpers.getChildValueForgiving( current,
-  		                                                                 "transportation",
-  		                                                                 interactionClassName );
-  		if( interactionTransport != null )
-  			interactionClass.setTransport( TransportEnum.fromFomString(interactionTransport) );
+  		// String interactionTransport = FedHelpers.getChildValueForgiving( current,
+  		//                                                                  "transportation",
+  		//                                                                  interactionClassName );
+  		// if( interactionTransport != null )
+      // LiteRTI uses TCP only, meaning that all are send HLAreliable
+      interactionClass.setTransport(TransportEnum.RELIABLE);
 
   		// get all the interaction parameters
   		extractParameters( interactionClass, current );

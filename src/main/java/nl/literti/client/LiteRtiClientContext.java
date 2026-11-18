@@ -456,8 +456,6 @@ public class LiteRtiClientContext {
     }
 
     try {
-      System.out.println("[LiteRtiClientContext] Delivering received interaction to federate ambassador");
-
       // Call the federate ambassador's receiveInteraction callback
       federateAmbassador.receiveInteraction(
           update.getInteractionClassHandle(),
@@ -503,8 +501,6 @@ public class LiteRtiClientContext {
     }
 
     InteractionClassHandle ich = new InteractionClassHandleImpl(handle);
-    System.out.println(
-        "[LiteRtiClientContext] getInteractionClassHandle: " + interactionClassName + " -> " + handle);
     return ich;
   }
 
@@ -523,15 +519,6 @@ public class LiteRtiClientContext {
       throw new NameNotFound("Object class not found with handle: " + classHandle);
     }
 
-    System.out.println(
-        "[LiteRtiClientContext] getAttributeHandle: looking up attribute '"
-            + attributeName
-            + "' in object class '"
-            + objectClass.getQualifiedName()
-            + "' (handle: "
-            + classHandle
-            + ")");
-
     // Look up the attribute by name
     int attributeHandle = objectClass.getAttributeHandle(attributeName);
     if (attributeHandle == FederationObjectModel.INVALID_HANDLE) {
@@ -539,8 +526,6 @@ public class LiteRtiClientContext {
     }
 
     // Return wrapped handle
-    System.out.println(
-        "[LiteRtiClientContext] getAttributeHandle: " + attributeName + " -> " + attributeHandle);
     return new AttributeHandleImpl(attributeHandle);
   }
 
@@ -559,15 +544,6 @@ public class LiteRtiClientContext {
       throw new NameNotFound("Interaction class not found with handle: " + classHandle);
     }
 
-    System.out.println(
-        "[LiteRtiClientContext] getParameterHandle: looking up parameter '"
-            + parameterName
-            + "' in interaction class '"
-            + interactionClass.getQualifiedName()
-            + "' (handle: "
-            + classHandle
-            + ")");
-
     // Look up the parameter by name
     int parameterHandle = interactionClass.getParameterHandle(parameterName);
     if (parameterHandle == FederationObjectModel.INVALID_HANDLE) {
@@ -575,8 +551,6 @@ public class LiteRtiClientContext {
     }
 
     // Return wrapped handle
-    System.out.println(
-        "[LiteRtiClientContext] getParameterHandle: " + parameterName + " -> " + parameterHandle);
     return new ParameterHandleImpl(parameterHandle);
   }
 
