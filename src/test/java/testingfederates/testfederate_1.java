@@ -5,8 +5,9 @@ import java.net.URL;
 import java.util.UUID;
 
 import hla.rti1516e.CallbackModel;
+import hla.rti1516e.RtiFactory;
+import hla.rti1516e.RtiFactoryFactory;
 import hla.rti1516e.exceptions.RTIexception;
-import nl.literti.client.LiteRtiAmbassador;
 import nl.tno.netn4.datatypes.EntityTypeStruct;
 import nl.tno.netn4.datatypes.EquipmentSymbolAmplificationStruct;
 import nl.tno.netn4.datatypes.GeodeticPoint;
@@ -28,10 +29,11 @@ public class testfederate_1 extends NullOOFederateAmbassador {
   OORTIambassador oortiamb;
 
   public void start() throws Exception {
-    // Get LiteRti ambassador using LiteRtiAmbassador (lite-rti implementation)
+    // Select LiteRTI explicitly, even when other RTI providers are on the classpath.
+    RtiFactory factory = RtiFactoryFactory.getRtiFactory();
     OORTIambassador oortiamb =
         new OORTIambassadorImpl(
-            new LiteRtiAmbassador(), new DefaultOOobjectFactory(), new OOproperties());
+        factory.getRtiAmbassador(), new DefaultOOobjectFactory(), new OOproperties());
 
     // connect to the RTI in evoked mode
     System.out.println("Connecting to the RTI...");
@@ -71,7 +73,7 @@ public class testfederate_1 extends NullOOFederateAmbassador {
     // Run tests
     // this.sendObjectUpdate(oortiamb);
     this.createEquipment(oortiamb);
-    // this.sendInteractions(oortiamb);
+    this.sendInteractions(oortiamb);
 
     // // resign and disconnect
     // oortiamb.resignFederationExecution(ResignAction.NO_ACTION);
