@@ -12,6 +12,7 @@ import hla.rti1516e.exceptions.RTIexception;
 import nl.literti.client.LiteRtiAmbassador;
 import nl.tno.netn4.interactions.SetSuppliesStatus;
 import nl.tno.netn4.objects.BaseEntity;
+import nl.tno.netn4.objects.Equipment;
 import nl.tno.oorti.DefaultOOobjectFactory;
 import nl.tno.oorti.NullOOFederateAmbassador;
 import nl.tno.oorti.OORTIambassador;
@@ -66,12 +67,12 @@ public class testfederate_2 extends NullOOFederateAmbassador {
     System.out.println("Trying to join...");
     oortiamb.joinFederationExecution("fed_2", "TheWorld", new URL[] {fom, mim});
 
-    // subscribe to BaseEntity object class
-    oortiamb.subscribeObjectClass(BaseEntity.class);
+    // subscribe to Equipment object class
+    oortiamb.subscribeObjectClass(Equipment.class);
     oortiamb.subscribeInteractionClass(SetSuppliesStatus.class);
 
-    System.out.println("Subscribed to BaseEntity updates.");
-    System.out.println("Waiting for BaseEntity updates...");
+    System.out.println("Subscribed to Equipment updates.");
+    System.out.println("Waiting for Equipment updates...");
     Thread.sleep(50000);
     System.out.println("Manually disconnecting from the RTI...");
     oortiamb.disconnect();

@@ -5,10 +5,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import hla.rti1516e.AttributeHandle;
 import hla.rti1516e.AttributeHandleSet;
@@ -30,8 +28,8 @@ import nl.literti.impl.AttributeHandleImpl;
 import nl.literti.impl.InteractionClassHandleImpl;
 import nl.literti.impl.ObjectClassHandleImpl;
 import nl.literti.impl.ParameterHandleImpl;
-import nl.literti.messages.MessageObject;
 import nl.literti.messages.requests.DiscoveredObjectInstance;
+import nl.literti.messages.requests.RequestAttributeValueUpdate;
 import nl.literti.messages.requests.UpdateAttributeValues;
 import nl.literti.messages.requests.UpdateSendInteraction;
 
@@ -45,11 +43,11 @@ public class LiteRtiClientContext {
 
   private FederationObjectModel
       fom; // Fom stored at client side (deserialized ObjectModel object in memory)
-  private FederateAmbassador
+  private volatile FederateAmbassador
       federateAmbassador; // RTI reference for delivering callbacks to the federate
 
-  private boolean canCallback = true; // Allow the client side to do callbacks to the FederateAmbassador
-  private final Queue<MessageObject> queuedCallbacks = new ConcurrentLinkedQueue<>(); // FIFO queue for callbacks when disabled
+  // Separate thread for receiving callbacks from the server, not blocking the clientReceiver thread
+  private final LiteRtiClientDispatcher dispatcher = new LiteRtiClientDispatcher();
 
   // Map of responses that are still expected by the client
   private final Map<Integer, CompletableFuture<Object>> pendingResponses =
@@ -332,23 +330,17 @@ public class LiteRtiClientContext {
       return;
     }
 
-    if (this.canCallback){
-      try {
-        System.out.println(
-            "[LiteRtiClientContext] Delivering discovered object instance to federate ambassador");
-        federateAmbassador.discoverObjectInstance(
-            discoveredObjectInstance.getInstanceHandle(),
-            discoveredObjectInstance.getClassHandle(),
-            discoveredObjectInstance.getTheObjectName(),
-            discoveredObjectInstance.getProducingFederate());
-      } catch (Exception e) {
-        System.err.println(
-            "[LiteRtiClientContext] Error delivering discovered object instance: " + e.getMessage());
-      }
-    } else {
-      queuedCallbacks.offer(discoveredObjectInstance);
+    try {
+      System.out.println(
+          "[LiteRtiClientContext] Delivering discovered object instance to federate ambassador");
+      federateAmbassador.discoverObjectInstance(
+          discoveredObjectInstance.getInstanceHandle(),
+          discoveredObjectInstance.getClassHandle(),
+          discoveredObjectInstance.getTheObjectName(),
+          discoveredObjectInstance.getProducingFederate());
+    } catch (Exception e) {
       System.err.println(
-        "[LiteRtiClientContext] Unable to callback now, storing callback for later");
+          "[LiteRtiClientContext] Error delivering discovered object instance: " + e.getMessage());
     }
 
   }
@@ -384,6 +376,31 @@ public class LiteRtiClientContext {
 
   // ==== Object Attribute updates =====
 
+  public void requestAttributeValueUpdate(ObjectInstanceHandle theObject, AttributeHandleSet theAttributes, byte[] userSuppliedTag) throws Throwable {
+    clientSocket.checkConnection();
+    if (theObject == null) throw new RuntimeException("[LiteRtiClientContext] ObjectInstanceHandle cannot be null");
+    if (theAttributes == null || theAttributes.isEmpty()) throw new RuntimeException("[LiteRtiClientContext] AttributeHandleSet cannot be null or empty");
+    clientSender.sendRequestAttributeValueUpdate(theObject, theAttributes, userSuppliedTag);
+  }
+
+  public void handleRequestAttributeValueUpdate(RequestAttributeValueUpdate request) {
+    if (this.federateAmbassador == null) {
+      System.err.println(
+          "[LiteRtiClientContext] No federate ambassador set, cannot deliver provideAttributeValueUpdate");
+      return;
+    }
+
+    try {
+      federateAmbassador.provideAttributeValueUpdate(
+          request.getObjectInstanceHandle(),
+          request.getTheAttributes(),
+          request.getUserSuppliedTag());
+    } catch (Exception e) {
+      System.err.println(
+          "[LiteRtiClientContext] Error delivering provideAttributeValueUpdate: " + e.getMessage());
+    }
+  }
+
   public void updateAttributeValues(
       ObjectInstanceHandle theObject,
       AttributeHandleValueMap theAttributes,
@@ -401,27 +418,21 @@ public class LiteRtiClientContext {
       return;
     }
 
-    if (this.canCallback){
-      try {
-        System.out.println("[LiteRtiClientContext] Delivering reflected attribute values to federate ambassador");
-        
-        // Call the federate ambassador's reflectAttributeValues callback
-        federateAmbassador.reflectAttributeValues(
-            update.getObjectInstanceHandle(),
-            update.getAttributeHandleValueMap(),
-            update.getUserSuppliedTag(),
-            null, // OrderType
-            null, // TransportationTypeHandle
-            null // ReflectInfo
-            );
-      } catch (Exception e) {
-        System.err.println(
-            "[LiteRtiClientContext] Error delivering reflected attribute values: " + e.getMessage());
-      }
-    } else {
-      queuedCallbacks.offer(update);
-        System.err.println(
-          "[LiteRtiClientContext] Unable to callback now, storing callback for later");
+    try {
+      System.out.println("[LiteRtiClientContext] Delivering reflected attribute values to federate ambassador");
+
+      // Call the federate ambassador's reflectAttributeValues callback
+      federateAmbassador.reflectAttributeValues(
+          update.getObjectInstanceHandle(),
+          update.getAttributeHandleValueMap(),
+          update.getUserSuppliedTag(),
+          null, // OrderType
+          null, // TransportationTypeHandle
+          null // ReflectInfo
+          );
+    } catch (Exception e) {
+      System.err.println(
+          "[LiteRtiClientContext] Error delivering reflected attribute values: " + e.getMessage());
     }
   }
 
@@ -444,26 +455,21 @@ public class LiteRtiClientContext {
       return;
     }
 
-    if (this.canCallback){
-      try {
-        System.out.println("[LiteRtiClientContext] Delivering received interaction to federate ambassador");
-        
-        // Call the federate ambassador's receiveInteraction callback
-        federateAmbassador.receiveInteraction(
-            update.getInteractionClassHandle(),
-            update.getParameterHandleValueMap(),
-            update.getUserSuppliedTag(),
-            null, // OrderType
-            null, // TransportationTypeHandle
-            null // ReceiveInfo
-            );
-      } catch (Exception e) {
-        System.err.println(
-            "[LiteRtiClientContext] Error delivering received interaction: " + e.getMessage());    }
-    } else {
-      queuedCallbacks.offer(update);
+    try {
+      System.out.println("[LiteRtiClientContext] Delivering received interaction to federate ambassador");
+
+      // Call the federate ambassador's receiveInteraction callback
+      federateAmbassador.receiveInteraction(
+          update.getInteractionClassHandle(),
+          update.getParameterHandleValueMap(),
+          update.getUserSuppliedTag(),
+          null, // OrderType
+          null, // TransportationTypeHandle
+          null // ReceiveInfo
+          );
+    } catch (Exception e) {
       System.err.println(
-        "[LiteRtiClientContext] Unable to callback now, storing callback for later");
+          "[LiteRtiClientContext] Error delivering received interaction: " + e.getMessage());
     }
   }
 
@@ -575,33 +581,21 @@ public class LiteRtiClientContext {
   }
 
   // ==== Handle Callback modes =====
+
   public void disableCallbacks() {
-    this.canCallback = false;
+    dispatcher.disable();
   }
 
   public void enableCallbacks(){
-    this.canCallback = true;
-    this.handleCallbackQueue();
+    dispatcher.enable();
   }
 
-  private void handleCallbackQueue(){
-    MessageObject callback;
-    while ((callback = queuedCallbacks.poll()) != null) {
-      switch (callback) {
-        case DiscoveredObjectInstance update -> {
-          this.handleDiscoveredObjectInstances(update);
-        }
-        case UpdateAttributeValues update -> {
-          this.handleUpdateAttributeValues(update);
-        }
-        case UpdateSendInteraction update -> {
-          this.handleUpdateSendInteraction(update);
-        }
-        default -> {
-          throw new RuntimeException("Unknown type for queued callback handling: " + callback.getClass().getName());
-        }
-      }
-    }
+  void queueCallback(Runnable callback) {
+    dispatcher.queueCallback(callback);
+  }
+
+  void shutdownCallbacks() {
+    dispatcher.close();
   }
 
 

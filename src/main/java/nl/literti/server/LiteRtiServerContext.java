@@ -16,6 +16,7 @@ import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
 import nl.literti.FederationExecution;
 import nl.literti.fom.FederationObjectModel;
+import nl.literti.messages.requests.RequestAttributeValueUpdate;
 import nl.literti.messages.requests.RequestConnectFederate;
 import nl.literti.messages.requests.RequestCreateFederation;
 import nl.literti.messages.requests.RequestDisconnectFederate;
@@ -29,6 +30,7 @@ import nl.literti.messages.requests.RequestSubscribeInteraction;
 import nl.literti.messages.requests.RequestSubscribeObject;
 import nl.literti.messages.requests.UpdateAttributeValues;
 import nl.literti.messages.requests.UpdateSendInteraction;
+import nl.literti.utils.AttributeHandleSetImpl;
 import nl.literti.utils.AttributeHandleValueMapImpl;
 
 /** Context for keeping track of the states of the server and its federates */
@@ -289,8 +291,8 @@ public class LiteRtiServerContext {
       return;
     }
 
-    ObjectInstanceHandle objectInstanceHandle =
-        fedEx.registerObjectInstance(federateType, reqObj.getObjectClassHandle());
+    // TODO: implement error pipeline if registration fails
+    ObjectInstanceHandle objectInstanceHandle = fedEx.registerObjectInstance(federateType, reqObj.getObjectClassHandle());
     msg = "OK|OBJECT_INSTANCE_REGISTERED";
     serverSender.sendRegisterObjectInstanceResponse(
         socket, reqObj.getMsgHandle(), objectInstanceHandle, msg);
@@ -309,7 +311,13 @@ public class LiteRtiServerContext {
       Socket targetSocket = fedEx.getFederateSocket(subscribedFederateType);
       if (targetSocket != null) {
         String theObjectName = fedEx.getObjectInstanceName(objectInstanceHandle);
-        serverSender.sendDiscoveredObjectInstances(targetSocket, 0, objectInstanceHandle, reqObj.getObjectClassHandle(), theObjectName, null);
+
+        // Try catch for dead federates
+        try {
+          serverSender.sendDiscoveredObjectInstances(targetSocket, 0, objectInstanceHandle, reqObj.getObjectClassHandle(), theObjectName, null);
+        } catch (IOException e) {
+          System.err.println("[ServerContext] Failed to send discovery to " + subscribedFederateType + ": " + e.getMessage());
+        }
       }
     }
   }
@@ -403,9 +411,75 @@ public class LiteRtiServerContext {
       // Send the filtered update to the subscribed federate
       Socket targetSocket = fedEx.getFederateSocket(subscribedFederateType);
       if (targetSocket != null) {
-        serverSender.forwardUpdateAttributeValues(targetSocket, filteredUpdate, "OK|ATTRIBUTE_VALUES_UPDATED");
+        // Try catch for dead federates
+        try {
+          serverSender.forwardUpdateAttributeValues(targetSocket, filteredUpdate, "OK|ATTRIBUTE_VALUES_UPDATED");
+        } catch (IOException e) {
+          System.err.println("[ServerContext] Failed to forward attribute update to " + subscribedFederateType + ": " + e.getMessage());
+        }
       }
     }
+  }
+
+  // ==== Request Attribute Value Update =====
+
+  void handleRequestAttributeValueUpdate(Socket socket, RequestAttributeValueUpdate reqObj, String federationName, String federateType) throws IOException {
+    // Request has no response, only forward the request to the federate owning the object instance
+    if (federationName == null) {
+      System.err.println("[ServerContext] RequestAttributeValueUpdate: federation name not provided");
+      return;
+    }
+
+    FederationExecution fedEx = this.federationName2FederationExecutions.get(federationName);
+    if (fedEx == null) {
+      System.err.println("[ServerContext] RequestAttributeValueUpdate: federation does not exist: " + federationName);
+      return;
+    }
+
+    ObjectInstanceHandle objectInstanceHandle = reqObj.getObjectInstanceHandle();
+    String ownerFederateType = fedEx.getObjectInstanceOwner(objectInstanceHandle);
+    if (ownerFederateType == null) {
+      System.err.println("[ServerContext] RequestAttributeValueUpdate: unknown object instance: " + objectInstanceHandle);
+      return;
+    }
+
+    // The owner does not need to be asked to provide values to itself
+    if (ownerFederateType.equals(federateType)) {
+      return;
+    }
+
+    // Only ask for attributes the owner actually publishes
+    ObjectClassHandle objectClassHandle = fedEx.getObjectInstanceClass(objectInstanceHandle);
+    AttributeHandleSet publishedAttributes = fedEx.getPublishedAttributes(ownerFederateType, objectClassHandle);
+    AttributeHandleSet requestedAttributes = reqObj.getTheAttributes();
+    AttributeHandleSet toRequestAttributes = new AttributeHandleSetImpl();
+    if (requestedAttributes != null) {
+      for (AttributeHandle attributeHandle : requestedAttributes) {
+        if (publishedAttributes == null || publishedAttributes.contains(attributeHandle)) {
+          toRequestAttributes.add(attributeHandle);
+        }
+      }
+    }
+
+    // Todo debug this line
+    if (toRequestAttributes.isEmpty()) {
+      throw new IllegalArgumentException("[ServerContext] RequestAttributeValueUpdate: no attributes to request from owner: " + ownerFederateType);
+    }
+
+    Socket ownerSocket = fedEx.getFederateSocket(ownerFederateType);
+    if (ownerSocket == null) {
+      System.err.println("[ServerContext] RequestAttributeValueUpdate: owner not connected: " + ownerFederateType);
+      return;
+    }
+
+    System.out.println("[ServerContext] Forwarding RequestAttributeValueUpdate for " + objectInstanceHandle + " to owner " + ownerFederateType);
+    RequestAttributeValueUpdate forwarded = new RequestAttributeValueUpdate(
+        objectInstanceHandle,
+        toRequestAttributes,
+        reqObj.getUserSuppliedTag(),
+        0 // MsgHandle is 0 since this is not a response to a request (no future in client);
+    );
+    serverSender.forwardRequestAttributeValueUpdate(ownerSocket, forwarded, "OK|REQUEST_ATTRIBUTE_VALUE_UPDATE");
   }
 
   // ==== Send Interaction Update =====
@@ -463,7 +537,12 @@ public class LiteRtiServerContext {
       Socket targetSocket = fedEx.getFederateSocket(subscribedFederateType);
       if (targetSocket != null) {
         fedEx.debugIncrementInteractionsReceived(subscribedFederateType);
-        serverSender.forwardUpdateSendInteraction(targetSocket, interactionUpdate, "OK|SEND_INTERACTION_UPDATE");
+        // Try catch for dead federates
+        try {
+          serverSender.forwardUpdateSendInteraction(targetSocket, interactionUpdate, "OK|SEND_INTERACTION_UPDATE");
+        } catch (IOException e) {
+          System.err.println("[ServerContext] Failed to forward interaction to " + subscribedFederateType + ": " + e.getMessage());
+        }
       }
     }
   }

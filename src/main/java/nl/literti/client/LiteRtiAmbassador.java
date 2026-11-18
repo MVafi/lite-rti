@@ -854,6 +854,15 @@ public class LiteRtiAmbassador implements RTIambassador {
     if (theClass == null) throw new RTIinternalError("ObjectClassHandle cannot be null");
     try {
       return clientContext.registerObjectInstance(theClass, theClass.toString());
+      // Todo, catches like this should be implemented for all
+    } catch (ObjectClassNotPublished
+      | ObjectClassNotDefined
+      | SaveInProgress
+      | RestoreInProgress
+      | FederateNotExecutionMember
+      | NotConnected
+      | RTIinternalError e) {
+      throw e;
     } catch (Throwable e) {
       throw new RTIinternalError(e.getMessage());
     }
@@ -997,7 +1006,13 @@ public class LiteRtiAmbassador implements RTIambassador {
           FederateNotExecutionMember,
           NotConnected,
           RTIinternalError {
-            throw new UnsupportedOperationException("Currently not supported call : requestAttributeValueUpdate(ObjectInstanceHandle, AttributeHandleSet, byte[])");
+            // TODO: implement useSuppliedTag
+            System.out.println("[LiteRtiAmbassador] requestAttributeValueUpdate called : please note that userSuppliedTag is currently not used");
+            try{
+              clientContext.requestAttributeValueUpdate(theObject, theAttributes, userSuppliedTag);
+            } catch (Throwable e) {
+              throw new RTIinternalError(e.getMessage());
+            }
           }
 
   @Override

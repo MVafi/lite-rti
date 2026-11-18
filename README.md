@@ -2,6 +2,8 @@ LiteRTI - A lightweight HLA-compatible RTI based on the IEEE 1516e standard
 
 ==== WORK IN PROGRESS ====
 
+This application is not a full-featured high performance HLA RTI. It uses a TCP server-centric architecture intended to simplify connectivity and reduce firewall related issues. LiteRTI uses TCP exclusively, meaning that all messages use the `HLAreliable` transportation type.
+
 to be Supported Features
 - HLA Object Management
 - Reliable and Best-Effort transportation

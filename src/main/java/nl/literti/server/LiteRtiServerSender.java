@@ -9,6 +9,7 @@ import hla.rti1516e.ObjectInstanceHandle;
 import nl.literti.AbstractLiteRtiSender;
 import nl.literti.fom.FederationObjectModel;
 import nl.literti.messages.requests.DiscoveredObjectInstance;
+import nl.literti.messages.requests.RequestAttributeValueUpdate;
 import nl.literti.messages.requests.UpdateAttributeValues;
 import nl.literti.messages.requests.UpdateSendInteraction;
 import nl.literti.messages.responses.ResponseFederateConnected;
@@ -109,6 +110,12 @@ public class LiteRtiServerSender extends AbstractLiteRtiSender {
       throws IOException {
     updateAttributeValues.setMsgString(result);
     serializeSendMsg(socket, updateAttributeValues);
+  }
+
+  public void forwardRequestAttributeValueUpdate(Socket socket, RequestAttributeValueUpdate requestAttributeValueUpdate, String result)
+      throws IOException {
+    requestAttributeValueUpdate.setMsgString(result);
+    serializeSendMsg(socket, requestAttributeValueUpdate);
   }
 
   public void forwardUpdateSendInteraction(Socket socket, UpdateSendInteraction updateSendInteraction, String result)

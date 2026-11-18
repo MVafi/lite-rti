@@ -316,6 +316,17 @@ public class FederationExecution {
     return objectInstanceClass.get(objectInstanceHandle);
   }
 
+  public String getObjectInstanceOwner(ObjectInstanceHandle objectInstanceHandle) {
+    return objectInstanceOwner.get(objectInstanceHandle);
+  }
+
+  public AttributeHandleSet getPublishedAttributes(
+      String federateName, ObjectClassHandle objectClassHandle) {
+    Map<ObjectClassHandle, AttributeHandleSet> fedPubs = federatePublications.get(federateName);
+    // TODO this might be a problem as previously it was assumed that a federate publishes all when the value is null
+    return fedPubs == null ? null : fedPubs.get(objectClassHandle);
+  }
+
   public Set<ObjectInstanceHandle> getObjectInstancesForClass(ObjectClassHandle objectClassHandle) {
     Set<ObjectInstanceHandle> instances = new java.util.HashSet<>();
     for (Map.Entry<ObjectInstanceHandle, ObjectClassHandle> entry : objectInstanceClass.entrySet()) {

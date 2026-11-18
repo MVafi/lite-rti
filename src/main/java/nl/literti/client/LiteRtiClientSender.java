@@ -5,6 +5,7 @@ import java.net.Socket;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import hla.rti1516e.AttributeHandleSet;
@@ -16,6 +17,7 @@ import hla.rti1516e.ParameterHandleValueMap;
 import nl.literti.AbstractLiteRtiSender;
 import nl.literti.fom.FederationObjectModel;
 import nl.literti.messages.MessageObject;
+import nl.literti.messages.requests.RequestAttributeValueUpdate;
 import nl.literti.messages.requests.RequestConnectFederate;
 import nl.literti.messages.requests.RequestCreateFederation;
 import nl.literti.messages.requests.RequestDisconnectFederate;
@@ -44,7 +46,7 @@ public class LiteRtiClientSender extends AbstractLiteRtiSender {
 
   private Object serializeSendMsgAndWait(MessageObject request) throws Throwable {
     // All request are registered in the context, responses are managed by the ClientReceiver
-    System.out.println("sending msg to server");
+    System.out.println("sending msg to server: " + request.getClass().getSimpleName() + " (msgHandle " + request.getMsgHandle() + ")");
     CompletableFuture<Object> future = new CompletableFuture<>();
     clientContext.registerPendingResponse(request.getMsgHandle(), future);
 
@@ -52,8 +54,15 @@ public class LiteRtiClientSender extends AbstractLiteRtiSender {
       serializeSendMsg(this.socket, request);
       Object result = future.get(30L, TimeUnit.SECONDS); // await result
       return result;
+
+    // Unwrap error from future
     } catch (ExecutionException e) {
       throw e.getCause();
+    } catch (TimeoutException e) {
+      String requestType = request.getClass().getSimpleName();
+      System.err.println("[ClientSender] Timed out after 30s waiting for response to " + requestType
+          + " (msgHandle " + request.getMsgHandle() + ", thread " + Thread.currentThread().getName() + ")");
+      throw new IOException("Timed out waiting for response to " + requestType + " (msgHandle " + request.getMsgHandle() + ")", e);
     } catch (Exception e) {
       throw new IOException("Future failed due to unexpected exception: " + e.getMessage(), e);
     } finally {
@@ -69,7 +78,7 @@ public class LiteRtiClientSender extends AbstractLiteRtiSender {
   }
 
   public void sendDisconnectFederateRequest() throws Throwable {
-    RequestDisconnectFederate request = new RequestDisconnectFederate(requestId.incrementAndGet());
+    RequestDisconnectFederate request = new RequestDisconnectFederate(0);
     serializeSendMsg(this.socket, request);
   }
 
@@ -119,13 +128,18 @@ public class LiteRtiClientSender extends AbstractLiteRtiSender {
     return serializeSendMsgAndWait(request);
   }
 
+  public void sendRequestAttributeValueUpdate(ObjectInstanceHandle theObject, AttributeHandleSet theAttributes, byte[] userSuppliedTag) throws Throwable {
+    RequestAttributeValueUpdate request = new RequestAttributeValueUpdate(theObject, theAttributes, userSuppliedTag, 0);
+    serializeSendMsg(this.socket, request);
+  }
+
   public void sendAttributeValuesUpdate(ObjectInstanceHandle theHandle, AttributeHandleValueMap theAttributes, byte[] userSuppliedTag) throws Throwable {
-    UpdateAttributeValues request = new UpdateAttributeValues(theHandle, theAttributes, userSuppliedTag, requestId.incrementAndGet());
+    UpdateAttributeValues request = new UpdateAttributeValues(theHandle, theAttributes, userSuppliedTag, 0);
     serializeSendMsg(this.socket, request);
   }
 
   public void sendInteraction(InteractionClassHandle theHandle, ParameterHandleValueMap theParameters, byte[] userSuppliedTag) throws Throwable {
-    UpdateSendInteraction request = new UpdateSendInteraction(theHandle, theParameters, userSuppliedTag, requestId.incrementAndGet());
+    UpdateSendInteraction request = new UpdateSendInteraction(theHandle, theParameters, userSuppliedTag, 0);
     serializeSendMsg(this.socket, request);
   }
 }

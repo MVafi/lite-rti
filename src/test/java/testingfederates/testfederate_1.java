@@ -8,9 +8,15 @@ import hla.rti1516e.CallbackModel;
 import hla.rti1516e.exceptions.RTIexception;
 import nl.literti.client.LiteRtiAmbassador;
 import nl.tno.netn4.datatypes.EntityTypeStruct;
+import nl.tno.netn4.datatypes.EquipmentSymbolAmplificationStruct;
+import nl.tno.netn4.datatypes.GeodeticPoint;
 import nl.tno.netn4.datatypes.SupplyStatusStruct;
+import nl.tno.netn4.datatypes.SymbolAmplificationVariant;
+import nl.tno.netn4.datatypes.SymbolStruct;
+import nl.tno.netn4.datatypes.SymbolTypeEnum;
 import nl.tno.netn4.interactions.SetSuppliesStatus;
 import nl.tno.netn4.objects.BaseEntity;
+import nl.tno.netn4.objects.Equipment;
 import nl.tno.oorti.DefaultOOobjectFactory;
 import nl.tno.oorti.NullOOFederateAmbassador;
 import nl.tno.oorti.OORTIambassador;
@@ -56,14 +62,16 @@ public class testfederate_1 extends NullOOFederateAmbassador {
     // publish and subscribe to the class of interest
     System.out.println("Trying to subscribe");
 
+    oortiamb.publishObjectClass(Equipment.class);
     oortiamb.publishObjectClass(BaseEntity.class);
     oortiamb.subscribeObjectClass(BaseEntity.class);
     oortiamb.publishInteractionClass(SetSuppliesStatus.class);
-    // oortiamb.subscribeInteractionClass(SetSuppliesStatus.class);
+    oortiamb.subscribeInteractionClass(SetSuppliesStatus.class);
 
     // Run tests
-    this.sendInteractions(oortiamb);
     // this.sendObjectUpdate(oortiamb);
+    this.createEquipment(oortiamb);
+    // this.sendInteractions(oortiamb);
 
     // // resign and disconnect
     // oortiamb.resignFederationExecution(ResignAction.NO_ACTION);
@@ -77,6 +85,61 @@ public class testfederate_1 extends NullOOFederateAmbassador {
 
   public static void main(String[] args) throws RTIexception, Exception {
     new testfederate_1().start();
+  }
+
+  public void createEquipment(OORTIambassador oortiamb) throws Exception {
+    System.err.println("Creating Equipment: MQ9 Reaper 1");
+
+    // Create Equipment instance with properties from XML
+    Equipment equipment = new Equipment();
+    equipment.setName("MQ9 Reaper 1");
+
+    // Set symbol information
+    SymbolStruct symbol = new SymbolStruct();
+    symbol.setId("SFAPMFQA-------");
+    SymbolAmplificationVariant amplification = new SymbolAmplificationVariant();
+    amplification.setSymbolType(SymbolTypeEnum.Equipment);
+    EquipmentSymbolAmplificationStruct equipmentSymbol = new EquipmentSymbolAmplificationStruct();
+    equipmentSymbol.setQuantity("1");
+    equipmentSymbol.setStaffComments("1");
+    equipmentSymbol.setAdditionalInformation("1");
+    equipmentSymbol.setEvaluationRating("1");
+    equipmentSymbol.setSignatureEquipment("1");
+    equipmentSymbol.setHostile("1");
+    equipmentSymbol.setIFF__SIF__AIS("1");
+    equipmentSymbol.setUniqueDesignation("1");
+    equipmentSymbol.setEquipmentType("1");
+    equipmentSymbol.setEngagementBarText("1");
+
+    amplification.setEquipmentSymbol(equipmentSymbol);
+    symbol.setAmplification(amplification);
+    equipment.setSymbol(symbol);
+
+    // Set location (GDC coordinates)
+    GeodeticPoint location = new GeodeticPoint();
+    location.setLatitude(1.0466343);
+    location.setLongitude(0.89164746);
+    location.setAltitude(0.0);
+    equipment.setLocation(location);
+    
+    // Set EntityType
+    EntityTypeStruct entityType = new EntityTypeStruct();
+    entityType.setEntityKind((byte) 1);
+    entityType.setDomain((byte) 3);
+    entityType.setCountryCode((short) 0);
+    entityType.setCategory((byte) 0);
+    entityType.setSubcategory((byte) 0);
+    entityType.setSpecific((byte) 0);
+    entityType.setExtra((byte) 0);
+    equipment.setEntityType(entityType);
+
+    equipment.setOrganization(UUID.fromString("a6ac89d6-4fee-22dd-be56-cc52ac120002"));
+
+    // Register and update the equipment object
+    oortiamb.registerObjectInstance(equipment);
+    oortiamb.updateAttributeValues(equipment, null);
+
+    System.err.println("Created Equipment with name: " + equipment.getName());
   }
 
   public void sendInteractions(OORTIambassador oortiamb) throws Exception {

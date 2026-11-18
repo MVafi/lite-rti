@@ -5,6 +5,7 @@ import java.net.Socket;
 
 import nl.literti.AbstractLiteRtiReceiver;
 import nl.literti.messages.MessageObject;
+import nl.literti.messages.requests.RequestAttributeValueUpdate;
 import nl.literti.messages.requests.RequestConnectFederate;
 import nl.literti.messages.requests.RequestCreateFederation;
 import nl.literti.messages.requests.RequestDisconnectFederate;
@@ -108,6 +109,10 @@ public class LiteRtiServerReceiver extends AbstractLiteRtiReceiver {
         }
         case RequestObjectInstanceName request -> {
           serverContext.handleObjectInstanceNameRequest(
+              this.socket, request, this.federationName, this.federateType);
+        }
+        case RequestAttributeValueUpdate request -> {
+          serverContext.handleRequestAttributeValueUpdate(
               this.socket, request, this.federationName, this.federateType);
         }
         case UpdateAttributeValues request -> {

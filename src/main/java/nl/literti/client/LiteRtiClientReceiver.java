@@ -7,6 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import nl.literti.AbstractLiteRtiReceiver;
 import nl.literti.messages.MessageObject;
 import nl.literti.messages.requests.DiscoveredObjectInstance;
+import nl.literti.messages.requests.RequestAttributeValueUpdate;
 import nl.literti.messages.requests.UpdateAttributeValues;
 import nl.literti.messages.requests.UpdateSendInteraction;
 import nl.literti.messages.responses.ResponseFederateConnected;
@@ -43,11 +44,35 @@ public class LiteRtiClientReceiver extends AbstractLiteRtiReceiver {
       return;
     }
 
-    // Todo: would be cleaner to move this line into the switch methods below
-    CompletableFuture<Object> future = clientContext.getPendingResponse(msgObj.getMsgHandle());
+    // Send non response messages to the clientDispatcher (these are responses without a future to complete)
+    switch (msgObj) {
+      case DiscoveredObjectInstance callback -> {
+        clientContext.queueCallback(() -> clientContext.handleDiscoveredObjectInstances(callback));
+        return;
+      }
+      case UpdateAttributeValues callback -> {
+        clientContext.queueCallback(() -> clientContext.handleUpdateAttributeValues(callback));
+        return;
+      }
+      case RequestAttributeValueUpdate callback -> {
+        clientContext.queueCallback(() -> clientContext.handleRequestAttributeValueUpdate(callback));
+        return;
+      }
+      case UpdateSendInteraction callback -> {
+        clientContext.queueCallback(() -> clientContext.handleUpdateSendInteraction(callback));
+        return;
+      }
+      default -> {}
+    }
 
-    // Route responses, futures created in the clientSender will be completed here when the response
-    // is received
+    // Response messages with a future
+    CompletableFuture<Object> future = clientContext.getPendingResponse(msgObj.getMsgHandle());
+    if (future == null) {
+      System.err.println("[ClientReceiver] Ignoring late or unmatched "
+          + msgObj.getClass().getSimpleName() + " (msgHandle " + msgObj.getMsgHandle() + ")");
+      return;
+    }
+
     try {
       switch (obj) {
         case ResponseFederateConnected response -> {
@@ -82,24 +107,12 @@ public class LiteRtiClientReceiver extends AbstractLiteRtiReceiver {
           clientContext.handleSubscribeInteractionResponse(response.getMsgString());
           future.complete(response.getMsgString());
         }
-        case DiscoveredObjectInstance response -> {
-          // No msgHandle is needed
-          clientContext.handleDiscoveredObjectInstances(response);
-        }
         case ResponseRegisterObjectInstance response -> {
           future.complete(
               response.getObjectInstanceHandle()); // Complete with the actual handle object
         }
         case ResponseObjectInstanceName response -> {
           future.complete(response.getObjectInstanceName()); // Complete with the name string
-        }
-        case UpdateAttributeValues update -> {
-          System.out.println("[ClientReceiver] Received UpdateAttributeValues");
-          clientContext.handleUpdateAttributeValues(update);
-        }
-        case UpdateSendInteraction update -> {
-          System.out.println("[ClientReceiver] Received UpdateSendInteraction");
-          clientContext.handleUpdateSendInteraction(update);
         }
         default -> {
           throw new RuntimeException("Unknown message type: " + obj.getClass().getName());
@@ -109,5 +122,10 @@ public class LiteRtiClientReceiver extends AbstractLiteRtiReceiver {
       System.err.println("[ClientReceiver] THE FUTURE HAS FAILED: " + e.getMessage());
       future.completeExceptionally(e);
     }
+  }
+
+  @Override
+  protected void cleanupReceiver() {
+    clientContext.shutdownCallbacks();
   }
 }
